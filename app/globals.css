@@ -51,8 +51,8 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: hsl(37, 98%, 47%);
+  --primary-foreground: hsl(0, 0%, 100%);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -85,8 +85,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: hsl(37, 98%, 47%);
+  --primary-foreground: hsl(0, 0%, 100%);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -118,5 +118,27 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .font-bebas {
+    font-family: var(--font-bebas-neue), sans-serif;
+  }
+
+  .font-garet-book {
+    font-family: var(--font-garetbook), sans-serif;
+  }
+
+  .font-garet-heavy {
+    font-family: var(--font-garetheavy), sans-serif;
+  }
+
+  .font-garetheavy {
+    font-family: var(--font-garetheavy), sans-serif;
+  }
+
+  .font-poppins {
+    font-family: var(--font-poppins), sans-serif;
   }
 }

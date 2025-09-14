@@ -1,0 +1,241 @@
+"use client";
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Calendar,
+  MapPin,
+  Users,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+import { TripFormData, calculateDaysBetween } from "@/lib/validations/trip";
+
+interface TripReviewProps {
+  formData: TripFormData;
+  onSubmit: () => void;
+  onPrev: () => void;
+  loading: boolean;
+}
+
+export default function TripReview({
+  formData,
+  onSubmit,
+  onPrev,
+  loading,
+}: TripReviewProps) {
+  const [showAllItinerary, setShowAllItinerary] = useState(false);
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "Not set";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const calculateDuration = () => {
+    if (!formData.about.startDate || !formData.about.endDate) {
+      return "Not set";
+    }
+    const days = calculateDaysBetween(
+      formData.about.startDate,
+      formData.about.endDate
+    );
+    return `${days} days`;
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h3 className="text-xl font-semibold mb-2">Review Your Trip</h3>
+        <p className="text-gray-600">
+          Please review all the details before publishing your trip
+        </p>
+      </div>
+
+      {/* Trip Overview */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <span>Trip Overview</span>
+            <Badge variant="secondary">{formData.about.tripType}</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <h4 className="font-semibold text-lg">{formData.title}</h4>
+            <p className="text-gray-600">{formData.about.tripType} Trip</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-gray-500" />
+              <span className="text-sm text-gray-700">
+                {formData.about.location}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-gray-500" />
+              <span className="text-sm text-gray-700">
+                {calculateDuration()}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold text-gray-500">₹</span>
+              <span className="text-sm font-semibold text-gray-700">
+                {formData.priceInInr.toLocaleString()}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-gray-500" />
+              <div className="text-sm">
+                <span className="text-gray-700">Start: </span>
+                <span className="text-gray-600">
+                  {formatDate(formData.about.startDate)}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-gray-500" />
+              <div className="text-sm">
+                <span className="text-gray-700">End: </span>
+                <span className="text-gray-600">
+                  {formatDate(formData.about.endDate)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-gray-500" />
+            <span className="text-sm">
+              Group size: {formData.about.groupSizeMin} -{" "}
+              {formData.about.groupSizeMax} people
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Host Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Host Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <h4 className="font-semibold">{formData.host.name}</h4>
+            <p className="text-gray-600">{formData.host.description}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Itinerary Preview */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Itinerary Preview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {(showAllItinerary
+              ? formData.itinerary
+              : formData.itinerary.slice(0, 3)
+            ).map((day, index) => (
+              <div key={index} className="border-l-2 border-primary pl-4">
+                <h5 className="font-medium">
+                  Day {day.day}
+                  {day.title ? `: ${day.title}` : ""}
+                </h5>
+                {day.date && (
+                  <p className="text-xs text-gray-500">
+                    {new Date(day.date).toLocaleDateString("en-US", {
+                      weekday: "long",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </p>
+                )}
+                <p className="text-sm text-gray-600 mt-1">{day.description}</p>
+              </div>
+            ))}
+            {formData.itinerary.length > 3 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAllItinerary(!showAllItinerary)}
+                className="w-full text-primary hover:text-primary/80"
+              >
+                {showAllItinerary ? (
+                  <>
+                    <ChevronUp className="h-4 w-4 mr-1" />
+                    Show Less
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4 mr-1" />
+                    Show All {formData.itinerary.length} Days
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Inclusions & Exclusions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-green-700">What's Included</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-1">
+              {formData.inclusions.map((inclusion, index) => (
+                <li key={index} className="text-sm flex items-center gap-2">
+                  <span className="text-green-500">✓</span>
+                  {inclusion}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-red-700">What's Not Included</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-1">
+              {formData.exclusions.map((exclusion, index) => (
+                <li key={index} className="text-sm flex items-center gap-2">
+                  <span className="text-red-500">✗</span>
+                  {exclusion}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex justify-between pt-4">
+        <Button variant="outline" onClick={onPrev} disabled={loading}>
+          Previous
+        </Button>
+        <Button
+          onClick={onSubmit}
+          disabled={loading}
+          className="bg-primary hover:bg-primary/90"
+        >
+          {loading ? "Creating Trip..." : "Create Trip"}
+        </Button>
+      </div>
+    </div>
+  );
+}
