@@ -1,16 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { tripService } from "@/lib/firestore";
-import { authService } from "@/lib/auth";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const trip = await tripService.getTripById(params.id);
+    const tripId = params.id;
+
+    if (!tripId) {
+      return NextResponse.json(
+        { error: "Trip ID is required" },
+        { status: 400 }
+      );
+    }
+
+    console.log("Fetching trip with ID:", tripId);
+    const trip = await tripService.getTripById(tripId);
+
     if (!trip) {
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
+
+    console.log("Found trip:", JSON.stringify(trip, null, 2));
     return NextResponse.json(trip);
   } catch (error) {
     console.error("Error fetching trip:", error);
@@ -26,23 +38,42 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const user = authService.getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const tripId = params.id;
+
+    if (!tripId) {
+      return NextResponse.json(
+        { error: "Trip ID is required" },
+        { status: 400 }
+      );
     }
 
-    const trip = await tripService.getTripById(params.id);
-    if (!trip) {
+    const body = await request.json();
+    const { userId, ...tripData } = body;
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
+
+    console.log("Updating trip with ID:", tripId);
+    console.log("Update data:", JSON.stringify(tripData, null, 2));
+
+    // Check if trip exists and user is authorized
+    const existingTrip = await tripService.getTripById(tripId);
+    if (!existingTrip) {
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
-    if (trip.createdBy !== user.uid) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (existingTrip.createdBy !== userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const updates = await request.json();
-    await tripService.updateTrip(params.id, updates);
+    // Update the trip
+    await tripService.updateTrip(tripId, tripData);
 
+    console.log("Trip updated successfully");
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error updating trip:", error);
@@ -58,22 +89,41 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const user = authService.getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const tripId = params.id;
+
+    if (!tripId) {
+      return NextResponse.json(
+        { error: "Trip ID is required" },
+        { status: 400 }
+      );
     }
 
-    const trip = await tripService.getTripById(params.id);
-    if (!trip) {
+    const body = await request.json();
+    const { userId } = body;
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
+
+    console.log("Deleting trip with ID:", tripId);
+
+    // Check if trip exists and user is authorized
+    const existingTrip = await tripService.getTripById(tripId);
+    if (!existingTrip) {
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
-    if (trip.createdBy !== user.uid) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (existingTrip.createdBy !== userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    await tripService.deleteTrip(params.id);
+    // Delete the trip
+    await tripService.deleteTrip(tripId);
 
+    console.log("Trip deleted successfully");
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting trip:", error);

@@ -15,6 +15,7 @@ import {
 import TripBasicInfo from "./TripBasicInfo";
 import TripDetails from "./TripDetails";
 import TripItinerary from "./TripItinerary";
+import TripFAQs from "./TripFAQs";
 import TripReview from "./TripReview";
 
 const initialFormData: TripFormData = {
@@ -65,7 +66,8 @@ const steps = [
     description: "Location, dates, and trip specifics",
   },
   { id: 3, title: "Itinerary", description: "Daily activities and inclusions" },
-  { id: 4, title: "Review", description: "Review and publish your trip" },
+  { id: 4, title: "FAQs", description: "Frequently asked questions" },
+  { id: 5, title: "Review", description: "Review and publish your trip" },
 ];
 
 export default function CreateTripPage() {
@@ -165,6 +167,9 @@ export default function CreateTripPage() {
           return false;
         }
       } else if (step === 4) {
+        // FAQs step - no validation required, FAQs are optional
+        return true;
+      } else if (step === 5) {
         // Final validation - comprehensive check of all required fields
         const validationErrors: Record<string, string> = {};
 
@@ -342,6 +347,16 @@ export default function CreateTripPage() {
           />
         );
       case 4:
+        return (
+          <TripFAQs
+            formData={formData}
+            updateFormData={updateFormData}
+            onNext={nextStep}
+            onPrev={prevStep}
+            errors={errors}
+          />
+        );
+      case 5:
         return (
           <TripReview
             formData={formData}

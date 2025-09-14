@@ -19,6 +19,7 @@ interface TripReviewProps {
   onSubmit: () => void;
   onPrev: () => void;
   loading: boolean;
+  isEditMode?: boolean;
 }
 
 export default function TripReview({
@@ -26,6 +27,7 @@ export default function TripReview({
   onSubmit,
   onPrev,
   loading,
+  isEditMode = false,
 }: TripReviewProps) {
   const [showAllItinerary, setShowAllItinerary] = useState(false);
   const formatDate = (dateString: string) => {
@@ -223,6 +225,29 @@ export default function TripReview({
         </Card>
       </div>
 
+      {/* FAQs Section */}
+      {formData.faqs && formData.faqs.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">
+              Frequently Asked Questions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {formData.faqs.map((faq, index) => (
+                <div key={index} className="border-l-4 border-primary/20 pl-4">
+                  <h4 className="font-medium text-gray-900 mb-1">
+                    Q: {faq.question}
+                  </h4>
+                  <p className="text-gray-600 text-sm">A: {faq.answer}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Action Buttons */}
       <div className="flex justify-between pt-4">
         <Button variant="outline" onClick={onPrev} disabled={loading}>
@@ -233,7 +258,13 @@ export default function TripReview({
           disabled={loading}
           className="bg-primary hover:bg-primary/90"
         >
-          {loading ? "Creating Trip..." : "Create Trip"}
+          {loading
+            ? isEditMode
+              ? "Updating Trip..."
+              : "Creating Trip..."
+            : isEditMode
+            ? "Update Trip"
+            : "Create Trip"}
         </Button>
       </div>
     </div>

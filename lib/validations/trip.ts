@@ -78,7 +78,14 @@ export const tripFormSchema = z.object({
     }),
   }),
   reviews: z.array(z.any()).optional(),
-  faqs: z.array(z.any()).optional(),
+  faqs: z
+    .array(
+      z.object({
+        question: z.string().min(1, "Question is required"),
+        answer: z.string().min(1, "Answer is required"),
+      })
+    )
+    .optional(),
   relatedTrips: z.array(z.any()).optional(),
   status: z.enum(["Upcoming", "Ongoing", "Completed", "Cancelled"]),
   bookings: z.number().min(0),

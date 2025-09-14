@@ -128,13 +128,22 @@ export const tripService = {
 
   // Get trip by ID
   async getTripById(tripId: string): Promise<Trip | null> {
-    const docRef = doc(db, "trips", tripId);
-    const docSnap = await getDoc(docRef);
+    try {
+      const docRef = doc(db, "trips", tripId);
+      const docSnap = await getDoc(docRef);
 
-    if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() } as Trip;
+      if (docSnap.exists()) {
+        const trip = { id: docSnap.id, ...docSnap.data() } as Trip;
+        console.log("Found trip by ID:", tripId, trip);
+        return trip;
+      } else {
+        console.log("Trip not found with ID:", tripId);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error fetching trip by ID:", tripId, error);
+      return null;
     }
-    return null;
   },
 
   // Get all trips
