@@ -132,7 +132,7 @@ export default function TripItinerary({
 
       {/* Inclusions */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">What's Included</h3>
+        <h3 className="text-lg font-semibold">What&apos;s Included</h3>
         {errors.inclusions && (
           <p className="text-sm text-red-500">{errors.inclusions}</p>
         )}
@@ -170,7 +170,7 @@ export default function TripItinerary({
 
       {/* Exclusions */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">What's Not Included</h3>
+        <h3 className="text-lg font-semibold">What&apos;s Not Included</h3>
         {errors.exclusions && (
           <p className="text-sm text-red-500">{errors.exclusions}</p>
         )}

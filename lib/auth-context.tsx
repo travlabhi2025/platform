@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           const profile = await userService.getUserById(firebaseUser.uid);
           setUserProfile(profile);
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error("Error fetching user profile:", error);
           setUserProfile(null);
         }

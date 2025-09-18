@@ -28,7 +28,6 @@ export default function TripFAQs({
   updateFormData,
   onNext,
   onPrev,
-  errors,
 }: TripFAQsProps) {
   const [newFAQ, setNewFAQ] = useState({ question: "", answer: "" });
 

@@ -1,23 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { bookingService } from "@/lib/firestore";
-import { authService } from "@/lib/auth";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { tripId: string } }
+  { params }: { params: Promise<{ tripId: string }> }
 ) {
   try {
-    const user = authService.getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { tripId } = await params;
+
+    if (!tripId) {
+      return NextResponse.json(
+        { error: "Trip ID is required" },
+        { status: 400 }
+      );
     }
 
-    const bookings = await bookingService.getBookingsForTrip(params.tripId);
+    const bookings = await bookingService.getBookingsForTrip(tripId);
+
     return NextResponse.json(bookings);
   } catch (error) {
-    console.error("Error fetching trip bookings:", error);
+    console.error("Error fetching bookings for trip:", error);
     return NextResponse.json(
-      { error: "Failed to fetch bookings" },
+      { error: "Failed to fetch bookings for trip" },
       { status: 500 }
     );
   }

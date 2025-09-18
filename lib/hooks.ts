@@ -39,52 +39,59 @@ export function useMyTrips() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchMyTrips() {
-      try {
+  const fetchMyTrips = async (isRefetch = false) => {
+    try {
+      // Only set loading to true on initial load, not on refetch
+      if (!isRefetch) {
         setLoading(true);
+      }
 
-        // Get current user from Firebase Auth
-        const { getAuth } = await import("firebase/auth");
-        const auth = getAuth();
-        const user = auth.currentUser;
+      // Get current user from Firebase Auth
+      const { getAuth } = await import("firebase/auth");
+      const auth = getAuth();
+      const user = auth.currentUser;
 
-        console.log("useMyTrips - Current user:", user?.uid);
+      console.log("useMyTrips - Current user:", user?.uid);
 
-        if (!user) {
-          setError("User not authenticated");
-          return;
-        }
+      if (!user) {
+        setError("User not authenticated");
+        return;
+      }
 
-        console.log("useMyTrips - Fetching trips for user:", user.uid);
-        const response = await fetch("/api/trips/my", {
-          headers: {
-            "x-user-id": user.uid,
-          },
-        });
+      console.log("useMyTrips - Fetching trips for user:", user.uid);
+      const response = await fetch("/api/trips/my", {
+        headers: {
+          "x-user-id": user.uid,
+        },
+      });
 
-        console.log("useMyTrips - Response status:", response.status);
+      console.log("useMyTrips - Response status:", response.status);
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("useMyTrips - Error response:", errorData);
-          throw new Error(errorData.error || "Failed to fetch trips");
-        }
-        const data = await response.json();
-        console.log("useMyTrips - Received data:", data);
-        setTrips(data);
-      } catch (err) {
-        console.error("useMyTrips - Error:", err);
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("useMyTrips - Error response:", errorData);
+        throw new Error(errorData.error || "Failed to fetch trips");
+      }
+      const data = await response.json();
+      console.log("useMyTrips - Received data:", data);
+      setTrips(data);
+    } catch (err) {
+      console.error("useMyTrips - Error:", err);
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      if (!isRefetch) {
         setLoading(false);
       }
     }
+  };
 
+  useEffect(() => {
     fetchMyTrips();
   }, []);
 
-  return { trips, loading, error };
+  const refetch = () => fetchMyTrips(true);
+
+  return { trips, loading, error, refetch };
 }
 
 // Hook for fetching a single trip
@@ -128,7 +135,15 @@ export function useMyBookings() {
     async function fetchMyBookings() {
       try {
         setLoading(true);
-        const response = await fetch("/api/bookings");
+        // include user id like we do for /api/trips/my
+        const { getAuth } = await import("firebase/auth");
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (!user) throw new Error("User not authenticated");
+
+        const response = await fetch("/api/bookings", {
+          headers: { "x-user-id": user.uid },
+        });
         if (!response.ok) {
           throw new Error("Failed to fetch bookings");
         }
@@ -159,12 +174,18 @@ export function useCreateBooking() {
       setLoading(true);
       setError(null);
 
+      // include user id in body for server auth
+      const { getAuth } = await import("firebase/auth");
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (!user) throw new Error("User not authenticated");
+
       const response = await fetch("/api/bookings", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(bookingData),
+        body: JSON.stringify({ ...bookingData, userId: user.uid }),
       });
 
       if (!response.ok) {

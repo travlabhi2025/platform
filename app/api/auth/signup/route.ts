@@ -14,15 +14,18 @@ export async function POST(request: NextRequest) {
 
     const user = await authService.signUp(email, password, name);
     return NextResponse.json({ user }, { status: 201 });
-  } catch (error: any) {
+    } catch (error: unknown) {
     console.error("Error signing up:", error);
 
     let errorMessage = "Failed to sign up";
-    if (error.code === "auth/email-already-in-use") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((error as any).code === "auth/email-already-in-use") {
       errorMessage = "Email already in use";
-    } else if (error.code === "auth/weak-password") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } else if ((error as any).code === "auth/weak-password") {
       errorMessage = "Password is too weak";
-    } else if (error.code === "auth/invalid-email") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } else if ((error as any).code === "auth/invalid-email") {
       errorMessage = "Invalid email address";
     }
 

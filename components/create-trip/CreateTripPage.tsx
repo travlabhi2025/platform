@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -38,6 +37,7 @@ const initialFormData: TripFormData = {
     rating: 5,
     reviewsCount: 0,
     description: "",
+    organizerImage: "",
   },
   itinerary: [],
   inclusions: [],
@@ -114,7 +114,7 @@ export default function CreateTripPage() {
           return false;
         }
         if (!formData.heroImageUrl) {
-          setErrors({ heroImageUrl: "Hero image URL is required" });
+          setErrors({ heroImageUrl: "Hero image is required" });
           return false;
         }
       } else if (step === 2) {
@@ -181,7 +181,7 @@ export default function CreateTripPage() {
           validationErrors.priceInInr = "Price must be greater than 0";
         }
         if (!formData.heroImageUrl) {
-          validationErrors.heroImageUrl = "Hero image URL is required";
+          validationErrors.heroImageUrl = "Hero image is required";
         }
 
         // Step 2 validations
@@ -293,12 +293,15 @@ export default function CreateTripPage() {
 
       toast.success("Trip created successfully!");
       router.push("/dashboard");
-    } catch (error: any) {
-      if (error.name === "ZodError") {
-        console.error("Zod validation errors:", error.errors);
+    } catch (error: unknown) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((error as any).name === "ZodError") {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        console.error("Zod validation errors:", (error as any).errors);
         // Show specific validation errors
-        const errorMessages = error.errors
-          .map((err: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const errorMessages = (error as any).errors
+          .map((err: { path: string[]; message: string }) => {
             const path = err.path.length > 0 ? err.path.join(".") : "form";
             return `${path}: ${err.message}`;
           })
@@ -307,7 +310,8 @@ export default function CreateTripPage() {
       } else {
         console.error("Submit error:", error);
         toast.error(
-          error.message || "An error occurred while creating the trip"
+          (error as Error).message ||
+            "An error occurred while creating the trip"
         );
       }
     } finally {
@@ -393,7 +397,6 @@ export default function CreateTripPage() {
               {steps.map((step) => {
                 const isCompleted = currentStep > step.id;
                 const isActive = currentStep === step.id;
-                const isUpcoming = currentStep < step.id;
 
                 return (
                   <div

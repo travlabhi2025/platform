@@ -17,7 +17,6 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const tripData = await request.json();
-
     // Get user ID from request body
     const userId = tripData.userId;
 
@@ -26,6 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Remove userId from tripData before saving
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { userId: _, ...tripDataWithoutUserId } = tripData;
 
     const tripId = await tripService.createTrip({

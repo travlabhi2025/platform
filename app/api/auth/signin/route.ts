@@ -14,17 +14,21 @@ export async function POST(request: NextRequest) {
 
     const user = await authService.signIn(email, password);
     return NextResponse.json({ user });
-  } catch (error: any) {
+    } catch (error: unknown) {
     console.error("Error signing in:", error);
 
     let errorMessage = "Failed to sign in";
-    if (error.code === "auth/user-not-found") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((error as any).code === "auth/user-not-found") {
       errorMessage = "User not found";
-    } else if (error.code === "auth/wrong-password") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } else if ((error as any).code === "auth/wrong-password") {
       errorMessage = "Wrong password";
-    } else if (error.code === "auth/invalid-email") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } else if ((error as any).code === "auth/invalid-email") {
       errorMessage = "Invalid email address";
-    } else if (error.code === "auth/too-many-requests") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } else if ((error as any).code === "auth/too-many-requests") {
       errorMessage = "Too many failed attempts. Please try again later";
     }
 

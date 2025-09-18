@@ -49,6 +49,7 @@ export const tripFormSchema = z.object({
     description: z
       .string()
       .min(10, "Host description must be at least 10 characters"),
+    organizerImage: z.string().optional(), // Optional organizer image URL
   }),
   itinerary: z
     .array(
@@ -87,7 +88,7 @@ export const tripFormSchema = z.object({
     )
     .optional(),
   relatedTrips: z.array(z.any()).optional(),
-  status: z.enum(["Upcoming", "Ongoing", "Completed", "Cancelled"]),
+  status: z.enum(["Upcoming", "Ongoing", "Active", "Completed", "Cancelled"]),
   bookings: z.number().min(0),
 });
 

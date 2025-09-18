@@ -10,7 +10,6 @@ import {
   query,
   where,
   orderBy,
-  limit,
   Timestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
@@ -40,6 +39,7 @@ export interface Trip {
     reviewsCount: number;
     partnerLogoUrl?: string;
     description: string;
+    organizerImage?: string; // Optional organizer image URL
   };
   itinerary: Array<{
     day: number;
@@ -92,11 +92,22 @@ export interface Booking {
   travelerPhone: string;
   groupSize: number;
   preferences?: string;
-  status: "Confirmed" | "Pending" | "Cancelled";
+  status: "Pending" | "Approved" | "Rejected";
+  paymentStatus?: "Pending" | "Paid";
   bookingDate: Timestamp;
   totalAmount: number;
-  paymentStatus: "Pending" | "Completed" | "Failed";
   createdBy: string; // User ID who made the booking
+  // Approval workflow fields
+  approvedBy?: string; // User ID of trip organizer who approved/rejected
+  approvedAt?: Timestamp;
+  rejectionReason?: string;
+  // Additional metadata
+  specialRequests?: string;
+  emergencyContact?: {
+    name: string;
+    phone: string;
+    relationship: string;
+  };
 }
 
 export interface User {
@@ -109,6 +120,35 @@ export interface User {
   badge?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  // Extended profile fields
+  logo?: string;
+  profilePicture?: string;
+  contact?: {
+    email?: string;
+    phone?: string;
+    address?: string;
+  };
+  socialLinks?: {
+    website?: string;
+    instagram?: string;
+    facebook?: string;
+    twitter?: string;
+    linkedin?: string;
+  };
+  bio?: string;
+  company?: string;
+  title?: string;
+}
+
+// Lightweight notification type for faking emails/WhatsApp
+export interface Notification {
+  id?: string;
+  type: "email" | "whatsapp";
+  to: string; // email address or phone
+  subject?: string;
+  message: string;
+  createdAt: Timestamp;
+  meta?: Record<string, unknown>;
 }
 
 // Trip operations
@@ -153,6 +193,11 @@ export const tripService = {
     return querySnapshot.docs.map(
       (doc) => ({ id: doc.id, ...doc.data() } as Trip)
     );
+  },
+
+  // Get trips by user (alias for getTripsByCreator)
+  async getTripsByUser(userId: string): Promise<Trip[]> {
+    return this.getTripsByCreator(userId);
   },
 
   // Get trips by creator
@@ -238,8 +283,20 @@ export const bookingService = {
   async createBooking(
     bookingData: Omit<Booking, "id" | "bookingDate">
   ): Promise<string> {
+    // Check if user has already booked this trip
+    const hasBooked = await this.hasUserBookedTrip(
+      bookingData.createdBy,
+      bookingData.tripId
+    );
+    if (hasBooked) {
+      throw new Error(
+        "You have already booked this trip. Only one booking per trip is allowed."
+      );
+    }
+
     const docRef = await addDoc(collection(db, "bookings"), {
       ...bookingData,
+      status: "Pending",
       bookingDate: Timestamp.now(),
     });
 
@@ -273,6 +330,36 @@ export const bookingService = {
     );
   },
 
+  // Check if user has already booked a specific trip
+  async hasUserBookedTrip(userId: string, tripId: string): Promise<boolean> {
+    const q = query(
+      collection(db, "bookings"),
+      where("createdBy", "==", userId),
+      where("tripId", "==", tripId)
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.length > 0;
+  },
+
+  // Get user's booking for a specific trip (if exists)
+  async getUserBookingForTrip(
+    userId: string,
+    tripId: string
+  ): Promise<Booking | null> {
+    const q = query(
+      collection(db, "bookings"),
+      where("createdBy", "==", userId),
+      where("tripId", "==", tripId)
+    );
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.docs.length > 0) {
+      const doc = querySnapshot.docs[0];
+      return { id: doc.id, ...doc.data() } as Booking;
+    }
+    return null;
+  },
+
   // Get bookings for a trip
   async getBookingsForTrip(tripId: string): Promise<Booking[]> {
     const q = query(
@@ -298,11 +385,109 @@ export const bookingService = {
   // Update payment status
   async updatePaymentStatus(
     bookingId: string,
-    paymentStatus: Booking["paymentStatus"]
+    paymentStatus: NonNullable<Booking["paymentStatus"]>
   ): Promise<void> {
     const docRef = doc(db, "bookings", bookingId);
     await updateDoc(docRef, { paymentStatus });
   },
+
+  // Approve a booking
+  async approveBooking(bookingId: string, approvedBy: string): Promise<void> {
+    const docRef = doc(db, "bookings", bookingId);
+    await updateDoc(docRef, {
+      status: "Approved",
+      approvedBy,
+      approvedAt: Timestamp.now(),
+    });
+  },
+
+  // Reject a booking
+  async rejectBooking(
+    bookingId: string,
+    approvedBy: string,
+    rejectionReason: string
+  ): Promise<void> {
+    const docRef = doc(db, "bookings", bookingId);
+    await updateDoc(docRef, {
+      status: "Rejected",
+      approvedBy,
+      approvedAt: Timestamp.now(),
+      rejectionReason,
+    });
+  },
+
+  // Get pending bookings for a trip
+  async getPendingBookingsForTrip(tripId: string): Promise<Booking[]> {
+    const q = query(
+      collection(db, "bookings"),
+      where("tripId", "==", tripId),
+      where("status", "==", "Pending"),
+      orderBy("bookingDate", "desc")
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(
+      (doc) => ({ id: doc.id, ...doc.data() } as Booking)
+    );
+  },
+
+  // Get approved bookings for a trip
+  async getApprovedBookingsForTrip(tripId: string): Promise<Booking[]> {
+    const q = query(
+      collection(db, "bookings"),
+      where("tripId", "==", tripId),
+      where("status", "==", "Approved"),
+      orderBy("bookingDate", "desc")
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(
+      (doc) => ({ id: doc.id, ...doc.data() } as Booking)
+    );
+  },
+
+  // Get all bookings for trip organizer (across all their trips)
+  async getBookingsForOrganizer(organizerId: string): Promise<Booking[]> {
+    // First get all trips by this organizer
+    const tripsQuery = query(
+      collection(db, "trips"),
+      where("createdBy", "==", organizerId)
+    );
+    const tripsSnapshot = await getDocs(tripsQuery);
+    const tripIds = tripsSnapshot.docs.map((doc) => doc.id);
+
+    if (tripIds.length === 0) {
+      return [];
+    }
+
+    // Then get all bookings for these trips
+    const bookingsQuery = query(
+      collection(db, "bookings"),
+      where("tripId", "in", tripIds),
+      orderBy("bookingDate", "desc")
+    );
+    const bookingsSnapshot = await getDocs(bookingsQuery);
+    return bookingsSnapshot.docs.map(
+      (doc) => ({ id: doc.id, ...doc.data() } as Booking)
+    );
+  },
+
+  // Get booking statistics for organizer
+  async getBookingStatsForOrganizer(organizerId: string): Promise<{
+    total: number;
+    pending: number;
+    approved: number;
+    rejected: number;
+  }> {
+    const bookings = await this.getBookingsForOrganizer(organizerId);
+
+    return {
+      total: bookings.length,
+      pending: bookings.filter((b) => b.status === "Pending").length,
+      approved: bookings.filter((b) => b.status === "Approved").length,
+      rejected: bookings.filter((b) => b.status === "Rejected").length,
+    };
+  },
+
+  // (duplicate removed above)
 };
 
 // User operations
@@ -340,5 +525,25 @@ export const userService = {
       return { id: docSnap.id, ...docSnap.data() } as User;
     }
     return null;
+  },
+};
+
+// Notification operations (fake email/whatsapp by writing to a collection)
+export const notificationService = {
+  async sendEmail(options: {
+    to: string;
+    subject: string;
+    message: string;
+    meta?: Record<string, unknown>;
+  }): Promise<string> {
+    const docRef = await addDoc(collection(db, "notifications"), {
+      type: "email",
+      to: options.to,
+      subject: options.subject,
+      message: options.message,
+      meta: options.meta ?? {},
+      createdAt: Timestamp.now(),
+    } as Notification);
+    return docRef.id;
   },
 };

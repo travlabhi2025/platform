@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import Image from "next/image";
 
 export default function SigninPage() {
   const [email, setEmail] = useState("");
@@ -33,16 +34,27 @@ export default function SigninPage() {
     try {
       await signIn(email, password);
       router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "An error occurred");
+    } catch (err: unknown) {
+      setError((err as Error).message || "An error occurred");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <section className="relative h-screen w-screen bg-gradient-to-br from-orange-100 to-orange-200">
+      {" "}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/images/home/TravelAbhiHero.png"
+          alt="Travel Adventure"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-black/10"></div>
+      </div>
+      <div className="absolute z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md">
         <Card className="shadow-2xl border-0">
           <CardHeader className="text-center pb-6">
             <div className="mx-auto mb-4">
@@ -114,7 +126,7 @@ export default function SigninPage() {
 
           <CardFooter className="flex flex-col space-y-4">
             <div className="text-center text-sm text-slate-600">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link
                 href="/signup"
                 className="text-primary hover:text-primary/80 font-medium"
@@ -134,6 +146,6 @@ export default function SigninPage() {
           </CardFooter>
         </Card>
       </div>
-    </div>
+    </section>
   );
 }

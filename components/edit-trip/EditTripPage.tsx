@@ -7,7 +7,6 @@ import { useAuth } from "@/lib/auth-context";
 import { useTrip } from "@/lib/hooks";
 import { tripFormSchema, TripFormData } from "@/lib/validations/trip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import TripBasicInfo from "../create-trip/TripBasicInfo";
 import TripDetails from "../create-trip/TripDetails";
@@ -240,12 +239,15 @@ export default function EditTripPage({ tripId }: EditTripPageProps) {
 
       toast.success("Trip updated successfully!");
       router.push(`/trip-details/${tripId}`);
-    } catch (error: any) {
-      if (error.name === "ZodError") {
-        console.error("Zod validation errors:", error.errors);
+    } catch (error: unknown) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((error as any).name === "ZodError") {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        console.error("Zod validation errors:", (error as any).errors);
         // Show specific validation errors
-        const errorMessages = error.errors
-          .map((err: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const errorMessages = (error as any).errors
+          .map((err: { path: string[]; message: string }) => {
             const path = err.path.length > 0 ? err.path.join(".") : "form";
             return `${path}: ${err.message}`;
           })
@@ -254,7 +256,7 @@ export default function EditTripPage({ tripId }: EditTripPageProps) {
       } else {
         console.error("Submit error:", error);
         toast.error(
-          error.message || "An error occurred while updating the trip"
+          (error as Error).message || "An error occurred while updating the trip"
         );
       }
     } finally {
@@ -364,7 +366,6 @@ export default function EditTripPage({ tripId }: EditTripPageProps) {
               {steps.map((step) => {
                 const isCompleted = currentStep > step.id;
                 const isActive = currentStep === step.id;
-                const isUpcoming = currentStep < step.id;
 
                 return (
                   <div

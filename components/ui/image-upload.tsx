@@ -2,8 +2,8 @@
 
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Upload, X, Loader2 } from "lucide-react";
+import Image from "next/image";
 import { storage } from "@/lib/firebase";
 import {
   ref,
@@ -22,9 +22,11 @@ interface ImageUploadProps {
   className?: string;
   maxSizeInMB?: number;
   acceptedFormats?: string[];
+  storagePath?: string; // Custom storage path (e.g., "profile-pictures", "trip-images")
+  variant?: "default" | "compact"; // compact renders a small circular avatar uploader
 }
 
-export function ImageUpload({
+export default function ImageUpload({
   value,
   onChange,
   placeholder = "Upload an image",
@@ -32,10 +34,12 @@ export function ImageUpload({
   className = "",
   maxSizeInMB = 5,
   acceptedFormats = ["image/jpeg", "image/jpg", "image/png", "image/webp"],
+  storagePath = "trip-images", // Default path for trip images
+  variant = "default",
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(value || null);
-  const [storageRef, setStorageRef] = useState<any>(null);
+  const [storageRef, setStorageRef] = useState<ReturnType<typeof ref> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
 
@@ -91,10 +95,15 @@ export function ImageUpload({
       // Create a unique filename
       const timestamp = Date.now();
       const fileExtension = file.name.split(".").pop();
-      const fileName = `trip-hero-${timestamp}.${fileExtension}`;
+      const fileName = `${
+        storagePath === "profile-pictures" ? "profile" : "image"
+      }-${timestamp}.${fileExtension}`;
 
       // Create storage reference
-      const newStorageRef = ref(storage, `trip-images/${user.uid}/${fileName}`);
+      const newStorageRef = ref(
+        storage,
+        `${storagePath}/${user.uid}/${fileName}`
+      );
 
       // Upload file
       const snapshot = await uploadBytes(newStorageRef, file);
@@ -165,6 +174,59 @@ export function ImageUpload({
     }
   };
 
+  // Compact circular avatar uploader
+  if (variant === "compact") {
+    return (
+      <div className={className}>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={acceptedFormats.join(",")}
+          onChange={handleFileInputChange}
+          className="hidden"
+          disabled={disabled || uploading}
+        />
+        <div className="relative inline-block">
+          {preview ? (
+            <>
+              <Image
+                src={preview}
+                alt="Preview"
+                width={64}
+                height={64}
+                className="w-16 h-16 rounded-full object-cover cursor-pointer"
+                onClick={handleClick}
+              />
+              <button
+                type="button"
+                onClick={handleRemove}
+                disabled={disabled || uploading}
+                className="absolute -top-1 -right-1 bg-white border rounded-full w-5 h-5 grid place-items-center shadow-sm"
+                aria-label="Remove image"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={handleClick}
+              disabled={disabled || uploading}
+              className="w-16 h-16 rounded-full bg-gray-100 grid place-items-center border text-gray-500 hover:bg-gray-50"
+            >
+              {uploading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Upload className="h-5 w-5" />
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Default large dropzone uploader
   return (
     <div className={`w-full ${className}`}>
       <input
@@ -179,10 +241,12 @@ export function ImageUpload({
       {preview ? (
         <div className="relative group">
           <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-            <img
+            <Image
               src={preview}
               alt="Preview"
               className="w-full h-48 object-cover"
+              width={300}
+              height={192}
             />
             <Button
               type="button"

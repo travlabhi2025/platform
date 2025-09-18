@@ -7,20 +7,9 @@ import { useState } from "react";
 import { useTrip } from "@/lib/hooks";
 import { useCreateBooking } from "@/lib/hooks";
 import { useAuth } from "@/lib/auth-context";
-import { Check, X, Edit, Copy, Trash2 } from "lucide-react";
+import { Check, X, Edit } from "lucide-react";
 import Link from "next/link";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useEffect } from "react";
 
 function StarsAverage({ rating }: { rating: number }) {
   const percent = Math.max(0, Math.min(100, (rating / 5) * 100));
@@ -67,10 +56,12 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
   console.log("TripDetailsPage - error:", error);
   const [openDays, setOpenDays] = useState<number[]>([]);
   const [showBookingForm, setShowBookingForm] = useState(false);
-  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isDuplicating, setIsDuplicating] = useState(false);
+  const [existingBooking, setExistingBooking] = useState<{
+    id: string;
+    status: string;
+  } | null>(null);
+  const [checkingBooking, setCheckingBooking] = useState(false);
+  // Removed duplicate/delete from details page per request
   const [bookingData, setBookingData] = useState({
     travelerName: "",
     travelerEmail: "",
@@ -84,78 +75,37 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
       prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
     );
 
-  const handleDuplicate = async () => {
-    if (!trip || !user) return;
+  // Check for existing booking
+  const checkExistingBooking = async () => {
+    if (!user?.uid || !tripId) return;
 
-    setIsDuplicating(true);
     try {
-      // Create a copy of the trip data with a new title
-      const duplicatedTrip = {
-        ...trip,
-        title: `${trip.title} (Copy)`,
-        status: "Upcoming" as const,
-        bookings: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      setCheckingBooking(true);
+      const response = await fetch(
+        `/api/bookings/check?userId=${user.uid}&tripId=${tripId}`
+      );
 
-      const response = await fetch("/api/trips", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...duplicatedTrip,
-          userId: user.uid,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to duplicate trip");
+      if (response.ok) {
+        const data = await response.json();
+        if (data.hasBooked) {
+          setExistingBooking(data.existingBooking);
+        }
       }
-
-      toast.success("Trip duplicated successfully!");
-      setShowDuplicateModal(false);
-      // Optionally redirect to the new trip or refresh the page
-      window.location.reload();
-    } catch (error) {
-      console.error("Error duplicating trip:", error);
-      toast.error("Failed to duplicate trip");
+    } catch {
+      console.error("Error checking existing booking");
     } finally {
-      setIsDuplicating(false);
+      setCheckingBooking(false);
     }
   };
 
-  const handleDelete = async () => {
-    if (!trip || !user) return;
-
-    setIsDeleting(true);
-    try {
-      const response = await fetch(`/api/trips/${trip.id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: user.uid,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete trip");
-      }
-
-      toast.success("Trip deleted successfully!");
-      setShowDeleteModal(false);
-      // Redirect to dashboard after deletion
-      window.location.href = "/dashboard";
-    } catch (error) {
-      console.error("Error deleting trip:", error);
-      toast.error("Failed to delete trip");
-    } finally {
-      setIsDeleting(false);
+  // Check for existing booking when component mounts
+  useEffect(() => {
+    if (user?.uid && tripId) {
+      checkExistingBooking();
     }
-  };
+  }, [checkExistingBooking, user?.uid, tripId]);
+
+  // duplicate/delete actions handled in dashboard only
 
   const handleBooking = async () => {
     if (!user) {
@@ -175,12 +125,11 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
         preferences: bookingData.preferences,
         status: "Pending",
         totalAmount: trip.priceInInr * bookingData.groupSize,
-        paymentStatus: "Pending",
       });
 
       alert("Booking created successfully!");
       setShowBookingForm(false);
-    } catch (error) {
+    } catch {
       alert("Failed to create booking. Please try again.");
     }
   };
@@ -192,7 +141,7 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
     return (
       <div className="min-h-screen bg-white">
         <SiteHeader />
-        <main className="mx-auto px-20 py-8 pb-28 lg:pb-8">
+        <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-20 py-8 pb-28 lg:pb-8 max-w-7xl">
           <div className="flex items-center justify-center h-64">
             <div className="text-lg">Loading trip details...</div>
           </div>
@@ -205,7 +154,7 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
     return (
       <div className="min-h-screen bg-white">
         <SiteHeader />
-        <main className="mx-auto px-20 py-8 pb-28 lg:pb-8">
+        <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-20 py-8 pb-28 lg:pb-8 max-w-7xl">
           <div className="flex items-center justify-center h-64">
             <div className="text-lg text-red-600">
               Error loading trip: {error}
@@ -220,7 +169,7 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
     <div className="min-h-screen bg-white">
       <SiteHeader />
 
-      <main className="mx-auto px-20 py-8 pb-28 lg:pb-8">
+      <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-20 py-8 pb-28 lg:pb-8 max-w-7xl">
         {/* Hero + Sidebar CTA */}
         <div className="flex flex-col lg:flex-row lg:items-start gap-8">
           <div className="lg:flex-1">
@@ -237,32 +186,14 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
               <h1 className="font-garetheavy text-slate-900 text-3xl md:text-4xl">
                 {data.title.toUpperCase()}
               </h1>
-              {user && data.createdBy === user.uid && (
-                <div className="flex items-center gap-1 text-sm text-gray-600">
-                  <Link
-                    href={`/edit-trip/${data.id}`}
-                    className="flex items-center gap-1 px-3 py-1 hover:text-primary transition-colors"
-                  >
-                    <Edit className="w-4 h-4" />
-                    <span>Edit</span>
-                  </Link>
-                  <span className="text-gray-400">|</span>
-                  <button
-                    onClick={() => setShowDuplicateModal(true)}
-                    className="flex items-center gap-1 px-3 py-1 hover:text-primary transition-colors"
-                  >
-                    <Copy className="w-4 h-4" />
-                    <span>Duplicate</span>
-                  </button>
-                  <span className="text-gray-400">|</span>
-                  <button
-                    onClick={() => setShowDeleteModal(true)}
-                    className="flex items-center gap-1 px-3 py-1 hover:text-red-600 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    <span>Delete</span>
-                  </button>
-                </div>
+              {user && "createdBy" in data && data.createdBy === user.uid && (
+                <Link
+                  href={`/edit-trip/${data.id}`}
+                  className="flex items-center gap-1 px-3 py-1 text-sm text-gray-600 hover:text-primary transition-colors"
+                >
+                  <Edit className="w-4 h-4" />
+                  <span>Edit</span>
+                </Link>
               )}
             </div>
             {/* About this trip */}
@@ -282,12 +213,24 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
                 <div>
                   <div className="text-xs text-slate-500">Dates</div>
                   <div className="text-sm">
-                    {data.about.startDate && data.about.endDate
-                      ? `${new Date(
-                          data.about.startDate
-                        ).toLocaleDateString()} - ${new Date(
-                          data.about.endDate
-                        ).toLocaleDateString()}`
+                    {"startDate" in data.about &&
+                    "endDate" in data.about &&
+                    data.about.startDate &&
+                    data.about.endDate
+                      ? `${new Date(data.about.startDate).toLocaleDateString(
+                          "en-US",
+                          {
+                            month: "short",
+                            day: "numeric",
+                          }
+                        )} - ${new Date(data.about.endDate).toLocaleDateString(
+                          "en-US",
+                          {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          }
+                        )}`
                       : "Dates not set"}
                   </div>
                 </div>
@@ -307,6 +250,25 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
                   <div className="text-xs text-slate-500">Trip type</div>
                   <div className="text-sm">{data.about.tripType}</div>
                 </div>
+                <div>
+                  <div className="text-xs text-slate-500">Status</div>
+                  <div className="text-sm">
+                    <span
+                      className={
+                        "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium border " +
+                        ("status" in data && data.status === "Active"
+                          ? "bg-green-100 text-green-800 border-green-200"
+                          : "status" in data && data.status === "Upcoming"
+                          ? "bg-blue-100 text-blue-800 border-blue-200"
+                          : "status" in data && data.status === "Completed"
+                          ? "bg-gray-100 text-gray-800 border-gray-200"
+                          : "bg-red-100 text-red-800 border-red-200")
+                      }
+                    >
+                      {"status" in data ? data.status || "Unknown" : "Unknown"}
+                    </span>
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -316,7 +278,21 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
                 Your host
               </h2>
               <div className="flex items-start gap-4">
-                <div className="shrink-0 w-[64px] h-[32px] bg-slate-100 rounded" />
+                {"organizerImage" in data.host && data.host.organizerImage ? (
+                  <Image
+                    src={data.host.organizerImage}
+                    alt={data.host.name}
+                    width={64}
+                    height={64}
+                    className="shrink-0 w-16 h-16 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="shrink-0 w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
+                    <span className="text-slate-400 text-sm font-medium">
+                      {data.host.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )}
                 <div>
                   <div className="font-semibold">{data.host.name}</div>
                   <div className="text-sm text-slate-600">
@@ -567,12 +543,46 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
                 ₹{data.priceInInr.toLocaleString("en-IN")}
               </div>
               <div className="text-xs text-slate-500">Per person</div>
-              <button
-                onClick={() => setShowBookingForm(true)}
-                className="mt-4 w-full bg-primary text-white rounded-md py-2 font-bebas tracking-wide"
-              >
-                Book now
-              </button>
+
+              {checkingBooking ? (
+                <div className="mt-4 block w-full text-center bg-gray-300 text-gray-600 rounded-md py-2 font-bebas tracking-wide">
+                  Checking...
+                </div>
+              ) : existingBooking ? (
+                <div className="mt-4 space-y-2">
+                  <div className="block w-full text-center bg-blue-600 text-white rounded-md py-2 font-bebas tracking-wide">
+                    Already Booked
+                  </div>
+                  <div className="text-center">
+                    <span
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        existingBooking.status === "Approved"
+                          ? "bg-green-100 text-green-800"
+                          : existingBooking.status === "Pending"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {existingBooking.status}
+                    </span>
+                  </div>
+                  {existingBooking?.id && (
+                    <a
+                      href={`/dashboard/bookings/${existingBooking.id}`}
+                      className="block w-full text-center bg-primary text-white rounded-md py-2 font-bebas tracking-wide hover:bg-primary/90"
+                    >
+                      View confirmation
+                    </a>
+                  )}
+                </div>
+              ) : (
+                <a
+                  href={`/book/${data.id}`}
+                  className="mt-4 block w-full text-center bg-primary text-white rounded-md py-2 font-bebas tracking-wide hover:bg-primary/90"
+                >
+                  Book now
+                </a>
+              )}
             </div>
           </aside>
         </div>
@@ -706,54 +716,7 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
         </div>
       )}
 
-      {/* Duplicate Confirmation Modal */}
-      <AlertDialog
-        open={showDuplicateModal}
-        onOpenChange={setShowDuplicateModal}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Duplicate Trip</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to duplicate this trip? A new trip will be
-              created with the title "{trip?.title} (Copy)".
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDuplicate}
-              disabled={isDuplicating}
-              className="bg-primary hover:bg-primary/90"
-            >
-              {isDuplicating ? "Duplicating..." : "Duplicate"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Delete Confirmation Modal */}
-      <AlertDialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Trip</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this trip? This action cannot be
-              undone and will permanently remove the trip and all its data.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {isDeleting ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Duplicate/Delete removed from details page */}
     </div>
   );
 }

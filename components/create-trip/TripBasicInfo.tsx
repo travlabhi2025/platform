@@ -3,8 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ImageUpload } from "@/components/ui/image-upload";
+import ImageUpload from "@/components/ui/image-upload";
 import { TripFormData } from "@/lib/validations/trip";
 
 interface TripBasicInfoProps {
@@ -84,6 +83,29 @@ export default function TripBasicInfo({
         )}
         <p className="text-sm text-gray-500 mt-1">
           Upload a high-quality image that showcases your trip destination
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        <Label
+          htmlFor="organizerImage"
+          className="text-sm font-medium text-gray-700"
+        >
+          Organizer Image (Optional)
+        </Label>
+        <ImageUpload
+          value={formData.host.organizerImage || ""}
+          onChange={(url) =>
+            updateFormData({
+              host: { ...formData.host, organizerImage: url },
+            })
+          }
+          placeholder="Upload your profile picture or company logo"
+          maxSizeInMB={3}
+          storagePath="organizer-images"
+        />
+        <p className="text-sm text-gray-500 mt-1">
+          Add your profile picture or company logo to build trust with travelers
         </p>
       </div>
 

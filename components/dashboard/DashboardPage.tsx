@@ -10,29 +10,28 @@ import ProfileVerification from "./ProfileVerification";
 import { useAuth } from "@/lib/auth-context";
 import { useMyTrips } from "@/lib/hooks";
 import { useMyBookings } from "@/lib/hooks";
-import { useState } from "react";
 import Link from "next/link";
 
 export default function DashboardPage() {
   const { user, userProfile } = useAuth();
-  const { trips: myTrips, loading: tripsLoading } = useMyTrips();
+  const {
+    trips: myTrips,
+    loading: tripsLoading,
+    refetch: refetchTrips,
+  } = useMyTrips();
   const { bookings: myBookings, loading: bookingsLoading } = useMyBookings();
 
   const items: DashboardSidebarItem[] = [
     {
       id: "overview",
       label: "Dashboard Overview",
-      href: "/dashboard",
+      scrollTo: "overview-section",
       active: true,
     },
-    { id: "my-trips", label: "My Trips", href: "/my-trips" },
-    { id: "bookings", label: "Bookings", href: "/dashboard#bookings" },
-    { id: "earnings", label: "Earnings", href: "/dashboard#earnings" },
-    {
-      id: "profile",
-      label: "Profile/Verification",
-      href: "/dashboard#profile",
-    },
+    { id: "my-trips", label: "My Trips", scrollTo: "my-trips-section" },
+    { id: "bookings", label: "Bookings", scrollTo: "bookings" },
+    { id: "earnings", label: "Earnings", scrollTo: "earnings-section" },
+    { id: "profile", label: "Profile/Verification", scrollTo: "profile" },
   ];
 
   // Calculate summary data from real data
@@ -46,6 +45,7 @@ export default function DashboardPage() {
     {
       label: "Earnings",
       value: `₹${myBookings
+        .filter((b) => b.status === "Approved")
         .reduce((sum, b) => sum + b.totalAmount, 0)
         .toLocaleString()}`,
     },
@@ -80,20 +80,44 @@ export default function DashboardPage() {
     }
   });
 
-  // Transform bookings data for the table
-  const bookingsData = myBookings.map((booking) => ({
-    travelerName: booking.travelerName,
-    trip: "Trip Name", // We'd need to fetch trip details for this
-    bookingDate: booking.bookingDate.toDate().toISOString().split("T")[0],
-    status: booking.status,
-  }));
+  // Transform bookings data for the table (robust date handling)
+  const bookingsData = myBookings.map((booking) => {
+    let dateStr = "";
+    const bd = (booking as { bookingDate: { toDate?: () => Date; seconds?: number } | string }).bookingDate;
+    try {
+      if (typeof bd === "object" && bd?.toDate) {
+        dateStr = bd.toDate().toISOString().split("T")[0];
+      } else if (typeof bd === "object" && typeof bd?.seconds === "number") {
+        dateStr = new Date(bd.seconds * 1000).toISOString().split("T")[0];
+      } else if (typeof bd === "string") {
+        dateStr = bd.split("T")[0];
+      }
+    } catch (e) {
+      console.error("Failed to parse booking date", booking.bookingDate, e);
+      dateStr = "";
+    }
+
+    // Find the trip title from myTrips
+    const trip = myTrips.find((t) => t.id === booking.tripId);
+    const tripTitle = trip?.title || "Unknown Trip";
+
+    return {
+      id: booking.id || "unknown",
+      travelerName: booking.travelerName,
+      trip: tripTitle,
+      bookingDate: dateStr,
+      status: booking.status,
+    };
+  });
 
   // Mock earnings data for now
   const earningsData = {
     monthly: `₹${myBookings
+      .filter((b) => b.status === "Approved")
       .reduce((sum, b) => sum + b.totalAmount, 0)
       .toLocaleString()}`,
     payoutSummary: `₹${myBookings
+      .filter((b) => b.status === "Approved")
       .reduce((sum, b) => sum + b.totalAmount, 0)
       .toLocaleString()}`,
   };
@@ -133,30 +157,40 @@ export default function DashboardPage() {
           </div>
 
           <section className="order-2 lg:order-2 lg:flex-1">
-            <h1 className="font-garetheavy text-primary text-3xl md:text-4xl leading-[44px] mb-6">
-              Dashboard Overview
-            </h1>
+            <div id="overview-section">
+              <h1 className="font-garetheavy text-primary text-3xl md:text-4xl leading-[44px] mb-6">
+                Dashboard Overview
+              </h1>
 
-            <div className="mb-6">
-              <div className="text-sm font-semibold text-slate-800 mb-3">
-                Summary
+              <div className="mb-6">
+                <div className="text-sm font-semibold text-slate-800 mb-3">
+                  Summary
+                </div>
+                <SummaryCards cards={summaryData} />
               </div>
-              <SummaryCards cards={summaryData} />
             </div>
 
-            <div className="mb-6">
+            <div id="my-trips-section" className="mb-6">
               <div className="flex justify-between items-center mb-3">
                 <div className="text-sm font-semibold text-slate-800">
                   My Trips
                 </div>
-                <Link
-                  href="/create-trip"
-                  className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90"
-                >
-                  Create Trip
-                </Link>
+                <div className="flex gap-2">
+                  <Link
+                    href="/dashboard/bookings"
+                    className="border border-primary text-primary px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/10"
+                  >
+                    Manage Bookings
+                  </Link>
+                  <Link
+                    href="/create-trip"
+                    className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90"
+                  >
+                    Create Trip
+                  </Link>
+                </div>
               </div>
-              <MyTripsTable trips={tripsData} />
+              <MyTripsTable trips={tripsData} onTripsUpdate={refetchTrips} />
             </div>
 
             <div id="bookings" className="mb-6">
@@ -166,7 +200,7 @@ export default function DashboardPage() {
               <BookingsTable bookings={bookingsData} />
             </div>
 
-            <div id="earnings" className="mb-6">
+            <div id="earnings-section" className="mb-6">
               <div className="text-sm font-semibold text-slate-800 mb-3">
                 Earnings
               </div>

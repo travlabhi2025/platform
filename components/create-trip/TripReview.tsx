@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import {
   Calendar,
@@ -131,9 +132,26 @@ export default function TripReview({
           <CardTitle>Host Information</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            <h4 className="font-semibold">{formData.host.name}</h4>
-            <p className="text-gray-600">{formData.host.description}</p>
+          <div className="flex items-start gap-4">
+            {/* Host Image */}
+            {formData.host.organizerImage && (
+              <div className="flex-shrink-0">
+                <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200">
+                  <Image
+                    src={formData.host.organizerImage}
+                    alt={`${formData.host.name} - Organizer`}
+                    width={80}
+                    height={80}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2 flex-1">
+              <h4 className="font-semibold">{formData.host.name}</h4>
+              <p className="text-gray-600">{formData.host.description}</p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -194,7 +212,7 @@ export default function TripReview({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle className="text-green-700">What's Included</CardTitle>
+            <CardTitle className="text-green-700">What&apos;s Included</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-1">
@@ -210,7 +228,7 @@ export default function TripReview({
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-red-700">What's Not Included</CardTitle>
+            <CardTitle className="text-red-700">What&apos;s Not Included</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-1">

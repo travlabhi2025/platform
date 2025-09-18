@@ -99,7 +99,9 @@ export default function TripDiscoveryPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-medium">Duration:</span>
-                      <span>{trip.about.dateRange.display}</span>
+                      <span>
+                        {trip.about.startDate} - {trip.about.endDate}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-medium">Type:</span>

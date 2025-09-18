@@ -1,11 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Booking } from "./types";
 
 export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
   const [query, setQuery] = useState("");
-  const [tab, setTab] = useState<"all" | "confirmed" | "pending">("all");
+  const [tab, setTab] = useState<"all" | "approved" | "pending" | "rejected">(
+    "all"
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -13,9 +16,11 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
       const byTab =
         tab === "all"
           ? true
-          : tab === "confirmed"
-          ? b.status === "Confirmed"
-          : b.status === "Pending";
+          : tab === "approved"
+          ? b.status === "Approved"
+          : tab === "pending"
+          ? b.status === "Pending"
+          : b.status === "Rejected";
       const byQuery = q
         ? b.travelerName.toLowerCase().includes(q) ||
           b.trip.toLowerCase().includes(q) ||
@@ -75,14 +80,14 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
             All
           </button>
           <button
-            onClick={() => setTab("confirmed")}
+            onClick={() => setTab("approved")}
             className={`px-3 py-1 rounded-full border ${
-              tab === "confirmed"
+              tab === "approved"
                 ? "bg-slate-900 text-white border-slate-900"
                 : "bg-white text-slate-700 border-slate-200"
             }`}
           >
-            Confirmed
+            Approved
           </button>
           <button
             onClick={() => setTab("pending")}
@@ -94,45 +99,77 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
           >
             Pending
           </button>
+          <button
+            onClick={() => setTab("rejected")}
+            className={`px-3 py-1 rounded-full border ${
+              tab === "rejected"
+                ? "bg-slate-900 text-white border-slate-900"
+                : "bg-white text-slate-700 border-slate-200"
+            }`}
+          >
+            Rejected
+          </button>
         </div>
       </div>
 
       <div className="border-t border-slate-200" />
 
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="bg-slate-50 text-slate-600">
-            <th className="text-left font-medium px-4 py-3">Traveler Name</th>
-            <th className="text-left font-medium px-4 py-3">Trip</th>
-            <th className="text-left font-medium px-4 py-3">Booking Date</th>
-            <th className="text-left font-medium px-4 py-3">Status</th>
-            <th className="text-left font-medium px-4 py-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filtered.map((b, i) => (
-            <tr key={`${b.travelerName}-${i}`} className="bg-white">
-              <td className="px-4 py-3 text-slate-800">{b.travelerName}</td>
-              <td className="px-4 py-3 text-slate-600">{b.trip}</td>
-              <td className="px-4 py-3 text-slate-600">{b.bookingDate}</td>
-              <td className="px-4 py-3">
-                <span
-                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border ${
-                    b.status === "Confirmed"
-                      ? "bg-slate-100 text-slate-800"
-                      : "bg-slate-100 text-slate-800"
-                  }`}
-                >
-                  {b.status}
-                </span>
-              </td>
-              <td className="px-4 py-3 text-primary">
-                <button className="underline text-xs">View Details</button>
-              </td>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[600px]">
+          <thead>
+            <tr className="bg-slate-50 text-slate-600">
+              <th className="text-left font-medium px-4 py-3">Traveler Name</th>
+              <th className="text-left font-medium px-4 py-3">Trip</th>
+              <th className="text-left font-medium px-4 py-3">Booking Date</th>
+              <th className="text-left font-medium px-4 py-3">Status</th>
+              <th className="text-left font-medium px-4 py-3">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filtered.length > 0 ? (
+              filtered.map((b, i) => (
+                <tr key={`${b.travelerName}-${i}`} className="bg-white">
+                  <td className="px-4 py-3 text-slate-800">{b.travelerName}</td>
+                  <td className="px-4 py-3 text-slate-600">{b.trip}</td>
+                  <td className="px-4 py-3 text-slate-600">{b.bookingDate}</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border ${
+                        b.status === "Approved"
+                          ? "bg-green-100 text-green-800"
+                          : b.status === "Pending"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : b.status === "Rejected"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-slate-100 text-slate-800"
+                      }`}
+                    >
+                      {b.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-primary">
+                    <Link
+                      href={`/dashboard/bookings/${b.id}`}
+                      className="underline text-xs hover:text-primary/80"
+                    >
+                      View Details
+                    </Link>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="px-4 py-8 text-center text-slate-500"
+                >
+                  no bookings yet..
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
