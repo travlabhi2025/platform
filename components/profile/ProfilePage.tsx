@@ -247,12 +247,16 @@ export default function ProfilePage() {
                           alt="Profile Picture"
                           width={64}
                           height={64}
-                          className="rounded-full object-cover"
+                          className="w-16 h-16 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
-                          <Camera className="w-6 h-6 text-gray-400" />
-                        </div>
+                        <Image
+                          src="/images/home/placeholders/profileImg.png"
+                          alt="Default Profile"
+                          width={64}
+                          height={64}
+                          className="w-16 h-16 rounded-full object-cover"
+                        />
                       )}
                       <span className="text-sm text-gray-500 hidden md:inline">
                         Profile picture uploaded

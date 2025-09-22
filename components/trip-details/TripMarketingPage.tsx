@@ -1,14 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import SiteHeader from "@/components/common/SiteHeader";
 import { EVEREST_BASE_CAMP_TRIP } from ".";
 import { useState } from "react";
 import { useTrip } from "@/lib/hooks";
-import { useAuth } from "@/lib/auth-context";
-import { Check, X, Edit } from "lucide-react";
-import Link from "next/link";
-import { toast } from "sonner";
+import { Check, X } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -45,19 +41,18 @@ function StarsSolid({ rating }: { rating: number }) {
   );
 }
 
-interface TripDetailsPageProps {
+interface TripMarketingPageProps {
   tripId: string;
 }
 
-export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
+export default function TripMarketingPage({ tripId }: TripMarketingPageProps) {
   const { trip, loading, error } = useTrip(tripId);
-  const { user } = useAuth();
 
   // Debug logging
-  console.log("TripDetailsPage - tripId:", tripId);
-  console.log("TripDetailsPage - trip data:", trip);
-  console.log("TripDetailsPage - loading:", loading);
-  console.log("TripDetailsPage - error:", error);
+  console.log("TripMarketingPage - tripId:", tripId);
+  console.log("TripMarketingPage - trip data:", trip);
+  console.log("TripMarketingPage - loading:", loading);
+  console.log("TripMarketingPage - error:", error);
 
   // Use mock data if trip is not loaded yet or there's an error
   const data = trip || EVEREST_BASE_CAMP_TRIP;
@@ -65,7 +60,6 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
-        <SiteHeader />
         <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-20 py-8 pb-28 lg:pb-8 max-w-7xl">
           <div className="flex items-center justify-center h-64">
             <div className="text-lg">Loading trip details...</div>
@@ -78,7 +72,6 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
   if (error) {
     return (
       <div className="min-h-screen bg-white">
-        <SiteHeader />
         <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-20 py-8 pb-28 lg:pb-8 max-w-7xl">
           <div className="flex items-center justify-center h-64">
             <div className="text-lg text-red-600">
@@ -92,11 +85,9 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
 
   return (
     <div className="min-h-screen bg-white">
-      <SiteHeader />
-
       <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-8 pb-28 lg:pb-8 max-w-7xl">
         {/* Hero + Sidebar CTA */}
-        <div className="flex flex-col lg:flex-row lg:items-start gap-8">
+        <div className="flex flex-col lg:flex-row lg:items-start gap-4">
           <div className="lg:flex-1">
             <div className="relative w-full h-[280px] md:h-[340px] lg:h-[380px] overflow-hidden rounded-md">
               <Image
@@ -107,19 +98,10 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
                 className="object-cover"
               />
             </div>
-            <div className="mt-4 flex items-center justify-between">
+            <div className="mt-4">
               <h1 className="font-garetheavy text-slate-900 text-3xl md:text-4xl">
                 {data.title.toUpperCase()}
               </h1>
-              {user && "createdBy" in data && data.createdBy === user.uid && (
-                <Link
-                  href={`/edit-trip/${data.id}`}
-                  className="flex items-center gap-1 px-3 py-1 text-sm text-gray-600 hover:text-primary transition-colors"
-                >
-                  <Edit className="w-4 h-4" />
-                  <span>Edit</span>
-                </Link>
-              )}
             </div>
             {/* About this trip */}
             <section className="mt-10">
@@ -235,7 +217,7 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
               <h2 className="font-garetheavy text-slate-900 text-xl mb-3">
                 Itinerary
               </h2>
-              <Accordion type="multiple" className="w-full space-y-3">
+              <Accordion type="multiple" className="w-full space-y-3 pb-4">
                 {data.itinerary.map((it) => (
                   <AccordionItem
                     key={it.day}
@@ -385,7 +367,7 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
                 <Accordion
                   type="single"
                   collapsible
-                  className="w-full space-y-3"
+                  className="w-full space-y-3 pb-4"
                 >
                   {data.faqs.map((f, i) => (
                     <AccordionItem
@@ -393,7 +375,7 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
                       value={`faq-${i}`}
                       className="rounded-md text-white border-0"
                     >
-                      <AccordionTrigger className="px-4 py-3 bg-primary/90 hover:no-underline text-white [&>svg]:text-white data-[state=open]:rounded-b-none">
+                      <AccordionTrigger className="px-4 py-3 hover:no-underline bg-primary/90 text-white [&>svg]:text-white data-[state=open]:rounded-b-none">
                         <span className="text-sm text-left">{f.question}</span>
                       </AccordionTrigger>
                       <AccordionContent className="bg-[#f28c0030] rounded-b-md text-slate-700 px-4 py-3 text-sm">
@@ -447,28 +429,18 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
           </div>
 
           <aside className="lg:pt-8 lg:basis-[320px] lg:w-[320px] lg:shrink-0 lg:self-start">
-            <div className="p-4 w-full bg-white fixed bottom-0 left-0 right-0 z-50 rounded-none border-t border-x-0 border-b-0 lg:fixed lg:top-24 lg:right-20 lg:left-auto lg:bottom-auto lg:w-[320px] lg:rounded-md lg:border lg:z-auto">
+            <div className="p-4 w-full bg-white fixed bottom-0 left-0 right-0 z-50 rounded-none border-t border-x-0 border-b-0 lg:fixed lg:top-8 lg:right-20 lg:left-auto lg:bottom-auto lg:w-[320px] lg:rounded-md lg:border lg:z-auto">
               <div className="text-2xl font-garetheavy text-slate-900">
                 ₹{data.priceInInr.toLocaleString("en-IN")}
               </div>
               <div className="text-xs text-slate-500">Per person</div>
 
-              <button
-                onClick={() => {
-                  toast.success("This test link works! To test: ", {
-                    duration: 8000,
-                    action: {
-                      label: "Go to Booking",
-                      onClick: () => {
-                        window.location.href = `/book/${data.id}`;
-                      },
-                    },
-                  });
-                }}
+              <a
+                href={`/book/${data.id}`}
                 className="mt-4 block w-full text-center bg-primary text-white rounded-md py-2 font-bebas tracking-wide hover:bg-primary/90"
               >
                 Book now
-              </button>
+              </a>
             </div>
           </aside>
         </div>

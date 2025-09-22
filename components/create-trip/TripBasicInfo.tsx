@@ -86,29 +86,6 @@ export default function TripBasicInfo({
         </p>
       </div>
 
-      <div className="space-y-3">
-        <Label
-          htmlFor="organizerImage"
-          className="text-sm font-medium text-gray-700"
-        >
-          Organizer Image (Optional)
-        </Label>
-        <ImageUpload
-          value={formData.host.organizerImage || ""}
-          onChange={(url) =>
-            updateFormData({
-              host: { ...formData.host, organizerImage: url },
-            })
-          }
-          placeholder="Upload your profile picture or company logo"
-          maxSizeInMB={3}
-          storagePath="organizer-images"
-        />
-        <p className="text-sm text-gray-500 mt-1">
-          Add your profile picture or company logo to build trust with travelers
-        </p>
-      </div>
-
       <div className="flex justify-end pt-4">
         <Button
           onClick={onNext}

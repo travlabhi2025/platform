@@ -12,7 +12,7 @@ export default function ProfileVerification({ profile }: { profile: Profile }) {
           alt={profile.name}
           width={56}
           height={56}
-          className="rounded-full"
+          className="w-14 h-14 rounded-full object-cover"
         />
         <div className="text-sm">
           <div className="font-semibold text-slate-900">{profile.name}</div>

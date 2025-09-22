@@ -12,7 +12,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
+import ImageUpload from "@/components/ui/image-upload";
 import { TripFormData } from "@/lib/validations/trip";
+import { useAuth } from "@/lib/auth-context";
+import { useEffect, useCallback } from "react";
 
 interface TripDetailsProps {
   formData: TripFormData;
@@ -42,17 +45,82 @@ export default function TripDetails({
   onPrev,
   errors,
 }: TripDetailsProps) {
-  const updateAbout = (updates: Partial<TripFormData["about"]>) => {
-    updateFormData({
-      about: { ...formData.about, ...updates },
-    });
-  };
+  const { user, userProfile } = useAuth();
 
-  const updateHost = (updates: Partial<TripFormData["host"]>) => {
-    updateFormData({
-      host: { ...formData.host, ...updates },
-    });
-  };
+  const updateAbout = useCallback(
+    (updates: Partial<TripFormData["about"]>) => {
+      updateFormData({
+        about: { ...formData.about, ...updates },
+      });
+    },
+    [formData.about, updateFormData]
+  );
+
+  const updateHost = useCallback(
+    (updates: Partial<TripFormData["host"]>) => {
+      updateFormData({
+        host: { ...formData.host, ...updates },
+      });
+    },
+    [formData.host, updateFormData]
+  );
+
+  // Populate host information with profile data if not already set
+  useEffect(() => {
+    if (userProfile && userProfile.id) {
+      console.log("Auto-filling host info:", {
+        profileName: userProfile.name,
+        profileBio: userProfile.bio,
+        profilePicture: userProfile.profilePicture,
+        avatar: userProfile.avatar,
+        userPhotoURL: user?.photoURL,
+        selectedProfileImage:
+          userProfile.profilePicture || userProfile.avatar || user?.photoURL,
+        currentHostName: formData.host.name,
+        currentHostDescription: formData.host.description,
+        currentHostImage: formData.host.organizerImage,
+      });
+
+      const hostUpdates: Partial<TripFormData["host"]> = {};
+      let hasUpdates = false;
+
+      // Set host name from profile if not already set (check for empty string or undefined)
+      if (
+        (!formData.host.name || formData.host.name.trim() === "") &&
+        (userProfile.name || user?.displayName)
+      ) {
+        hostUpdates.name = userProfile.name || user?.displayName || "";
+        hasUpdates = true;
+      }
+
+      // Set host description from profile bio if not already set (check for empty string or undefined)
+      if (
+        (!formData.host.description ||
+          formData.host.description.trim() === "") &&
+        userProfile.bio
+      ) {
+        hostUpdates.description = userProfile.bio;
+        hasUpdates = true;
+      }
+
+      // Set host image from profile picture if not already set (check for empty string or undefined)
+      const profileImage =
+        userProfile.profilePicture || userProfile.avatar || user?.photoURL;
+      if (
+        (!formData.host.organizerImage ||
+          formData.host.organizerImage.trim() === "") &&
+        profileImage
+      ) {
+        hostUpdates.organizerImage = profileImage;
+        hasUpdates = true;
+      }
+
+      // Only update if we have something to set
+      if (hasUpdates) {
+        updateHost(hostUpdates);
+      }
+    }
+  }, [userProfile, user, updateHost]); // Include updateHost in dependencies
 
   return (
     <div className="space-y-6">
@@ -185,6 +253,13 @@ export default function TripDetails({
       </div>
 
       <div className="space-y-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <p className="text-sm text-blue-800">
+            <strong>Tip:</strong> Host information is pre-filled from your
+            profile. You can modify it below if needed.
+          </p>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="hostName">Host Name *</Label>
           <Input
@@ -214,6 +289,27 @@ export default function TripDetails({
           {errors.hostDescription && (
             <p className="text-sm text-red-500">{errors.hostDescription}</p>
           )}
+        </div>
+
+        <div className="space-y-2">
+          <Label
+            htmlFor="hostImage"
+            className="text-sm font-medium text-gray-700"
+          >
+            Host Image (Optional)
+          </Label>
+          <ImageUpload
+            value={formData.host.organizerImage || ""}
+            onChange={(url) => updateHost({ organizerImage: url })}
+            placeholder="Upload your profile picture or company logo"
+            maxSizeInMB={3}
+            storagePath="organizer-images"
+            variant="compact"
+          />
+          <p className="text-sm text-gray-500 mt-1">
+            Add your profile picture or company logo to build trust with
+            travelers
+          </p>
         </div>
       </div>
 

@@ -4,10 +4,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { EllipsisVertical } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, userProfile, signOut } = useAuth();
 
   useEffect(() => {
     const onResize = () => {
@@ -35,21 +43,29 @@ export default function Header() {
           <div className="hidden sm:flex items-center gap-6">
             {user ? (
               <div className="flex items-center gap-3">
-                <Link href="/dashboard">
-                  <Image
-                    src="/images/trip-discovery/profile-pic.png"
-                    alt="Profile"
-                    width={32}
-                    height={32}
-                    className="rounded-full"
-                  />
-                </Link>
-                <button
-                  onClick={signOut}
-                  className="text-sm text-gray-600 hover:text-gray-800"
-                >
-                  Sign Out
-                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full"
+                    >
+                      <EllipsisVertical className="h-5 w-5 text-primary" />
+                      <span className="sr-only">Open menu</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44">
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile">Profile</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard">Dashboard</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={signOut}>
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             ) : (
               <div className="flex items-center gap-2">
@@ -69,13 +85,21 @@ export default function Header() {
             )}
           </div>
 
-          {/* Center link on sm+ */}
-          <Link
-            href={"/trip-discovery"}
-            className="hidden sm:block absolute left-1/2 -translate-x-1/2 font-garetheavy text-primary"
-          >
-            Explore All Trips
-          </Link>
+          {/* Center links on sm+ */}
+          <div className="hidden sm:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
+            <Link
+              href={"/trip-discovery"}
+              className="font-garetheavy text-primary hover:text-primary/90"
+            >
+              Explore All Trips
+            </Link>
+            <Link
+              href={"/booking-status"}
+              className="font-garetheavy text-primary hover:text-primary/90"
+            >
+              Check Booking
+            </Link>
+          </div>
 
           {/* Burger button */}
           <button
@@ -122,6 +146,12 @@ export default function Header() {
               className="font-garetheavy text-primary"
             >
               Explore All Trips
+            </Link>
+            <Link
+              href={"/booking-status"}
+              className="font-garetheavy text-primary"
+            >
+              Check Booking
             </Link>
             {user ? (
               <div className="flex flex-col gap-2">

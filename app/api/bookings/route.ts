@@ -31,48 +31,71 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const bookingData = await request.json();
-    const { userId } = bookingData || {};
-    if (!userId) {
+    const {
+      tripId,
+      travelerName,
+      travelerEmail,
+      travelerPhone,
+      groupSize,
+      preferences,
+    } = bookingData || {};
+
+    // Validate required fields
+    if (!tripId) {
       return NextResponse.json(
-        { error: "User ID is required" },
-        { status: 401 }
+        { error: "Trip ID is required" },
+        { status: 400 }
       );
     }
-    // Compute total on server to trust amount
-    const trip = await tripService.getTripById(bookingData.tripId);
+
+    if (!travelerName || !travelerEmail || !travelerPhone) {
+      return NextResponse.json(
+        { error: "Traveler information is required" },
+        { status: 400 }
+      );
+    }
+
+    // Get trip details to calculate total amount
+    const trip = await tripService.getTripById(tripId);
     if (!trip) {
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
-    const groupSize = Math.max(1, Number(bookingData.groupSize || 1));
-    const totalAmount = (trip.priceInInr || 0) * groupSize;
+    const validGroupSize = Math.max(1, Number(groupSize || 1));
+    const totalAmount = (trip.priceInInr || 0) * validGroupSize;
 
+    // Create booking with only essential information
     const bookingId = await bookingService.createBooking({
-      ...bookingData,
+      tripId,
+      travelerName,
+      travelerEmail,
+      travelerPhone,
+      groupSize: validGroupSize,
+      preferences: preferences || "",
       totalAmount,
-      createdBy: userId,
+      status: "Pending",
+      bookingDate: new Date(),
     });
 
-    // Send fake email notifications (write to notifications collection)
+    // Send email notifications
     const organizerName = trip.host?.name || "Organizer";
     const tripName = trip.title || "Trip";
-    const travelerName = bookingData.travelerName || "Traveler";
 
     // Organizer notification
     await notificationService.sendEmail({
       to: trip.createdBy || "organizer@example.com",
-      subject: `New booking for ${tripName}`,
-      message: `${travelerName} booked the ${tripName} for ${groupSize} people, paid ₹${totalAmount.toLocaleString(
+      subject: `New booking request for ${tripName}`,
+      message: `${travelerName} has requested to book the ${tripName} for ${validGroupSize} people. Estimated amount: ₹${totalAmount.toLocaleString(
         "en-IN"
-      )}`,
+      )}. Please review and approve this booking request.`,
       meta: { bookingId, tripId: trip.id, type: "organizer" },
     });
 
     // Booker notification
     await notificationService.sendEmail({
-      to: bookingData.travelerEmail || userId,
-      subject: `Booking confirmed: ${tripName}`,
-      message: `${tripName} by ${organizerName} has been booked`,
+      to: travelerEmail,
+      subject: `Booking request submitted: ${tripName}`,
+      message: `Your booking request for ${tripName} by ${organizerName} has been submitted. The organizer will review your request and contact you for payment details.`,
       meta: { bookingId, tripId: trip.id, type: "booker" },
     });
 

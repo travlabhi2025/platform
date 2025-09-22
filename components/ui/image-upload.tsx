@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, X, Loader2 } from "lucide-react";
 import Image from "next/image";
@@ -23,7 +23,7 @@ interface ImageUploadProps {
   maxSizeInMB?: number;
   acceptedFormats?: string[];
   storagePath?: string; // Custom storage path (e.g., "profile-pictures", "trip-images")
-  variant?: "default" | "compact"; // compact renders a small circular avatar uploader
+  variant?: "default" | "compact" | "square"; // compact renders a small circular avatar uploader, square renders a square preview
 }
 
 export default function ImageUpload({
@@ -39,9 +39,16 @@ export default function ImageUpload({
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(value || null);
-  const [storageRef, setStorageRef] = useState<ReturnType<typeof ref> | null>(null);
+  const [storageRef, setStorageRef] = useState<ReturnType<typeof ref> | null>(
+    null
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
+
+  // Update preview when value prop changes
+  useEffect(() => {
+    setPreview(value || null);
+  }, [value]);
 
   // Helper function to extract storage reference from Firebase Storage URL
   const getStorageRefFromUrl = (url: string) => {
@@ -78,14 +85,18 @@ export default function ImageUpload({
 
     // Validate file type
     if (!acceptedFormats.includes(file.type)) {
-      toast.error("Please upload a valid image file (JPG, PNG, WebP)");
+      toast.error("Please upload a valid image file (JPG, PNG, WebP)", {
+        id: `file-type-error-${Date.now()}`,
+      });
       return;
     }
 
     // Validate file size
     const fileSizeInMB = file.size / (1024 * 1024);
     if (fileSizeInMB > maxSizeInMB) {
-      toast.error(`File size must be less than ${maxSizeInMB}MB`);
+      toast.error(`File size must be less than ${maxSizeInMB}MB`, {
+        id: `file-size-error-${Date.now()}`,
+      });
       return;
     }
 
@@ -222,6 +233,88 @@ export default function ImageUpload({
             </button>
           )}
         </div>
+      </div>
+    );
+  }
+
+  // Square aspect ratio uploader (for profile images)
+  if (variant === "square") {
+    return (
+      <div className={`w-full ${className}`}>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={acceptedFormats.join(",")}
+          onChange={handleFileInputChange}
+          className="hidden"
+          disabled={disabled || uploading}
+        />
+
+        {preview ? (
+          <div className="relative group">
+            <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+              <Image
+                src={preview}
+                alt="Preview"
+                className="w-full h-48 object-cover"
+                width={192}
+                height={192}
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg"
+                onClick={handleRemove}
+                disabled={disabled || uploading}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div
+            className={`relative border-2 border-dashed rounded-lg transition-all duration-200 ${
+              disabled || uploading
+                ? "border-gray-200 bg-gray-50 cursor-not-allowed"
+                : "border-gray-300 bg-white hover:border-primary hover:bg-primary/5 cursor-pointer"
+            }`}
+            onClick={handleClick}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+          >
+            <div className="flex flex-col items-center justify-center py-12 px-6">
+              {uploading ? (
+                <>
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-4">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-700 mb-1">
+                    Uploading image...
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Please wait while we process your image
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-4">
+                    <Upload className="h-6 w-6 text-gray-400" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-700 mb-2 text-center">
+                    {placeholder}
+                  </p>
+                  <p className="text-xs text-gray-500 mb-1">
+                    Drag and drop your image here, or click to browse
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    Supports JPG, PNG, WebP • Max {maxSizeInMB}MB
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     );
   }

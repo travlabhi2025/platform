@@ -25,7 +25,7 @@ export default function DashboardSidebar({
           alt={profile.name}
           width={36}
           height={36}
-          className="rounded-full"
+          className="w-9 h-9 rounded-full object-cover"
         />
         <div className="text-sm">
           <div className="font-semibold">Hi, {profile.name.split(" ")[0]}</div>

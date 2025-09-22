@@ -15,10 +15,15 @@ export type Trip = {
 
 export type Booking = {
   id: string;
+  tripId: string;
   travelerName: string;
-  trip: string;
-  bookingDate: string;
+  travelerEmail: string;
+  travelerPhone: string;
+  groupSize: number;
+  preferences?: string;
   status: "Pending" | "Approved" | "Rejected";
+  bookingDate: string;
+  totalAmount: number;
 };
 
 export type Earnings = {

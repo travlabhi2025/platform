@@ -45,7 +45,7 @@ export default function MyTripsTable({
     }
 
     try {
-      const tripUrl = `${window.location.origin}/trip-details/${tripId}`;
+      const tripUrl = `${window.location.origin}/trip/${tripId}`;
       await navigator.clipboard.writeText(tripUrl);
       toast.success("Trip link copied to clipboard!");
     } catch {

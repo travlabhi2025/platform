@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     const userData = userSnap.data();
     return NextResponse.json({ profile: userData });
-    } catch (error: unknown) {
+  } catch (error: unknown) {
     console.error("Error fetching profile:", error);
     return NextResponse.json(
       { error: "Failed to fetch profile" },
@@ -65,7 +65,7 @@ export async function PUT(request: NextRequest) {
       message: "Profile updated successfully",
       profile,
     });
-    } catch (error: unknown) {
+  } catch (error: unknown) {
     console.error("Error updating profile:", error);
     return NextResponse.json(
       { error: "Failed to update profile" },

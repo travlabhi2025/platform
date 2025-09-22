@@ -4,10 +4,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { EllipsisVertical } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 export default function SiteHeader() {
   const [open, setOpen] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, userProfile, signOut } = useAuth();
 
   useEffect(() => {
     const onResize = () => {
@@ -23,7 +31,7 @@ export default function SiteHeader() {
     <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
       <div className="max-w-[95vw] mx-auto flex items-center justify-between h-16">
         <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center">
+          <Link href="/dashboard" className="flex items-center">
             <Image
               src="/images/logo.png"
               alt="TravlAbhi"
@@ -49,6 +57,12 @@ export default function SiteHeader() {
               className="text-primary hover:text-primary/90 font-garetheavy"
             >
               Discover Trips
+            </Link>
+            <Link
+              href="/booking-status"
+              className="text-primary hover:text-primary/90 font-garetheavy"
+            >
+              Check Booking
             </Link>
           </nav>
         </div>
@@ -93,21 +107,25 @@ export default function SiteHeader() {
                 width={32}
                 height={32}
               />
-              <Link href="/dashboard">
-                <Image
-                  src="/images/trip-discovery/profile-pic.png"
-                  alt="Profile"
-                  width={32}
-                  height={32}
-                  className="rounded-full"
-                />
-              </Link>
-              <button
-                onClick={signOut}
-                className="text-sm text-gray-600 hover:text-gray-800"
-              >
-                Sign Out
-              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <EllipsisVertical className="h-5 w-5 text-primary" />
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard">Dashboard</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={signOut}>
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ) : (
             <div className="flex items-center gap-2">
@@ -177,6 +195,12 @@ export default function SiteHeader() {
             >
               Discover Trips
             </Link>
+            <Link
+              href="/booking-status"
+              className="text-primary font-garetheavy"
+            >
+              Check Booking
+            </Link>
             <div className="pt-2">
               <input
                 aria-label="Search"
@@ -192,21 +216,26 @@ export default function SiteHeader() {
                   width={32}
                   height={32}
                 />
-                <Link href="/dashboard">
-                  <Image
-                    src="/images/trip-discovery/profile-pic.png"
-                    alt="Profile"
-                    width={32}
-                    height={32}
-                    className="rounded-full"
-                  />
-                </Link>
-                <button
-                  onClick={signOut}
-                  className="text-sm text-gray-600 hover:text-gray-800"
-                >
-                  Sign Out
-                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full"
+                    >
+                      <EllipsisVertical className="h-5 w-5 text-primary" />
+                      <span className="sr-only">Open menu</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard">Profile</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={signOut}>
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             ) : (
               <div className="flex flex-col gap-2">

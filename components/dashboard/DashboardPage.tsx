@@ -83,7 +83,11 @@ export default function DashboardPage() {
   // Transform bookings data for the table (robust date handling)
   const bookingsData = myBookings.map((booking) => {
     let dateStr = "";
-    const bd = (booking as { bookingDate: { toDate?: () => Date; seconds?: number } | string }).bookingDate;
+    const bd = (
+      booking as {
+        bookingDate: { toDate?: () => Date; seconds?: number } | string;
+      }
+    ).bookingDate;
     try {
       if (typeof bd === "object" && bd?.toDate) {
         dateStr = bd.toDate().toISOString().split("T")[0];
@@ -126,9 +130,10 @@ export default function DashboardPage() {
   const profileData = {
     name: userProfile?.name || user?.displayName || "User",
     avatar:
+      userProfile?.profilePicture ||
       userProfile?.avatar ||
       user?.photoURL ||
-      "/images/trip-discovery/profile-pic.png",
+      "/images/home/placeholders/profileImg.png",
     verified: userProfile?.verified || false,
     kycVerified: userProfile?.kycVerified || false,
     badge: userProfile?.badge || "Organizer",
@@ -175,27 +180,27 @@ export default function DashboardPage() {
                 <div className="text-sm font-semibold text-slate-800">
                   My Trips
                 </div>
-                <div className="flex gap-2">
-                  <Link
-                    href="/dashboard/bookings"
-                    className="border border-primary text-primary px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/10"
-                  >
-                    Manage Bookings
-                  </Link>
-                  <Link
-                    href="/create-trip"
-                    className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90"
-                  >
-                    Create Trip
-                  </Link>
-                </div>
+                <Link
+                  href="/create-trip"
+                  className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90"
+                >
+                  Create Trip
+                </Link>
               </div>
               <MyTripsTable trips={tripsData} onTripsUpdate={refetchTrips} />
             </div>
 
             <div id="bookings" className="mb-6">
-              <div className="text-sm font-semibold text-slate-800 mb-3">
-                Bookings
+              <div className="flex justify-between items-center mb-3">
+                <div className="text-sm font-semibold text-slate-800">
+                  Bookings
+                </div>
+                <Link
+                  href="/dashboard/bookings"
+                  className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90"
+                >
+                  Manage Bookings
+                </Link>
               </div>
               <BookingsTable bookings={bookingsData} />
             </div>

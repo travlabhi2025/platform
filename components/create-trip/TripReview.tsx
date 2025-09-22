@@ -69,6 +69,19 @@ export default function TripReview({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Hero Image */}
+          {formData.heroImageUrl && (
+            <div className="relative w-full h-[280px] md:h-[340px] lg:h-[380px] overflow-hidden rounded-md">
+              <Image
+                src={formData.heroImageUrl}
+                alt={formData.title}
+                fill
+                priority
+                className="object-cover"
+              />
+            </div>
+          )}
+
           <div>
             <h4 className="font-semibold text-lg">{formData.title}</h4>
             <p className="text-gray-600">{formData.about.tripType} Trip</p>
@@ -136,15 +149,13 @@ export default function TripReview({
             {/* Host Image */}
             {formData.host.organizerImage && (
               <div className="flex-shrink-0">
-                <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200">
-                  <Image
-                    src={formData.host.organizerImage}
-                    alt={`${formData.host.name} - Organizer`}
-                    width={80}
-                    height={80}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+                <Image
+                  src={formData.host.organizerImage}
+                  alt={`${formData.host.name} - Organizer`}
+                  width={64}
+                  height={64}
+                  className="shrink-0 w-16 h-16 rounded-full object-cover"
+                />
               </div>
             )}
 
@@ -212,7 +223,9 @@ export default function TripReview({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle className="text-green-700">What&apos;s Included</CardTitle>
+            <CardTitle className="text-green-700">
+              What&apos;s Included
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-1">
@@ -228,7 +241,9 @@ export default function TripReview({
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-red-700">What&apos;s Not Included</CardTitle>
+            <CardTitle className="text-red-700">
+              What&apos;s Not Included
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-1">
