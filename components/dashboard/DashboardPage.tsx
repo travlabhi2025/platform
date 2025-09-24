@@ -26,7 +26,6 @@ export default function DashboardPage() {
       id: "overview",
       label: "Dashboard Overview",
       scrollTo: "overview-section",
-      active: true,
     },
     { id: "my-trips", label: "My Trips", scrollTo: "my-trips-section" },
     { id: "bookings", label: "Bookings", scrollTo: "bookings" },
@@ -107,10 +106,16 @@ export default function DashboardPage() {
 
     return {
       id: booking.id || "unknown",
+      tripId: booking.tripId || "unknown",
       travelerName: booking.travelerName,
-      trip: tripTitle,
-      bookingDate: dateStr,
+      travelerEmail: booking.travelerEmail || "",
+      travelerPhone: booking.travelerPhone || "",
+      groupSize: booking.groupSize || 1,
+      preferences: booking.preferences || "",
       status: booking.status,
+      bookingDate: dateStr,
+      totalAmount: booking.totalAmount || 0,
+      trip: tripTitle, // Keep this for display purposes
     };
   });
 
@@ -143,7 +148,7 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-white">
         <SiteHeader />
-        <main className="mx-auto px-4 md:px-8 lg:px-12 pt-8 md:pt-10 pb-10">
+        <main className="mx-auto px-4 md:px-8 lg:px-12 pt-8 md:pt-8 pb-10">
           <div className="flex items-center justify-center h-64">
             <div className="text-lg">Loading dashboard...</div>
           </div>
@@ -155,14 +160,14 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-white">
       <SiteHeader />
-      <main className="mx-auto px-4 md:px-8 lg:px-12 pt-8 md:pt-10 pb-10">
+      <main className="mx-auto px-4 md:px-8 lg:px-12 pt-8 md:pt-8 pb-10">
         <div className="flex flex-col lg:flex-row lg:items-stretch gap-8 lg:gap-10">
           <div className="order-1 lg:order-1 lg:basis-[320px] lg:w-[320px] lg:shrink-0 lg:self-stretch">
             <DashboardSidebar profile={profileData} items={items} />
           </div>
 
           <section className="order-2 lg:order-2 lg:flex-1">
-            <div id="overview-section">
+            <div id="overview-section" className="scroll-mt-24">
               <h1 className="font-garetheavy text-primary text-3xl md:text-4xl leading-[44px] mb-6">
                 Dashboard Overview
               </h1>
@@ -175,7 +180,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div id="my-trips-section" className="mb-6">
+            <div id="my-trips-section" className="mb-6 scroll-mt-24">
               <div className="flex justify-between items-center mb-3">
                 <div className="text-sm font-semibold text-slate-800">
                   My Trips
@@ -190,7 +195,7 @@ export default function DashboardPage() {
               <MyTripsTable trips={tripsData} onTripsUpdate={refetchTrips} />
             </div>
 
-            <div id="bookings" className="mb-6">
+            <div id="bookings" className="mb-6 scroll-mt-24">
               <div className="flex justify-between items-center mb-3">
                 <div className="text-sm font-semibold text-slate-800">
                   Bookings
@@ -205,14 +210,14 @@ export default function DashboardPage() {
               <BookingsTable bookings={bookingsData} />
             </div>
 
-            <div id="earnings-section" className="mb-6">
+            <div id="earnings-section" className="mb-6 scroll-mt-24">
               <div className="text-sm font-semibold text-slate-800 mb-3">
                 Earnings
               </div>
               <EarningsSection earnings={earningsData} />
             </div>
 
-            <div id="profile" className="mb-6">
+            <div id="profile" className="mb-6 scroll-mt-24">
               <div className="text-sm font-semibold text-slate-800 mb-3">
                 Profile/Verification
               </div>

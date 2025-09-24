@@ -6,6 +6,7 @@ export const tripFormSchema = z.object({
     .min(1, "Trip title is required")
     .max(100, "Title must be less than 100 characters"),
   heroImageUrl: z.string().min(1, "Hero image is required"),
+  galleryImages: z.array(z.string()).optional(), // Array of gallery image URLs
   priceInInr: z
     .number()
     .min(1, "Price must be greater than 0")

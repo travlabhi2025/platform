@@ -3,7 +3,6 @@
 import Image from "next/image";
 import SiteHeader from "@/components/common/SiteHeader";
 import { EVEREST_BASE_CAMP_TRIP } from ".";
-import { useState } from "react";
 import { useTrip } from "@/lib/hooks";
 import { useAuth } from "@/lib/auth-context";
 import { Check, X, Edit } from "lucide-react";
@@ -15,6 +14,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import TripGallery from "./TripGallery";
 
 function StarsAverage({ rating }: { rating: number }) {
   const percent = Math.max(0, Math.min(100, (rating / 5) * 100));
@@ -304,6 +304,13 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
               </div>
             </section>
 
+            {/* Trip Gallery */}
+            {"galleryImages" in data &&
+              data.galleryImages &&
+              data.galleryImages.length > 0 && (
+                <TripGallery images={data.galleryImages} title={data.title} />
+              )}
+
             {/* Reviews */}
             <section className="mt-10">
               <h2 className="font-garetheavy text-slate-900 text-xl mb-3">
@@ -446,31 +453,33 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
             </section>
           </div>
 
-          <aside className="lg:pt-8 lg:basis-[320px] lg:w-[320px] lg:shrink-0 lg:self-start">
-            <div className="p-4 w-full bg-white fixed bottom-0 left-0 right-0 z-50 rounded-none border-t border-x-0 border-b-0 lg:fixed lg:top-24 lg:right-20 lg:left-auto lg:bottom-auto lg:w-[320px] lg:rounded-md lg:border lg:z-auto">
-              <div className="text-2xl font-garetheavy text-slate-900">
-                ₹{data.priceInInr.toLocaleString("en-IN")}
-              </div>
-              <div className="text-xs text-slate-500">Per person</div>
+          <div className="order-1 lg:order-1 lg:basis-[320px] lg:w-[320px] lg:shrink-0 lg:self-stretch">
+            <aside className="sticky top-24 h-full max-h-[calc(100vh-8rem)] flex flex-col">
+              <div className="bg-white rounded-lg border border-slate-200 p-4 md:p-5 h-fit">
+                <div className="text-2xl font-garetheavy text-slate-900">
+                  ₹{data.priceInInr.toLocaleString("en-IN")}
+                </div>
+                <div className="text-xs text-slate-500">Per person</div>
 
-              <button
-                onClick={() => {
-                  toast.success("This test link works! To test: ", {
-                    duration: 8000,
-                    action: {
-                      label: "Go to Booking",
-                      onClick: () => {
-                        window.location.href = `/book/${data.id}`;
+                <button
+                  onClick={() => {
+                    toast.success("This test link works! To test: ", {
+                      duration: 8000,
+                      action: {
+                        label: "Go to Booking",
+                        onClick: () => {
+                          window.location.href = `/book/${data.id}`;
+                        },
                       },
-                    },
-                  });
-                }}
-                className="mt-4 block w-full text-center bg-primary text-white rounded-md py-2 font-bebas tracking-wide hover:bg-primary/90"
-              >
-                Book now
-              </button>
-            </div>
-          </aside>
+                    });
+                  }}
+                  className="mt-4 block w-full text-center bg-primary text-white rounded-md py-2 font-bebas tracking-wide hover:bg-primary/90"
+                >
+                  Book now
+                </button>
+              </div>
+            </aside>
+          </div>
         </div>
       </main>
     </div>

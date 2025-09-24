@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { Profile } from "./types";
+import { useScrollSpy } from "@/lib/useScrollSpy";
 
 export type DashboardSidebarItem = {
   id: string;
@@ -17,8 +20,24 @@ export default function DashboardSidebar({
   profile: Profile;
   items: DashboardSidebarItem[];
 }) {
+  // Extract section IDs for scroll spy
+  const sectionIds = items
+    .filter((item) => item.scrollTo)
+    .map((item) => item.scrollTo!);
+
+  // Use scroll spy to track active section
+  const { activeSection, scrollToSection } = useScrollSpy(sectionIds, {
+    threshold: 0.3,
+    rootMargin: "-20% 0px -70% 0px",
+    offset: 100, // Account for fixed header
+  });
+
+  // Debug logging
+  console.log("Sidebar - sectionIds:", sectionIds);
+  console.log("Sidebar - activeSection:", activeSection);
+
   return (
-    <aside className="bg-white rounded-lg border border-slate-200 p-4 md:p-5 flex flex-col h-full">
+    <aside className="sticky top-24 bg-white rounded-lg border border-slate-200 p-4 md:p-5 flex flex-col h-full max-h-[calc(100vh-8rem)]">
       <div className="flex items-center gap-3">
         <Image
           src={profile.avatar}
@@ -32,15 +51,16 @@ export default function DashboardSidebar({
         </div>
       </div>
 
-      <nav className="mt-4 space-y-1 flex-1">
+      <nav className="mt-4 space-y-1 flex-1 overflow-y-auto">
         {items.map((it) => {
+          const isActive = it.scrollTo
+            ? activeSection === it.scrollTo
+            : it.active;
+
           const handleClick = (e: React.MouseEvent) => {
             if (it.scrollTo) {
               e.preventDefault();
-              const element = document.getElementById(it.scrollTo);
-              if (element) {
-                element.scrollIntoView({ behavior: "smooth" });
-              }
+              scrollToSection(it.scrollTo);
             }
           };
 
@@ -48,11 +68,11 @@ export default function DashboardSidebar({
             <span
               className={
                 "block px-3 py-2 rounded-md text-sm transition-colors cursor-pointer " +
-                (it.active
+                (isActive
                   ? "bg-primary text-white"
                   : "hover:bg-slate-100 text-slate-700")
               }
-              aria-current={it.active ? "page" : undefined}
+              aria-current={isActive ? "page" : undefined}
               onClick={handleClick}
             >
               {it.label}

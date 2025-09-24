@@ -19,6 +19,7 @@ export interface Trip {
   id?: string;
   title: string;
   heroImageUrl: string;
+  galleryImages?: string[]; // Optional array of gallery image URLs
   priceInInr: number;
   currency: "INR";
   perPerson: boolean;
@@ -350,6 +351,36 @@ export const bookingService = {
     const q = query(
       collection(db, "bookings"),
       where("travelerEmail", "==", email),
+      where("tripId", "==", tripId)
+    );
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.docs.length > 0) {
+      const doc = querySnapshot.docs[0];
+      return { id: doc.id, ...doc.data() } as Booking;
+    }
+    return null;
+  },
+
+  // Check if user has already booked a specific trip (by userId)
+  async hasUserBookedTrip(userId: string, tripId: string): Promise<boolean> {
+    const q = query(
+      collection(db, "bookings"),
+      where("createdBy", "==", userId),
+      where("tripId", "==", tripId)
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.length > 0;
+  },
+
+  // Get user's booking for a specific trip (if exists)
+  async getUserBookingForTrip(
+    userId: string,
+    tripId: string
+  ): Promise<Booking | null> {
+    const q = query(
+      collection(db, "bookings"),
+      where("createdBy", "==", userId),
       where("tripId", "==", tripId)
     );
     const querySnapshot = await getDocs(q);

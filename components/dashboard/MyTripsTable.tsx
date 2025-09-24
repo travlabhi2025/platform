@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import Pagination, { usePagination } from "@/components/ui/pagination";
 
 export default function MyTripsTable({
   trips,
@@ -37,6 +38,17 @@ export default function MyTripsTable({
     trip: Trip | null;
     loading: boolean;
   }>({ type: null, trip: null, loading: false });
+
+  // Pagination hook
+  const {
+    currentPage,
+    totalPages,
+    itemsPerPage,
+    totalItems,
+    paginatedItems,
+    handlePageChange,
+    handleItemsPerPageChange,
+  } = usePagination(trips, 5); // Start with 5 items per page
 
   const copyTripLink = async (tripId: string) => {
     if (!tripId) {
@@ -227,7 +239,7 @@ export default function MyTripsTable({
             </tr>
           </thead>
           <tbody>
-            {trips.map((t, i) => (
+            {paginatedItems.map((t, i) => (
               <tr key={t.id} className={i % 2 === 1 ? "bg-white" : "bg-white"}>
                 <td className="px-4 py-3">
                   {t.id ? (
@@ -357,6 +369,17 @@ export default function MyTripsTable({
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        itemsPerPage={itemsPerPage}
+        totalItems={totalItems}
+        onPageChange={handlePageChange}
+        onItemsPerPageChange={handleItemsPerPageChange}
+        itemsPerPageOptions={[5, 10, 20]}
+      />
 
       {/* Confirm Modals */}
       <AlertDialog

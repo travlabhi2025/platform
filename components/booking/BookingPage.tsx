@@ -143,7 +143,7 @@ export default function BookingPage({ tripId }: { tripId: string }) {
                 </li>
                 <li className="flex items-start">
                   <span className="text-blue-600 mr-2">2.</span>
-                  We'll contact you for with payment details
+                  We&apos;ll contact you for with payment details
                 </li>
                 <li className="flex items-start">
                   <span className="text-blue-600 mr-2">3.</span>

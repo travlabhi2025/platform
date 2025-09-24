@@ -5,6 +5,13 @@ export const EVEREST_BASE_CAMP_TRIP: TripDetailsData = {
   id: "everest-base-camp",
   title: "Trek to Everest Base",
   heroImageUrl: "/images/trip-details/everest.png",
+  galleryImages: [
+    "/images/trip-details/everest.png",
+    "/images/trip-details/everest.png",
+    "/images/trip-details/everest.png",
+    "/images/trip-details/everest.png",
+    "/images/trip-details/everest.png",
+  ],
   priceInInr: 120000,
   currency: "INR",
   perPerson: true,

@@ -28,7 +28,7 @@ service firebase.storage {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Allow public read access to trip images
+    // Allow public read access to trip images (including gallery images)
     match /trip-images/{allPaths=**} {
       allow read: if true;
       allow write: if request.auth != null;
@@ -70,16 +70,15 @@ Your Firebase Storage will be organized as follows:
 ```
 trip-images/
 ├── {userId}/
-│   ├── trip-{tripId}/
-│   │   ├── hero-image.jpg
-│   │   ├── gallery-image-1.jpg
-│   │   └── gallery-image-2.jpg
+│   ├── hero-image-{timestamp}.jpg          # Trip cover image
+│   ├── image-{timestamp}.jpg               # Gallery image 1
+│   ├── image-{timestamp}.jpg               # Gallery image 2
 │   └── ...
 └── ...
 
 profile-images/
 ├── {userId}/
-│   ├── profile-pic.jpg
+│   ├── profile-{timestamp}.jpg             # Profile picture
 │   └── ...
 └── ...
 ```

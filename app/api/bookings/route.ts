@@ -74,7 +74,6 @@ export async function POST(request: NextRequest) {
       preferences: preferences || "",
       totalAmount,
       status: "Pending",
-      bookingDate: new Date(),
     });
 
     // Send email notifications

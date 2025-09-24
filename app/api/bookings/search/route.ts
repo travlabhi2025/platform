@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { bookingService } from "@/lib/firestore";
+import { bookingService, Booking, Trip } from "@/lib/firestore";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let bookings = [];
+    let bookings: Booking[] = [];
 
     // Search by email if provided
     if (email) {
@@ -41,40 +41,37 @@ export async function POST(request: NextRequest) {
       // We need to fetch trip details for each booking to apply filters
       const { tripService } = await import("@/lib/firestore");
 
-      const bookingsWithTrips = await Promise.all(
+      const bookingsWithTrips = (await Promise.all(
         filteredBookings.map(async (booking) => {
           const trip = await tripService.getTripById(booking.tripId);
           return { ...booking, trip };
         })
-      );
+      )) as (Booking & { trip: Trip | null })[];
 
-      filteredBookings = bookingsWithTrips.filter((bookingWithTrip) => {
-        const trip = bookingWithTrip.trip;
-        if (!trip) return false;
+      filteredBookings = (
+        bookingsWithTrips.filter((bookingWithTrip) => {
+          const trip = bookingWithTrip.trip;
+          if (!trip) return false;
 
-        // Filter by trip name if provided
-        if (
-          tripName &&
-          !trip.title.toLowerCase().includes(tripName.toLowerCase())
-        ) {
-          return false;
-        }
+          // Filter by trip name if provided
+          if (
+            tripName &&
+            !trip.title.toLowerCase().includes(tripName.toLowerCase())
+          ) {
+            return false;
+          }
 
-        // Filter by host name if provided
-        if (
-          hostName &&
-          !trip.host?.name?.toLowerCase().includes(hostName.toLowerCase())
-        ) {
-          return false;
-        }
+          // Filter by host name if provided
+          if (
+            hostName &&
+            !trip.host?.name?.toLowerCase().includes(hostName.toLowerCase())
+          ) {
+            return false;
+          }
 
-        return true;
-      });
-
-      // Remove trip data from response (keep it clean)
-      filteredBookings = filteredBookings.map(
-        ({ trip, ...booking }) => booking
-      );
+          return true;
+        }) as (Booking & { trip: Trip | null })[]
+      ).map(({ trip: _trip, ...booking }) => booking);
     }
 
     return NextResponse.json({

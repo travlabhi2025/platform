@@ -62,7 +62,7 @@ export default function BookingConfirmationPage({
             </CardHeader>
             <CardContent className="space-y-4">
               <p>
-                Thank you for your booking request. We've recorded your
+                Thank you for your booking request. We&apos;ve recorded your
                 information and sent a confirmation to your email.
               </p>
 

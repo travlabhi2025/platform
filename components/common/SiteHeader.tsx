@@ -36,7 +36,7 @@ export default function SiteHeader() {
               src="/images/logo.png"
               alt="TravlAbhi"
               width={120}
-              height={120}
+              height={80}
             />
           </Link>
           <nav className="hidden lg:flex items-center gap-8">

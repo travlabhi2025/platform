@@ -70,6 +70,7 @@ export interface TripDetailsData {
   id: string;
   title: string;
   heroImageUrl: string;
+  galleryImages?: string[]; // Optional array of gallery image URLs
   priceInInr: number;
   currency: CurrencyCode;
   perPerson: boolean;

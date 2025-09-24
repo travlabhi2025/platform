@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Booking } from "./types";
+import Pagination, { usePagination } from "@/components/ui/pagination";
 
 export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
   const [query, setQuery] = useState("");
@@ -23,12 +24,23 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
           : b.status === "Rejected";
       const byQuery = q
         ? b.travelerName.toLowerCase().includes(q) ||
-          b.trip.toLowerCase().includes(q) ||
+          b.tripId.toLowerCase().includes(q) ||
           b.bookingDate.includes(q)
         : true;
       return byTab && byQuery;
     });
   }, [bookings, query, tab]);
+
+  // Pagination hook
+  const {
+    currentPage,
+    totalPages,
+    itemsPerPage,
+    totalItems,
+    paginatedItems,
+    handlePageChange,
+    handleItemsPerPageChange,
+  } = usePagination(filtered, 5); // Start with 5 items per page
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
@@ -126,11 +138,11 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
             </tr>
           </thead>
           <tbody>
-            {filtered.length > 0 ? (
-              filtered.map((b, i) => (
+            {paginatedItems.length > 0 ? (
+              paginatedItems.map((b, i) => (
                 <tr key={`${b.travelerName}-${i}`} className="bg-white">
                   <td className="px-4 py-3 text-slate-800">{b.travelerName}</td>
-                  <td className="px-4 py-3 text-slate-600">{b.trip}</td>
+                  <td className="px-4 py-3 text-slate-600">{b.tripId}</td>
                   <td className="px-4 py-3 text-slate-600">{b.bookingDate}</td>
                   <td className="px-4 py-3">
                     <span
@@ -170,6 +182,17 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        itemsPerPage={itemsPerPage}
+        totalItems={totalItems}
+        onPageChange={handlePageChange}
+        onItemsPerPageChange={handleItemsPerPageChange}
+        itemsPerPageOptions={[5, 10, 20]}
+      />
     </div>
   );
 }

@@ -14,12 +14,14 @@ import {
 import TripBasicInfo from "./TripBasicInfo";
 import TripDetails from "./TripDetails";
 import TripItinerary from "./TripItinerary";
+import TripGallery from "./TripGallery";
 import TripFAQs from "./TripFAQs";
 import TripReview from "./TripReview";
 
 const initialFormData: TripFormData = {
   title: "",
   heroImageUrl: "",
+  galleryImages: [],
   priceInInr: 0,
   about: {
     tripName: "",
@@ -66,8 +68,9 @@ const steps = [
     description: "Location, dates, and trip specifics",
   },
   { id: 3, title: "Itinerary", description: "Daily activities and inclusions" },
-  { id: 4, title: "FAQs", description: "Frequently asked questions" },
-  { id: 5, title: "Review", description: "Review and publish your trip" },
+  { id: 4, title: "Gallery", description: "Additional trip images" },
+  { id: 5, title: "FAQs", description: "Frequently asked questions" },
+  { id: 6, title: "Review", description: "Review and publish your trip" },
 ];
 
 export default function CreateTripPage() {
@@ -167,9 +170,12 @@ export default function CreateTripPage() {
           return false;
         }
       } else if (step === 4) {
-        // FAQs step - no validation required, FAQs are optional
+        // Gallery step - no validation required, gallery images are optional
         return true;
       } else if (step === 5) {
+        // FAQs step - no validation required, FAQs are optional
+        return true;
+      } else if (step === 6) {
         // Final validation - comprehensive check of all required fields
         const validationErrors: Record<string, string> = {};
 
@@ -352,7 +358,7 @@ export default function CreateTripPage() {
         );
       case 4:
         return (
-          <TripFAQs
+          <TripGallery
             formData={formData}
             updateFormData={updateFormData}
             onNext={nextStep}
@@ -361,6 +367,16 @@ export default function CreateTripPage() {
           />
         );
       case 5:
+        return (
+          <TripFAQs
+            formData={formData}
+            updateFormData={updateFormData}
+            onNext={nextStep}
+            onPrev={prevStep}
+            errors={errors}
+          />
+        );
+      case 6:
         return (
           <TripReview
             formData={formData}

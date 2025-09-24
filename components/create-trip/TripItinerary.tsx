@@ -17,6 +17,29 @@ interface TripItineraryProps {
   errors: Record<string, string>;
 }
 
+// Suggested inclusions and exclusions
+const SUGGESTED_INCLUSIONS = [
+  "Accommodation",
+  "Transportation",
+  "Meals",
+  "Guided tours",
+  "Entrance fees",
+  "Activities",
+  "Tour guide",
+  "Taxes",
+];
+
+const SUGGESTED_EXCLUSIONS = [
+  "Airfare",
+  "Personal expenses",
+  "Optional activities",
+  "Travel insurance",
+  "Visa fees",
+  "Gratuities",
+  "Unlisted meals",
+  "Additional services",
+];
+
 export default function TripItinerary({
   formData,
   updateFormData,
@@ -65,6 +88,22 @@ export default function TripItinerary({
     updateFormData({
       exclusions: formData.exclusions.filter((_, i) => i !== index),
     });
+  };
+
+  const addSuggestedInclusion = (suggestion: string) => {
+    if (!formData.inclusions.includes(suggestion)) {
+      updateFormData({
+        inclusions: [...formData.inclusions, suggestion],
+      });
+    }
+  };
+
+  const addSuggestedExclusion = (suggestion: string) => {
+    if (!formData.exclusions.includes(suggestion)) {
+      updateFormData({
+        exclusions: [...formData.exclusions, suggestion],
+      });
+    }
   };
 
   return (
@@ -136,6 +175,27 @@ export default function TripItinerary({
         {errors.inclusions && (
           <p className="text-sm text-red-500">{errors.inclusions}</p>
         )}
+
+        {/* Suggested inclusions */}
+        <div className="space-y-2">
+          <p className="text-sm text-gray-600">Quick add suggestions:</p>
+          <div className="flex flex-wrap gap-2">
+            {SUGGESTED_INCLUSIONS.map((suggestion) => (
+              <Button
+                key={suggestion}
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => addSuggestedInclusion(suggestion)}
+                disabled={formData.inclusions.includes(suggestion)}
+                className="text-xs h-8 px-3"
+              >
+                + {suggestion}
+              </Button>
+            ))}
+          </div>
+        </div>
+
         <div className="space-y-2">
           {formData.inclusions.map((inclusion, index) => (
             <div
@@ -156,7 +216,7 @@ export default function TripItinerary({
           ))}
           <div className="flex gap-2">
             <Input
-              placeholder="Add inclusion (e.g., Accommodation, Meals)"
+              placeholder="Add custom inclusion"
               value={newInclusion}
               onChange={(e) => setNewInclusion(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && addInclusion()}
@@ -174,6 +234,27 @@ export default function TripItinerary({
         {errors.exclusions && (
           <p className="text-sm text-red-500">{errors.exclusions}</p>
         )}
+
+        {/* Suggested exclusions */}
+        <div className="space-y-2">
+          <p className="text-sm text-gray-600">Quick add suggestions:</p>
+          <div className="flex flex-wrap gap-2">
+            {SUGGESTED_EXCLUSIONS.map((suggestion) => (
+              <Button
+                key={suggestion}
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => addSuggestedExclusion(suggestion)}
+                disabled={formData.exclusions.includes(suggestion)}
+                className="text-xs h-8 px-3"
+              >
+                + {suggestion}
+              </Button>
+            ))}
+          </div>
+        </div>
+
         <div className="space-y-2">
           {formData.exclusions.map((exclusion, index) => (
             <div
@@ -194,7 +275,7 @@ export default function TripItinerary({
           ))}
           <div className="flex gap-2">
             <Input
-              placeholder="Add exclusion (e.g., Personal expenses, Travel insurance)"
+              placeholder="Add custom exclusion"
               value={newExclusion}
               onChange={(e) => setNewExclusion(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && addExclusion()}

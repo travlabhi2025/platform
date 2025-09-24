@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import TripBasicInfo from "../create-trip/TripBasicInfo";
 import TripDetails from "../create-trip/TripDetails";
 import TripItinerary from "../create-trip/TripItinerary";
+import TripGallery from "../create-trip/TripGallery";
 import TripFAQs from "../create-trip/TripFAQs";
 import TripReview from "../create-trip/TripReview";
 
@@ -26,8 +27,9 @@ const steps = [
     description: "Location, dates, and trip specifics",
   },
   { id: 3, title: "Itinerary", description: "Daily activities and inclusions" },
-  { id: 4, title: "FAQs", description: "Frequently asked questions" },
-  { id: 5, title: "Review", description: "Review and update your trip" },
+  { id: 4, title: "Gallery", description: "Additional trip images" },
+  { id: 5, title: "FAQs", description: "Frequently asked questions" },
+  { id: 6, title: "Review", description: "Review and update your trip" },
 ];
 
 interface EditTripPageProps {
@@ -141,9 +143,12 @@ export default function EditTripPage({ tripId }: EditTripPageProps) {
         return false;
       }
     } else if (step === 4) {
-      // FAQs step - no validation required, FAQs are optional
+      // Gallery step - no validation required, gallery images are optional
       return true;
     } else if (step === 5) {
+      // FAQs step - no validation required, FAQs are optional
+      return true;
+    } else if (step === 6) {
       // Final validation - comprehensive check of all required fields
       const validationErrors: Record<string, string> = {};
 
@@ -256,7 +261,8 @@ export default function EditTripPage({ tripId }: EditTripPageProps) {
       } else {
         console.error("Submit error:", error);
         toast.error(
-          (error as Error).message || "An error occurred while updating the trip"
+          (error as Error).message ||
+            "An error occurred while updating the trip"
         );
       }
     } finally {
@@ -299,7 +305,7 @@ export default function EditTripPage({ tripId }: EditTripPageProps) {
         );
       case 4:
         return (
-          <TripFAQs
+          <TripGallery
             formData={formData}
             updateFormData={updateFormData}
             onNext={nextStep}
@@ -308,6 +314,16 @@ export default function EditTripPage({ tripId }: EditTripPageProps) {
           />
         );
       case 5:
+        return (
+          <TripFAQs
+            formData={formData}
+            updateFormData={updateFormData}
+            onNext={nextStep}
+            onPrev={prevStep}
+            errors={errors}
+          />
+        );
+      case 6:
         return (
           <TripReview
             formData={formData}

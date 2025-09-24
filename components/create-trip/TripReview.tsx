@@ -12,7 +12,16 @@ import {
   Clock,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import { TripFormData, calculateDaysBetween } from "@/lib/validations/trip";
 
 interface TripReviewProps {
@@ -79,6 +88,55 @@ export default function TripReview({
                 priority
                 className="object-cover"
               />
+            </div>
+          )}
+
+          {/* Gallery Images Preview */}
+          {formData.galleryImages && formData.galleryImages.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="font-semibold text-gray-900">Trip Gallery</h4>
+              <div className="relative">
+                <Carousel
+                  className="w-full"
+                  opts={{
+                    align: "start",
+                    loop: true,
+                  }}
+                >
+                  <CarouselContent className="-ml-2 md:-ml-4">
+                    {formData.galleryImages.map((imageUrl, index) => (
+                      <CarouselItem
+                        key={index}
+                        className="pl-2 md:pl-4 basis-full"
+                      >
+                        <div className="relative w-full h-[280px] md:h-[340px] lg:h-[380px] overflow-hidden rounded-md">
+                          <Image
+                            src={imageUrl}
+                            alt={`${formData.title} - Gallery image ${
+                              index + 1
+                            }`}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
+                          />
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+
+                  {/* Custom navigation buttons */}
+                  <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white shadow-lg border-0">
+                    <ChevronLeft className="h-4 w-4" />
+                  </CarouselPrevious>
+                  <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white shadow-lg border-0">
+                    <ChevronRight className="h-4 w-4" />
+                  </CarouselNext>
+                </Carousel>
+              </div>
+              <p className="text-sm text-gray-500 text-center">
+                {formData.galleryImages.length} gallery image
+                {formData.galleryImages.length !== 1 ? "s" : ""} added
+              </p>
             </div>
           )}
 

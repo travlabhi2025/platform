@@ -14,7 +14,7 @@ export default function TripDiscoveryPage() {
     return (
       <div className="min-h-screen bg-white">
         <SiteHeader />
-        <main className="mx-auto px-4 md:px-8 lg:px-12 pt-8 md:pt-10 pb-10">
+        <main className="mx-auto px-4 md:px-8 lg:px-12 pt-8 md:pt-8 pb-10">
           <div className="flex items-center justify-center h-64">
             <div className="text-lg">Loading trips...</div>
           </div>
@@ -27,7 +27,7 @@ export default function TripDiscoveryPage() {
     return (
       <div className="min-h-screen bg-white">
         <SiteHeader />
-        <main className="mx-auto px-4 md:px-8 lg:px-12 pt-8 md:pt-10 pb-10">
+        <main className="mx-auto px-4 md:px-8 lg:px-12 pt-8 md:pt-8 pb-10">
           <div className="flex items-center justify-center h-64">
             <div className="text-lg text-red-600">
               Error loading trips: {error}
@@ -41,7 +41,7 @@ export default function TripDiscoveryPage() {
   return (
     <div className="min-h-screen bg-white">
       <SiteHeader />
-      <main className="mx-auto px-4 md:px-8 lg:px-12 pt-8 md:pt-10 pb-10">
+      <main className="mx-auto px-4 md:px-8 lg:px-12 pt-8 md:pt-8 pb-10">
         <div className="mb-8">
           <h1 className="font-garetheavy text-primary text-3xl md:text-4xl leading-[44px] mb-4">
             Discover Amazing Trips
