@@ -118,6 +118,7 @@ export interface User {
   verified: boolean;
   kycVerified: boolean;
   badge?: string;
+  role: "trip-organizer" | "customer";
   createdAt: Timestamp;
   updatedAt: Timestamp;
   // Extended profile fields

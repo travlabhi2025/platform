@@ -1,4 +1,5 @@
 import BookingConfirmationPage from "@/components/booking/BookingConfirmationPage";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -6,5 +7,9 @@ interface PageProps {
 
 export default async function Page({ params }: PageProps) {
   const { id } = await params;
-  return <BookingConfirmationPage bookingId={id} />;
+  return (
+    <ProtectedRoute>
+      <BookingConfirmationPage bookingId={id} />
+    </ProtectedRoute>
+  );
 }

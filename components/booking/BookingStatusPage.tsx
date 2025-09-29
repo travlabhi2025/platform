@@ -1,12 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTrip } from "@/lib/hooks";
+import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
+import SiteHeader from "@/components/common/SiteHeader";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import Pagination, { usePagination } from "@/components/ui/pagination";
+import { Badge } from "@/components/ui/badge";
 
 // Component for displaying individual booking cards
 function BookingCard({
@@ -134,8 +146,102 @@ function BookingCard({
   );
 }
 
+// Component for displaying bookings in a table row
+function BookingTableRow({
+  booking,
+}: {
+  booking: {
+    id: string;
+    tripId: string;
+    travelerName: string;
+    travelerEmail: string;
+    travelerPhone: string;
+    groupSize: number;
+    preferences?: string;
+    totalAmount: number;
+    status: string;
+    bookingDate: { seconds: number } | string;
+  };
+}) {
+  const { trip } = useTrip(booking.tripId);
+
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "approved":
+        return "default";
+      case "pending":
+        return "secondary";
+      case "rejected":
+        return "destructive";
+      default:
+        return "outline";
+    }
+  };
+
+  const formatDate = (date: { seconds: number } | string) => {
+    try {
+      if (typeof date === "object" && date.seconds) {
+        return new Date(date.seconds * 1000).toLocaleDateString();
+      }
+      return new Date(date as string).toLocaleDateString();
+    } catch {
+      return "Invalid Date";
+    }
+  };
+
+  return (
+    <TableRow className="hover:bg-gray-50">
+      <TableCell className="font-medium w-[20%]">
+        <div className="flex flex-col">
+          <span className="font-mono text-sm">{booking.id}</span>
+          <span className="text-xs text-gray-500">
+            {formatDate(booking.bookingDate)}
+          </span>
+        </div>
+      </TableCell>
+      <TableCell className="w-[25%]">
+        <div className="flex flex-col">
+          <span className="font-medium">{trip?.title || "Loading..."}</span>
+          <span className="text-sm text-gray-500 truncate">
+            {booking.tripId}
+          </span>
+        </div>
+      </TableCell>
+      <TableCell className="w-[20%]">
+        <div className="flex flex-col">
+          <span className="font-medium">{booking.travelerName}</span>
+          <span className="text-sm text-gray-500 truncate">
+            {booking.travelerEmail}
+          </span>
+        </div>
+      </TableCell>
+      <TableCell className="text-center w-[10%]">
+        {booking.groupSize} {booking.groupSize === 1 ? "person" : "people"}
+      </TableCell>
+      <TableCell className="text-right font-medium w-[12%]">
+        ₹{booking.totalAmount.toLocaleString()}
+      </TableCell>
+      <TableCell className="w-[8%]">
+        <Badge variant={getStatusBadgeVariant(booking.status)}>
+          {booking.status}
+        </Badge>
+      </TableCell>
+      <TableCell className="w-[5%]">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => (window.location.href = `/trip/${booking.tripId}`)}
+        >
+          View Trip
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+}
+
 export default function BookingStatusPage() {
-  const [searchType, setSearchType] = useState<"id" | "details">("id");
+  const { userProfile } = useAuth();
+  const [searchType, setSearchType] = useState<"id" | "details">("details");
   const [bookingId, setBookingId] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -170,9 +276,28 @@ export default function BookingStatusPage() {
     }>
   >([]);
 
+  // Use pagination hook
+  const {
+    currentPage,
+    totalPages,
+    itemsPerPage,
+    totalItems,
+    paginatedItems: currentBookings,
+    handlePageChange,
+    handleItemsPerPageChange,
+  } = usePagination(bookings, 10);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+
+  // Auto-fill form with user profile information
+  useEffect(() => {
+    if (userProfile) {
+      setEmail(userProfile.email || "");
+      setPhone(userProfile.contact?.phone || "");
+    }
+  }, [userProfile]);
 
   // Fetch trip details when we have a booking
   const { trip, loading: tripLoading } = useTrip(booking?.tripId || "");
@@ -273,7 +398,8 @@ export default function BookingStatusPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-20 py-16 max-w-4xl">
+      <SiteHeader />
+      <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-20 py-16 max-w-7xl">
         <div className="text-center mb-8">
           <h1 className="font-garetheavy text-primary text-3xl md:text-4xl mb-4">
             Check Booking Status
@@ -438,9 +564,48 @@ export default function BookingStatusPage() {
                     {bookings.length > 1 ? "s" : ""}
                   </h3>
                 </div>
-                {bookings.map((bookingItem, index) => (
-                  <BookingCard key={bookingItem.id} booking={bookingItem} />
-                ))}
+
+                {/* Results Table */}
+                <div className="border rounded-lg overflow-hidden w-full">
+                  <Table className="w-full">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[20%]">Booking ID</TableHead>
+                        <TableHead className="w-[25%]">Trip</TableHead>
+                        <TableHead className="w-[20%]">Traveler</TableHead>
+                        <TableHead className="text-center w-[10%]">
+                          Group Size
+                        </TableHead>
+                        <TableHead className="text-right w-[12%]">
+                          Amount
+                        </TableHead>
+                        <TableHead className="w-[8%]">Status</TableHead>
+                        <TableHead className="w-[5%]">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {currentBookings.map((bookingItem) => (
+                        <BookingTableRow
+                          key={bookingItem.id}
+                          booking={bookingItem}
+                        />
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Pagination */}
+                <div className="mt-6">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    itemsPerPage={itemsPerPage}
+                    totalItems={totalItems}
+                    onPageChange={handlePageChange}
+                    onItemsPerPageChange={handleItemsPerPageChange}
+                    itemsPerPageOptions={[5, 10, 20]}
+                  />
+                </div>
               </div>
             ) : booking ? (
               <Card>

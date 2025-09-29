@@ -1,16 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useTrip } from "@/lib/hooks";
+import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
+import SiteHeader from "@/components/common/SiteHeader";
 
 export default function BookingPage({ tripId }: { tripId: string }) {
   const { trip, loading: tripLoading } = useTrip(tripId);
+  const { userProfile, isCustomer } = useAuth();
   const [loading, setLoading] = useState(false);
   const [bookingSubmitted, setBookingSubmitted] = useState(false);
   const [bookingId, setBookingId] = useState<string | null>(null);
@@ -24,6 +27,18 @@ export default function BookingPage({ tripId }: { tripId: string }) {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Auto-fill customer information if they're a customer
+  useEffect(() => {
+    if (isCustomer() && userProfile) {
+      setForm((prev) => ({
+        ...prev,
+        travelerName: userProfile.name || "",
+        travelerEmail: userProfile.email || "",
+        travelerPhone: userProfile.contact?.phone || "",
+      }));
+    }
+  }, [isCustomer, userProfile]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -104,6 +119,7 @@ export default function BookingPage({ tripId }: { tripId: string }) {
   if (bookingSubmitted && bookingId) {
     return (
       <div className="min-h-screen bg-white">
+        <SiteHeader />
         <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-20 py-16 max-w-4xl">
           <div className="text-center">
             <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
@@ -170,6 +186,7 @@ export default function BookingPage({ tripId }: { tripId: string }) {
 
   return (
     <div className="min-h-screen bg-white">
+      <SiteHeader />
       <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-20 py-16 max-w-4xl">
         <h1 className="font-garetheavy text-primary text-3xl md:text-4xl mb-2">
           Request Booking

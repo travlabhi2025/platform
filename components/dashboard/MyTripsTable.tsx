@@ -310,7 +310,7 @@ export default function MyTripsTable({
                 <td className="px-4 py-3">
                   {t.bookings > 0 ? (
                     <Link
-                      href={`/dashboard/bookings?tripId=${t.id}`}
+                      href={`/trip-organizer/dashboard/bookings?tripId=${t.id}`}
                       className="text-slate-800 hover:text-primary hover:underline flex items-center gap-1"
                       title="View bookings for this trip"
                     >

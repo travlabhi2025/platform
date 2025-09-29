@@ -54,12 +54,12 @@ export default function Header() {
                       <span className="sr-only">Open menu</span>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuContent align="end" className="w-44 z-[110]">
                     <DropdownMenuItem asChild>
                       <Link href="/profile">Profile</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/dashboard">Dashboard</Link>
+                      <Link href="/trip-organizer/dashboard">Dashboard</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={signOut}>
                       Sign Out
@@ -155,7 +155,10 @@ export default function Header() {
             </Link>
             {user ? (
               <div className="flex flex-col gap-2">
-                <Link href="/dashboard" className="text-primary font-medium">
+                <Link
+                  href="/trip-organizer/dashboard"
+                  className="text-primary font-medium"
+                >
                   Dashboard
                 </Link>
                 <button

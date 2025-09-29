@@ -1,12 +1,12 @@
 "use client";
 
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import OrganizerProtectedRoute from "@/components/auth/OrganizerProtectedRoute";
 import BookingManagementPage from "@/components/dashboard/BookingManagementPage";
 
 export default function BookingsPage() {
   return (
-    <ProtectedRoute>
+    <OrganizerProtectedRoute>
       <BookingManagementPage />
-    </ProtectedRoute>
+    </OrganizerProtectedRoute>
   );
 }

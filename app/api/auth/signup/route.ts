@@ -3,16 +3,23 @@ import { authService } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name } = await request.json();
+    const { email, password, name, role } = await request.json();
 
-    if (!email || !password || !name) {
+    if (!email || !password || !name || !role) {
       return NextResponse.json(
-        { error: "Email, password, and name are required" },
+        { error: "Email, password, name, and role are required" },
         { status: 400 }
       );
     }
 
-    const user = await authService.signUp(email, password, name);
+    if (role !== "trip-organizer" && role !== "customer") {
+      return NextResponse.json(
+        { error: "Role must be either 'trip-organizer' or 'customer'" },
+        { status: 400 }
+      );
+    }
+
+    const user = await authService.signUp(email, password, name, role);
     return NextResponse.json({ user }, { status: 201 });
     } catch (error: unknown) {
     console.error("Error signing up:", error);

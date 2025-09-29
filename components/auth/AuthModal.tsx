@@ -13,6 +13,7 @@ export default function AuthModal({ isOpen, onClose, mode }: AuthModalProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [role, setRole] = useState<"trip-organizer" | "customer">("customer");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -27,7 +28,7 @@ export default function AuthModal({ isOpen, onClose, mode }: AuthModalProps) {
       if (mode === "signin") {
         await signIn(email, password);
       } else {
-        await signUp(email, password, name);
+        await signUp(email, password, name, role);
       }
       onClose();
     } catch (err: unknown) {
@@ -56,18 +57,63 @@ export default function AuthModal({ isOpen, onClose, mode }: AuthModalProps) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === "signup" && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Name
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Account Type
+                </label>
+                <div className="space-y-2">
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      id="customer"
+                      name="role"
+                      value="customer"
+                      checked={role === "customer"}
+                      onChange={(e) =>
+                        setRole(e.target.value as "trip-organizer" | "customer")
+                      }
+                      className="mr-2"
+                    />
+                    <label htmlFor="customer" className="text-sm text-gray-700">
+                      Customer - Book and travel on trips
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      id="trip-organizer"
+                      name="role"
+                      value="trip-organizer"
+                      checked={role === "trip-organizer"}
+                      onChange={(e) =>
+                        setRole(e.target.value as "trip-organizer" | "customer")
+                      }
+                      className="mr-2"
+                    />
+                    <label
+                      htmlFor="trip-organizer"
+                      className="text-sm text-gray-700"
+                    >
+                      Trip Organizer - Create and manage trips
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
 
           <div>

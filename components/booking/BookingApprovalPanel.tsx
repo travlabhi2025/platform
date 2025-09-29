@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import BookingActions from "./BookingActions";
@@ -31,7 +31,7 @@ const BookingApprovalPanel: React.FC<BookingApprovalPanelProps> = ({
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     if (!user?.uid) return;
 
     try {
@@ -50,7 +50,7 @@ const BookingApprovalPanel: React.FC<BookingApprovalPanelProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.uid, tripId]);
 
   useEffect(() => {
     if (user?.uid) {

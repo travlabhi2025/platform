@@ -298,7 +298,7 @@ export default function CreateTripPage() {
       }
 
       toast.success("Trip created successfully!");
-      router.push("/dashboard");
+      router.push("/trip-organizer/dashboard");
     } catch (error: unknown) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((error as any).name === "ZodError") {

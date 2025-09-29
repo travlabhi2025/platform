@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import {
   Card,
@@ -25,6 +25,8 @@ export default function SigninPage() {
 
   const { signIn } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +35,14 @@ export default function SigninPage() {
 
     try {
       await signIn(email, password);
-      router.push("/dashboard");
+
+      // Redirect to the original URL if available, otherwise to dashboard
+      if (redirectUrl) {
+        router.push(decodeURIComponent(redirectUrl));
+      } else {
+        // Default redirect based on user role - this will be handled by the dashboard logic
+        router.push("/dashboard");
+      }
     } catch (err: unknown) {
       setError((err as Error).message || "An error occurred");
     } finally {

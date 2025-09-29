@@ -17,14 +17,14 @@ export default function OrganizerCTA() {
         </p>
         {user ? (
           <Link
-            href="/dashboard"
+            href="/trip-organizer/dashboard"
             className="inline-block bg-white text-black px-6 py-2 rounded-md hover:bg-gray-100 transition-colors duration-200 font-plusjakartasans font-semibold"
           >
             Go to Dashboard
           </Link>
         ) : (
           <Link
-            href="/dashboard"
+            href="/trip-organizer/dashboard"
             className="inline-block bg-white text-black px-6 py-2 rounded-md hover:bg-gray-100 transition-colors duration-200 font-plusjakartasans font-semibold"
           >
             Start Organising

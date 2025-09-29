@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import { Booking } from "./types";
 import Pagination, { usePagination } from "@/components/ui/pagination";
 
@@ -142,7 +143,15 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
               paginatedItems.map((b, i) => (
                 <tr key={`${b.travelerName}-${i}`} className="bg-white">
                   <td className="px-4 py-3 text-slate-800">{b.travelerName}</td>
-                  <td className="px-4 py-3 text-slate-600">{b.tripId}</td>
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/trip/${b.tripId}`}
+                      className="text-slate-800 hover:text-primary hover:underline flex items-center gap-1"
+                    >
+                      {b.tripName || b.tripId}
+                      <ExternalLink className="h-3 w-3" />
+                    </Link>
+                  </td>
                   <td className="px-4 py-3 text-slate-600">{b.bookingDate}</td>
                   <td className="px-4 py-3">
                     <span
@@ -161,7 +170,7 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
                   </td>
                   <td className="px-4 py-3 text-primary">
                     <Link
-                      href={`/dashboard/bookings/${b.id}`}
+                      href={`/trip-organizer/dashboard/bookings/${b.id}`}
                       className="underline text-xs hover:text-primary/80"
                     >
                       View Details

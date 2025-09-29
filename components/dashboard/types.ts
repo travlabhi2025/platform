@@ -16,6 +16,7 @@ export type Trip = {
 export type Booking = {
   id: string;
   tripId: string;
+  tripName?: string; // Added trip name
   travelerName: string;
   travelerEmail: string;
   travelerPhone: string;

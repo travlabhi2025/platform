@@ -21,7 +21,8 @@ export const authService = {
   async signUp(
     email: string,
     password: string,
-    name: string
+    name: string,
+    role: "trip-organizer" | "customer"
   ): Promise<AuthUser> {
     const userCredential = await createUserWithEmailAndPassword(
       auth,
@@ -40,6 +41,7 @@ export const authService = {
         email,
         verified: false,
         kycVerified: false,
+        role,
       },
       user.uid
     );

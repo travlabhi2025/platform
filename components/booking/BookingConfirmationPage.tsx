@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { useTrip } from "@/lib/hooks";
+import SiteHeader from "@/components/common/SiteHeader";
 
 export default function BookingConfirmationPage({
   bookingId,
@@ -50,6 +51,7 @@ export default function BookingConfirmationPage({
 
   return (
     <div className="min-h-screen bg-white">
+      <SiteHeader />
       <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-20 py-8 max-w-3xl">
         {loading ? (
           <div>Loading confirmation…</div>

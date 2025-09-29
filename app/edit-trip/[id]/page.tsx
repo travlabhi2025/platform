@@ -1,5 +1,5 @@
 import EditTripPage from "@/components/edit-trip/EditTripPage";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import OrganizerProtectedRoute from "@/components/auth/OrganizerProtectedRoute";
 
 export const dynamic = "force-dynamic";
 
@@ -12,8 +12,8 @@ export default async function Page({ params }: PageProps) {
   console.log("Edit Trip Page - Received tripId:", tripId);
 
   return (
-    <ProtectedRoute>
+    <OrganizerProtectedRoute>
       <EditTripPage tripId={tripId} />
-    </ProtectedRoute>
+    </OrganizerProtectedRoute>
   );
 }

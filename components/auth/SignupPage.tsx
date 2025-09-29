@@ -15,12 +15,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Image from "next/image";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [role, setRole] = useState<"trip-organizer" | "customer">("customer");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -33,8 +35,8 @@ export default function SignupPage() {
     setError("");
 
     try {
-      await signUp(email, password, name);
-      router.push("/dashboard");
+      await signUp(email, password, name, role);
+      router.push("/trip-organizer/dashboard");
     } catch (err: unknown) {
       setError((err as Error).message || "An error occurred");
     } finally {
@@ -125,6 +127,40 @@ export default function SignupPage() {
                   className="h-11"
                   placeholder="Create a password"
                 />
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-sm font-medium text-slate-700">
+                  Account Type
+                </Label>
+                <RadioGroup
+                  value={role}
+                  onValueChange={(value) =>
+                    setRole(value as "trip-organizer" | "customer")
+                  }
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="customer" id="customer" />
+                    <Label
+                      htmlFor="customer"
+                      className="text-sm text-slate-600 cursor-pointer"
+                    >
+                      Customer - Book and travel on trips
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem
+                      value="trip-organizer"
+                      id="trip-organizer"
+                    />
+                    <Label
+                      htmlFor="trip-organizer"
+                      className="text-sm text-slate-600 cursor-pointer"
+                    >
+                      Trip Organizer - Create and manage trips
+                    </Label>
+                  </div>
+                </RadioGroup>
               </div>
 
               {error && (

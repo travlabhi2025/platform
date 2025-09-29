@@ -58,7 +58,7 @@ export default function TripDiscoveryPage() {
             </div>
             {user && (
               <Link
-                href="/dashboard"
+                href="/trip-organizer/dashboard"
                 className="bg-primary text-white px-6 py-2 rounded-md hover:bg-primary/90 transition-colors duration-200"
               >
                 Create Your First Trip

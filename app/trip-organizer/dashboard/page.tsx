@@ -1,11 +1,11 @@
 import DashboardPage from "@/components/dashboard/DashboardPage";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import OrganizerProtectedRoute from "@/components/auth/OrganizerProtectedRoute";
 
 const Page = () => {
   return (
-    <ProtectedRoute>
+    <OrganizerProtectedRoute>
       <DashboardPage />
-    </ProtectedRoute>
+    </OrganizerProtectedRoute>
   );
 };
 

@@ -212,7 +212,9 @@ const BookingStatsCard: React.FC = () => {
               approval.
             </p>
             <button
-              onClick={() => (window.location.href = "/dashboard/bookings")}
+              onClick={() =>
+                (window.location.href = "/trip-organizer/dashboard/bookings")
+              }
               className="text-sm text-blue-600 hover:text-blue-800 font-medium"
             >
               Review Pending Bookings →

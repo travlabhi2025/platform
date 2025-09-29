@@ -10,7 +10,7 @@ import Experiences from "@/components/home-page/Experiences";
 
 export default function Home() {
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen ">
       <Header />
       <HeroSection />
       <TopDestinations />

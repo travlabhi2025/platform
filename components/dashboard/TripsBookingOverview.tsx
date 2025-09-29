@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,14 +21,18 @@ const TripsBookingOverview: React.FC = () => {
   const [trips, setTrips] = useState<TripBookingStats[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchTripsWithBookingStats = async () => {
+  const fetchTripsWithBookingStats = useCallback(async () => {
     try {
       setLoading(true);
       const uid = user?.uid;
       if (!uid) return;
 
-      // Fetch user's trips
-      const tripsResponse = await fetch(`/api/trips?userId=${uid}`);
+      // Fetch user's trips using the correct endpoint
+      const tripsResponse = await fetch("/api/trips/my", {
+        headers: {
+          "x-user-id": uid,
+        },
+      });
       if (!tripsResponse.ok) {
         throw new Error("Failed to fetch trips");
       }
@@ -80,7 +84,7 @@ const TripsBookingOverview: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.uid]);
 
   useEffect(() => {
     if (user?.uid) {
@@ -153,7 +157,7 @@ const TripsBookingOverview: React.FC = () => {
                     <td className="px-4 py-3">
                       <div className="w-full flex justify-end">
                         <Link
-                          href={`/dashboard/bookings?tripId=${trip.tripId}`}
+                          href={`/trip-organizer/dashboard/bookings?tripId=${trip.tripId}`}
                           className="border border-primary text-primary px-3 py-1.5 rounded-md inline-flex items-center gap-2 hover:bg-primary/10"
                         >
                           <ExternalLink className="w-4 h-4" />

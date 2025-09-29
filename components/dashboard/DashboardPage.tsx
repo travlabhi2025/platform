@@ -7,13 +7,14 @@ import MyTripsTable from "./MyTripsTable";
 import BookingsTable from "./BookingsTable";
 import EarningsSection from "./EarningsSection";
 import ProfileVerification from "./ProfileVerification";
+import CustomerDashboard from "./CustomerDashboard";
 import { useAuth } from "@/lib/auth-context";
 import { useMyTrips } from "@/lib/hooks";
 import { useMyBookings } from "@/lib/hooks";
 import Link from "next/link";
 
 export default function DashboardPage() {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, isOrganizer, isCustomer } = useAuth();
   const {
     trips: myTrips,
     loading: tripsLoading,
@@ -107,6 +108,7 @@ export default function DashboardPage() {
     return {
       id: booking.id || "unknown",
       tripId: booking.tripId || "unknown",
+      tripName: tripTitle, // Add trip name for display
       travelerName: booking.travelerName,
       travelerEmail: booking.travelerEmail || "",
       travelerPhone: booking.travelerPhone || "",
@@ -115,7 +117,6 @@ export default function DashboardPage() {
       status: booking.status,
       bookingDate: dateStr,
       totalAmount: booking.totalAmount || 0,
-      trip: tripTitle, // Keep this for display purposes
     };
   });
 
@@ -157,6 +158,12 @@ export default function DashboardPage() {
     );
   }
 
+  // Show customer dashboard for customers
+  if (isCustomer()) {
+    return <CustomerDashboard />;
+  }
+
+  // Show organizer dashboard for trip organizers
   return (
     <div className="min-h-screen bg-white">
       <SiteHeader />
@@ -201,7 +208,7 @@ export default function DashboardPage() {
                   Bookings
                 </div>
                 <Link
-                  href="/dashboard/bookings"
+                  href="/trip-organizer/dashboard/bookings"
                   className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90"
                 >
                   Manage Bookings

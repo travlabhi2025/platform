@@ -10,8 +10,15 @@ interface AuthContextType {
   userProfile: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name: string) => Promise<void>;
+  signUp: (
+    email: string,
+    password: string,
+    name: string,
+    role: "trip-organizer" | "customer"
+  ) => Promise<void>;
   signOut: () => Promise<void>;
+  isOrganizer: () => boolean;
+  isCustomer: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,12 +55,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await authService.signIn(email, password);
   };
 
-  const signUp = async (email: string, password: string, name: string) => {
-    await authService.signUp(email, password, name);
+  const signUp = async (
+    email: string,
+    password: string,
+    name: string,
+    role: "trip-organizer" | "customer"
+  ) => {
+    await authService.signUp(email, password, name, role);
   };
 
   const signOut = async () => {
     await authService.signOut();
+  };
+
+  const isOrganizer = () => {
+    return userProfile?.role === "trip-organizer";
+  };
+
+  const isCustomer = () => {
+    return userProfile?.role === "customer";
   };
 
   const value = {
@@ -63,6 +83,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signOut,
+    isOrganizer,
+    isCustomer,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
