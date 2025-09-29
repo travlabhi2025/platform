@@ -7,6 +7,8 @@ import OrganizerProtectedRoute from "@/components/auth/OrganizerProtectedRoute";
 import SiteHeader from "@/components/common/SiteHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import BookingActions from "@/components/booking/BookingActions";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 interface Booking {
   id: string;
@@ -124,6 +126,17 @@ export default function IndividualBookingPage() {
       <div className="min-h-screen bg-white">
         <SiteHeader />
         <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-20 py-8 max-w-4xl">
+          {/* Back to Dashboard Button */}
+          <div className="mb-6">
+            <Link
+              href="/trip-organizer/dashboard"
+              className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </Link>
+          </div>
+
           {/* Header */}
           <div className="mb-6">
             <h1 className="font-garetheavy text-primary text-3xl md:text-4xl">

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Footer() {
   return (
     <footer className="bg-primary text-primary-foreground py-12">
@@ -29,8 +31,24 @@ export default function Footer() {
             </div>
           </div>
 
+          {/* Legal */}
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Legal</h3>
+            <div className="space-y-2 text-primary-foreground/80">
+              <Link
+                href="/terms-and-conditions"
+                className="block hover:text-primary-foreground transition-colors"
+              >
+                Terms & Conditions
+              </Link>
+              <p>Privacy Policy</p>
+              <p>Cookie Policy</p>
+              <p>Refund Policy</p>
+            </div>
+          </div>
+
           {/* Gallery */}
-          <div className="md:col-span-2">
+          <div>
             <div className="grid grid-cols-5 gap-2">
               <div className="aspect-square bg-primary/60 rounded"></div>
               <div className="aspect-square bg-primary/60 rounded"></div>

@@ -36,7 +36,13 @@ export default function SignupPage() {
 
     try {
       await signUp(email, password, name, role);
-      router.push("/trip-organizer/dashboard");
+
+      // Redirect based on the radio input selection directly
+      if (role === "trip-organizer") {
+        router.push("/trip-organizer/dashboard");
+      } else {
+        router.push("/profile");
+      }
     } catch (err: unknown) {
       setError((err as Error).message || "An error occurred");
     } finally {

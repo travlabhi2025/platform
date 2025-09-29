@@ -23,7 +23,7 @@ export default function SigninPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const { signIn } = useAuth();
+  const { signIn, isOrganizer } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get("redirect");
@@ -36,12 +36,16 @@ export default function SigninPage() {
     try {
       await signIn(email, password);
 
-      // Redirect to the original URL if available, otherwise to dashboard
+      // Redirect to the original URL if available, otherwise to appropriate dashboard
       if (redirectUrl) {
         router.push(decodeURIComponent(redirectUrl));
       } else {
-        // Default redirect based on user role - this will be handled by the dashboard logic
-        router.push("/dashboard");
+        // Default redirect based on user role
+        if (isOrganizer()) {
+          router.push("/trip-organizer/dashboard");
+        } else {
+          router.push("/profile");
+        }
       }
     } catch (err: unknown) {
       setError((err as Error).message || "An error occurred");

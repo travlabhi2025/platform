@@ -9,6 +9,8 @@ import { useTrip } from "@/lib/hooks";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import SiteHeader from "@/components/common/SiteHeader";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -400,6 +402,17 @@ export default function BookingStatusPage() {
     <div className="min-h-screen bg-white">
       <SiteHeader />
       <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-20 py-16 max-w-7xl">
+        {/* Back to Profile Button */}
+        <div className="mb-6">
+          <Link
+            href="/profile"
+            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Profile
+          </Link>
+        </div>
+
         <div className="text-center mb-8">
           <h1 className="font-garetheavy text-primary text-3xl md:text-4xl mb-4">
             Check Booking Status

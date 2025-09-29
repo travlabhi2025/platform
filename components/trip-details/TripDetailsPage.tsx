@@ -481,6 +481,19 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
             </aside>
           </div>
         </div>
+
+        {/* Terms and Conditions Link */}
+        <div className="mt-12 pt-8 border-t border-gray-200 text-center">
+          <p className="text-sm text-gray-600 mb-2">
+            By booking this trip, you agree to our
+          </p>
+          <Link
+            href="/trip-terms-and-conditions"
+            className="text-primary hover:text-primary/80 transition-colors font-medium text-sm"
+          >
+            Trip Terms and Conditions
+          </Link>
+        </div>
       </main>
     </div>
   );

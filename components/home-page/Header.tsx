@@ -15,7 +15,7 @@ import {
 
 export default function Header() {
   const [open, setOpen] = useState(false);
-  const { user, userProfile, signOut } = useAuth();
+  const { user, userProfile, signOut, isOrganizer } = useAuth();
 
   useEffect(() => {
     const onResize = () => {
@@ -59,7 +59,15 @@ export default function Header() {
                       <Link href="/profile">Profile</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/trip-organizer/dashboard">Dashboard</Link>
+                      <Link
+                        href={
+                          isOrganizer()
+                            ? "/trip-organizer/dashboard"
+                            : "/profile"
+                        }
+                      >
+                        Dashboard
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={signOut}>
                       Sign Out
@@ -156,7 +164,9 @@ export default function Header() {
             {user ? (
               <div className="flex flex-col gap-2">
                 <Link
-                  href="/trip-organizer/dashboard"
+                  href={
+                    isOrganizer() ? "/trip-organizer/dashboard" : "/profile"
+                  }
                   className="text-primary font-medium"
                 >
                   Dashboard

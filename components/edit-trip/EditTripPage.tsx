@@ -8,6 +8,8 @@ import { useTrip } from "@/lib/hooks";
 import { tripFormSchema, TripFormData } from "@/lib/validations/trip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import TripBasicInfo from "../create-trip/TripBasicInfo";
 import TripDetails from "../create-trip/TripDetails";
 import TripItinerary from "../create-trip/TripItinerary";
@@ -367,6 +369,17 @@ export default function EditTripPage({ tripId }: EditTripPageProps) {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
+        {/* Back to Dashboard Button */}
+        <div className="mb-6">
+          <Link
+            href="/trip-organizer/dashboard"
+            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Link>
+        </div>
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Edit Trip</h1>
           <p className="text-gray-600">Update your trip details</p>

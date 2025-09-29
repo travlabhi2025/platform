@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 
 export default function SiteHeader() {
   const [open, setOpen] = useState(false);
-  const { user, userProfile, signOut } = useAuth();
+  const { user, userProfile, signOut, isOrganizer, isCustomer } = useAuth();
 
   useEffect(() => {
     const onResize = () => {
@@ -31,7 +31,10 @@ export default function SiteHeader() {
     <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
       <div className="max-w-[95vw] mx-auto flex items-center justify-between h-16">
         <div className="flex items-center gap-6">
-          <Link href="/trip-organizer/dashboard" className="flex items-center">
+          <Link
+            href={user && isOrganizer() ? "/trip-organizer/dashboard" : "/"}
+            className="flex items-center"
+          >
             <Image
               src="/images/logo.png"
               alt="TravlAbhi"
@@ -119,7 +122,13 @@ export default function SiteHeader() {
                     <Link href="/profile">Profile</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/trip-organizer/dashboard">Dashboard</Link>
+                    <Link
+                      href={
+                        isOrganizer() ? "/trip-organizer/dashboard" : "/profile"
+                      }
+                    >
+                      Dashboard
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={signOut}>
                     Sign Out
@@ -229,7 +238,15 @@ export default function SiteHeader() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-40">
                     <DropdownMenuItem asChild>
-                      <Link href="/trip-organizer/dashboard">Profile</Link>
+                      <Link
+                        href={
+                          isOrganizer()
+                            ? "/trip-organizer/dashboard"
+                            : "/profile"
+                        }
+                      >
+                        Profile
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={signOut}>
                       Sign Out

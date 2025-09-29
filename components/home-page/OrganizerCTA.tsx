@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 
 export default function OrganizerCTA() {
-  const { user } = useAuth();
+  const { user, isOrganizer } = useAuth();
 
   return (
     <section className="py-16 bg-primary">
@@ -17,14 +17,14 @@ export default function OrganizerCTA() {
         </p>
         {user ? (
           <Link
-            href="/trip-organizer/dashboard"
+            href={isOrganizer() ? "/trip-organizer/dashboard" : "/profile"}
             className="inline-block bg-white text-black px-6 py-2 rounded-md hover:bg-gray-100 transition-colors duration-200 font-plusjakartasans font-semibold"
           >
-            Go to Dashboard
+            {isOrganizer() ? "Go to Dashboard" : "Go to Profile"}
           </Link>
         ) : (
           <Link
-            href="/trip-organizer/dashboard"
+            href="/signup"
             className="inline-block bg-white text-black px-6 py-2 rounded-md hover:bg-gray-100 transition-colors duration-200 font-plusjakartasans font-semibold"
           >
             Start Organising
