@@ -66,10 +66,17 @@ function BookingTableRow({
   };
 
   return (
-    <TableRow className="hover:bg-gray-50">
+    <TableRow
+      className="hover:bg-gray-50 cursor-pointer"
+      onClick={() =>
+        (window.location.href = `/booking-confirmation/${booking.id}`)
+      }
+    >
       <TableCell className="font-medium w-[160px] px-2">
         <div className="flex flex-col">
-          <span className="font-mono text-sm">{booking.id}</span>
+          <span className="font-mono text-sm font-bold text-primary">
+            {booking.id}
+          </span>
           <span className="text-xs text-gray-500">
             {formatDate(booking.bookingDate)}
           </span>
@@ -79,7 +86,7 @@ function BookingTableRow({
         <div className="flex flex-col">
           <span className="font-medium">{trip?.title || "Loading..."}</span>
           <span className="text-sm text-gray-500 truncate">
-            {booking.tripId}
+            Trip ID: {booking.tripId}
           </span>
         </div>
       </TableCell>
@@ -107,7 +114,10 @@ function BookingTableRow({
           variant="outline"
           size="sm"
           className="text-xs px-2 py-1 h-7"
-          onClick={() => (window.location.href = `/trip/${booking.tripId}`)}
+          onClick={(e) => {
+            e.stopPropagation();
+            window.location.href = `/trip/${booking.tripId}`;
+          }}
         >
           View Trip
         </Button>
@@ -500,7 +510,12 @@ export default function BookingStatusPage() {
                 </div>
               </div>
             ) : booking ? (
-              <Card>
+              <Card
+                className="cursor-pointer"
+                onClick={() =>
+                  (window.location.href = `/booking-confirmation/${booking.id}`)
+                }
+              >
                 <CardHeader>
                   <CardTitle className="text-green-700">
                     Booking Found!
@@ -516,7 +531,7 @@ export default function BookingStatusPage() {
                         <span className="font-medium text-blue-800">
                           Booking ID:
                         </span>
-                        <span className="text-blue-700 font-mono">
+                        <span className="font-mono font-bold text-primary">
                           {booking.id}
                         </span>
                       </div>
@@ -525,6 +540,12 @@ export default function BookingStatusPage() {
                         <span className="text-blue-700">
                           {trip?.title || "Loading..."}
                         </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium text-blue-800">
+                          Trip ID:
+                        </span>
+                        <span className="text-blue-700">{booking.tripId}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-blue-800">Host:</span>
@@ -627,12 +648,23 @@ export default function BookingStatusPage() {
                     </div>
                   </div>
 
-                  <div className="flex justify-center pt-2">
+                  <div className="flex justify-center gap-3 pt-2">
                     <Button
-                      onClick={() =>
-                        (window.location.href = `/trip/${booking.tripId}`)
-                      }
-                      className="bg-primary text-white"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.location.href = `/booking-confirmation/${booking.id}`;
+                      }}
+                      className="bg-green-600 text-white hover:bg-green-700"
+                    >
+                      View Booking Details
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.location.href = `/trip/${booking.tripId}`;
+                      }}
+                      className="border-primary text-primary hover:bg-primary hover:text-white"
                     >
                       View Trip Details
                     </Button>

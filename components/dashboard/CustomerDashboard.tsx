@@ -145,59 +145,65 @@ export default function CustomerDashboard() {
             ) : (
               <div className="space-y-4">
                 {myBookings.map((booking) => (
-                  <div
+                  <Link
                     key={booking.id}
-                    className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                    href={`/booking-confirmation/${booking.id}`}
+                    className="block"
                   >
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-slate-900">
-                        Trip ID: {booking.tripId}
-                      </h3>
-                      <p className="text-sm text-slate-600">
-                        Traveler: {booking.travelerName}
-                      </p>
-                      <p className="text-sm text-slate-600">
-                        Group Size: {booking.groupSize} people
-                      </p>
-                      <p className="text-sm text-slate-600">
-                        Booking Date:{" "}
-                        {(() => {
-                          try {
-                            if (
-                              typeof booking.bookingDate === "object" &&
-                              booking.bookingDate.seconds
-                            ) {
+                    <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-primary text-lg mb-1">
+                          Booking ID: {booking.id}
+                        </h3>
+                        <p className="text-sm text-slate-600 mb-1">
+                          Trip ID: {booking.tripId}
+                        </p>
+                        <p className="text-sm text-slate-600">
+                          Traveler: {booking.travelerName}
+                        </p>
+                        <p className="text-sm text-slate-600">
+                          Group Size: {booking.groupSize} people
+                        </p>
+                        <p className="text-sm text-slate-600">
+                          Booking Date:{" "}
+                          {(() => {
+                            try {
+                              if (
+                                typeof booking.bookingDate === "object" &&
+                                booking.bookingDate.seconds
+                              ) {
+                                return new Date(
+                                  booking.bookingDate.seconds * 1000
+                                ).toLocaleDateString();
+                              }
                               return new Date(
-                                booking.bookingDate.seconds * 1000
+                                booking.bookingDate as unknown as string
                               ).toLocaleDateString();
+                            } catch {
+                              return "Invalid Date";
                             }
-                            return new Date(
-                              booking.bookingDate as unknown as string
-                            ).toLocaleDateString();
-                          } catch {
-                            return "Invalid Date";
+                          })()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <Badge
+                          variant={
+                            booking.status === "Approved"
+                              ? "default"
+                              : booking.status === "Pending"
+                              ? "secondary"
+                              : "destructive"
                           }
-                        })()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <Badge
-                        variant={
-                          booking.status === "Approved"
-                            ? "default"
-                            : booking.status === "Pending"
-                            ? "secondary"
-                            : "destructive"
-                        }
-                        className="mb-2"
-                      >
-                        {booking.status}
-                      </Badge>
-                      <div className="text-lg font-semibold text-slate-900">
-                        ₹{booking.totalAmount.toLocaleString()}
+                          className="mb-2"
+                        >
+                          {booking.status}
+                        </Badge>
+                        <div className="text-lg font-semibold text-slate-900">
+                          ₹{booking.totalAmount.toLocaleString()}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
