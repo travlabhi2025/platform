@@ -6,19 +6,19 @@ export default function BookingSteps() {
       icon: "/images/home/easy-steps/curated-trips.svg",
       title: "Browse Curated Trips",
       description:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Urna, tortor tempus.",
+        "Explore our handpicked collection of amazing trips from verified organizers. Find adventures that match your interests and budget.",
     },
     {
       icon: "/images/home/easy-steps/comunity-based.svg",
       title: "Join Community-Based Groups",
       description:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Urna, tortor tempus.",
+        "Connect with like-minded travelers in our community groups. Share experiences, get recommendations, and make lasting friendships.",
     },
     {
       icon: "/images/home/easy-steps/travel-share.svg",
       title: "Travel & Share Your Story",
       description:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Urna, tortor tempus.",
+        "Embark on your adventure and create unforgettable memories. Share your journey with the community and inspire others to explore.",
     },
   ];
 

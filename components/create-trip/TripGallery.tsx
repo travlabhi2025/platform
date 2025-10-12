@@ -5,7 +5,6 @@ import { Label } from "@/components/ui/label";
 import ImageUpload from "@/components/ui/image-upload";
 import { TripFormData } from "@/lib/validations/trip";
 import { X, Plus } from "lucide-react";
-import { useState } from "react";
 
 interface TripGalleryProps {
   formData: TripFormData;
@@ -13,6 +12,9 @@ interface TripGalleryProps {
   onNext: () => void;
   onPrev: () => void;
   errors: Record<string, string>;
+  uploadingIndexes: Set<number>;
+  onUploadStart?: (index: number) => void;
+  onUploadEnd?: (index: number) => void;
 }
 
 export default function TripGallery({
@@ -21,11 +23,10 @@ export default function TripGallery({
   onNext,
   onPrev,
   errors,
+  uploadingIndexes,
+  onUploadStart,
+  onUploadEnd,
 }: TripGalleryProps) {
-  const [uploadingIndexes, setUploadingIndexes] = useState<Set<number>>(
-    new Set()
-  );
-
   const addGalleryImage = () => {
     // Don't allow adding a new card if there are any empty or uploading cards
     const hasEmptyOrUploading =
@@ -46,11 +47,7 @@ export default function TripGallery({
     updateFormData({ galleryImages: newGalleryImages });
 
     // Remove from uploading set if it was uploading
-    setUploadingIndexes((prev) => {
-      const next = new Set(prev);
-      next.delete(index);
-      return next;
-    });
+    onUploadEnd?.(index);
   };
 
   const updateGalleryImage = (index: number, url: string) => {
@@ -64,21 +61,20 @@ export default function TripGallery({
   };
 
   const handleUploadStart = (index: number) => {
-    setUploadingIndexes((prev) => new Set(prev).add(index));
+    onUploadStart?.(index);
   };
 
   const handleUploadEnd = (index: number) => {
-    setUploadingIndexes((prev) => {
-      const next = new Set(prev);
-      next.delete(index);
-      return next;
-    });
+    onUploadEnd?.(index);
   };
 
-  // Check if "Add Gallery Image" button should be disabled
-  const hasEmptyOrUploading =
-    (formData.galleryImages || []).some((url) => !url) ||
-    uploadingIndexes.size > 0;
+  // Check if there are empty image cards or uploading images
+  const hasEmptyImages = (formData.galleryImages || []).some((url) => !url);
+  const hasUploadingImages = uploadingIndexes.size > 0;
+  const hasEmptyOrUploading = hasEmptyImages || hasUploadingImages;
+
+  // Check if next button should be disabled
+  const isNextDisabled = hasEmptyImages || hasUploadingImages;
 
   return (
     <div className="space-y-8">
@@ -159,9 +155,14 @@ export default function TripGallery({
         </Button>
         <Button
           onClick={onNext}
-          className="bg-primary hover:bg-primary/90 px-6 py-2 text-sm font-medium"
+          disabled={isNextDisabled}
+          className="bg-primary hover:bg-primary/90 px-6 py-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Next: FAQs
+          {isNextDisabled
+            ? hasEmptyImages
+              ? "Upload all images or remove empty cards"
+              : "Uploading images..."
+            : "Next: FAQs"}
         </Button>
       </div>
     </div>

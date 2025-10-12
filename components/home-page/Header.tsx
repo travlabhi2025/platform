@@ -15,7 +15,7 @@ import {
 
 export default function Header() {
   const [open, setOpen] = useState(false);
-  const { user, userProfile, signOut, isOrganizer } = useAuth();
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     const onResize = () => {

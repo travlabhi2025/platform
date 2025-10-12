@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     try {
       const authResult = await verifyAuth(request);
       userId = authResult.userId;
-    } catch (error) {
+    } catch {
       // User not authenticated - this is okay for guest bookings
       console.log("No authenticated user for booking check");
     }

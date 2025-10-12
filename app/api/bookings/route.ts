@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       if (userId) {
         userProfile = await userService.getUserById(userId);
       }
-    } catch (error) {
+    } catch {
       // User not authenticated - this is okay for guest bookings
       console.log(
         "No authenticated user for booking creation - allowing guest booking"

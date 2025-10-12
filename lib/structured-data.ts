@@ -106,7 +106,7 @@ export function generateTripStructuredData(trip: TripData) {
         : undefined,
     itinerary:
       trip.itinerary && trip.itinerary.length > 0
-        ? trip.itinerary.map((day, index) => ({
+        ? trip.itinerary.map((day) => ({
             "@type": "TouristTrip",
             name: day.title,
             description: day.description,

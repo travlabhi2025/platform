@@ -14,7 +14,7 @@ import { useMyBookings } from "@/lib/hooks";
 import Link from "next/link";
 
 export default function DashboardPage() {
-  const { user, userProfile, isOrganizer, isCustomer } = useAuth();
+  const { user, userProfile, isCustomer } = useAuth();
   const {
     trips: myTrips,
     loading: tripsLoading,

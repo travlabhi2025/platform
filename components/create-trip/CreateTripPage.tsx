@@ -79,6 +79,9 @@ export default function CreateTripPage() {
   const [formData, setFormData] = useState<TripFormData>(initialFormData);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [uploadingIndexes, setUploadingIndexes] = useState<Set<number>>(
+    new Set()
+  );
   const { user } = useAuth();
   const router = useRouter();
 
@@ -103,6 +106,18 @@ export default function CreateTripPage() {
 
     // Clear errors when data changes
     setErrors({});
+  };
+
+  const handleUploadStart = (index: number) => {
+    setUploadingIndexes((prev) => new Set(prev).add(index));
+  };
+
+  const handleUploadEnd = (index: number) => {
+    setUploadingIndexes((prev) => {
+      const next = new Set(prev);
+      next.delete(index);
+      return next;
+    });
   };
 
   const validateStep = (step: number): boolean => {
@@ -171,7 +186,27 @@ export default function CreateTripPage() {
           return false;
         }
       } else if (step === 4) {
-        // Gallery step - no validation required, gallery images are optional
+        // Gallery step - check for empty image cards
+        const hasEmptyImages = (formData.galleryImages || []).some(
+          (url) => !url
+        );
+        const hasUploadingImages = uploadingIndexes.size > 0;
+
+        if (hasEmptyImages) {
+          setErrors({
+            galleryImages:
+              "Please upload all images or remove empty image cards before proceeding",
+          });
+          return false;
+        }
+
+        if (hasUploadingImages) {
+          setErrors({
+            galleryImages: "Please wait for all images to finish uploading",
+          });
+          return false;
+        }
+
         return true;
       } else if (step === 5) {
         // FAQs step - no validation required, FAQs are optional
@@ -367,6 +402,9 @@ export default function CreateTripPage() {
             onNext={nextStep}
             onPrev={prevStep}
             errors={errors}
+            uploadingIndexes={uploadingIndexes}
+            onUploadStart={handleUploadStart}
+            onUploadEnd={handleUploadEnd}
           />
         );
       case 5:

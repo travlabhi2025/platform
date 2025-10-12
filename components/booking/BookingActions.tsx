@@ -46,10 +46,15 @@ const BookingActions: React.FC<BookingActionsProps> = ({
     try {
       setActionLoading(true);
 
+      // Get auth headers with JWT token
+      const { getAuthHeaders } = await import("@/lib/auth-helpers");
+      const authHeaders = await getAuthHeaders();
+
       const response = await fetch("/api/bookings/approve", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...authHeaders,
         },
         body: JSON.stringify({
           bookingId: booking.id,

@@ -8,12 +8,24 @@ export default function UnifiedDashboard() {
   const { userProfile, loading } = useAuth();
 
   // Show loading state while user profile is being fetched
-  if (loading || !userProfile) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-slate-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not loading but no user profile, show loading state (should be rare now)
+  if (!userProfile) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading user profile...</p>
         </div>
       </div>
     );

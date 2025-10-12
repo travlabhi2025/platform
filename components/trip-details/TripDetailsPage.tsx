@@ -1,11 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import SiteHeader from "@/components/common/SiteHeader";
 import { EVEREST_BASE_CAMP_TRIP } from ".";
 import { useTrip } from "@/lib/hooks";
 import { useAuth } from "@/lib/auth-context";
-import { Check, X, Edit } from "lucide-react";
+import { Check, X, Edit, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
@@ -15,24 +16,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import TripGallery from "./TripGallery";
-
-function StarsAverage({ rating }: { rating: number }) {
-  const percent = Math.max(0, Math.min(100, (rating / 5) * 100));
-  return (
-    <div
-      className="relative inline-block leading-none"
-      aria-label={`${rating.toFixed(1)} out of 5`}
-    >
-      <div className="text-slate-300 select-none">★★★★★</div>
-      <div
-        className="absolute inset-0 overflow-hidden"
-        style={{ width: `${percent}%` }}
-      >
-        <div className="text-slate-900 select-none">★★★★★</div>
-      </div>
-    </div>
-  );
-}
 
 function StarsSolid({ rating }: { rating: number }) {
   const full = Math.round(Math.max(0, Math.min(5, rating)));
@@ -52,6 +35,10 @@ interface TripDetailsPageProps {
 export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
   const { trip, loading, error } = useTrip(tripId);
   const { user } = useAuth();
+  const [hostImageLoaded, setHostImageLoaded] = useState(false);
+  const [relatedImagesLoaded, setRelatedImagesLoaded] = useState<
+    Record<number, boolean>
+  >({});
 
   // Debug logging
   console.log("TripDetailsPage - tripId:", tripId);
@@ -90,127 +77,179 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
     );
   }
 
+  const formatDate = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch {
+      return "Date TBD";
+    }
+  };
+
+  const formatPrice = (price: number, currency: string = "INR") => {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(price);
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <SiteHeader />
 
-      <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-8 pb-28 lg:pb-8 max-w-7xl">
-        {/* Hero + Sidebar CTA */}
-        <div className="flex flex-col lg:flex-row lg:items-start gap-8">
-          <div className="lg:flex-1">
-            <div className="relative w-full h-[280px] md:h-[340px] lg:h-[380px] overflow-hidden rounded-md">
-              <Image
-                src={data.heroImageUrl}
-                alt={data.title}
-                fill
-                priority
-                className="object-cover"
-              />
+      {/* Hero Section */}
+      <section className="relative h-[60vh] md:h-[70vh] overflow-hidden">
+        <div className="absolute inset-0">
+          <Image
+            src={data.heroImageUrl}
+            alt={data.title}
+            fill
+            className="object-cover"
+            priority
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-black/40" />
+        </div>
+
+        <div className="relative z-10 h-full flex items-end">
+          <div className="container mx-auto px-4 pb-12">
+            <div className="max-w-3xl">
+              <div className="flex items-center justify-between mb-4">
+                <h1 className="text-4xl md:text-6xl font-garetheavy text-white leading-tight">
+                  {data.title}
+                </h1>
+                {user && "createdBy" in data && data.createdBy === user.uid && (
+                  <Link
+                    href={`/edit-trip/${data.id}`}
+                    className="flex items-center gap-1 px-3 py-1 text-sm text-white/80 hover:text-white transition-colors bg-white/20 rounded-md backdrop-blur-sm"
+                  >
+                    <Edit className="w-4 h-4" />
+                    <span>Edit</span>
+                  </Link>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-4 text-white/90">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-semibold">
+                    {formatPrice(data.priceInInr, data.currency || "INR")}
+                  </span>
+                  <span className="text-sm">per person</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <StarsSolid rating={data.reviewsSummary.average} />
+                  <span className="text-sm">
+                    {data.reviewsSummary.average.toFixed(1)} (
+                    {data.reviewsSummary.totalCount} reviews)
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">{data.about.tripType}</span>
+                </div>
+              </div>
             </div>
-            <div className="mt-4 flex items-center justify-between">
-              <h1 className="font-garetheavy text-slate-900 text-3xl md:text-4xl">
-                {data.title.toUpperCase()}
-              </h1>
-              {user && "createdBy" in data && data.createdBy === user.uid && (
-                <Link
-                  href={`/edit-trip/${data.id}`}
-                  className="flex items-center gap-1 px-3 py-1 text-sm text-gray-600 hover:text-primary transition-colors"
-                >
-                  <Edit className="w-4 h-4" />
-                  <span>Edit</span>
-                </Link>
-              )}
-            </div>
-            {/* About this trip */}
-            <section className="mt-10">
-              <h2 className="font-garetheavy text-slate-900 text-xl mb-4">
-                About this trip
+          </div>
+        </div>
+      </section>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+          {/* Left Column - Main Content */}
+          <div className="lg:col-span-2 space-y-12">
+            {/* About Section */}
+            <section>
+              <h2 className="font-garetheavy text-slate-900 text-2xl mb-6">
+                About This Trip
               </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 border-t border-slate-200 pt-4">
-                <div>
-                  <div className="text-xs text-slate-500">Trip</div>
-                  <div className="text-sm">{data.about.tripName}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-500">Location</div>
-                  <div className="text-sm">{data.about.location}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-500">Dates</div>
-                  <div className="text-sm">
-                    {"startDate" in data.about &&
-                    "endDate" in data.about &&
-                    data.about.startDate &&
-                    data.about.endDate
-                      ? `${new Date(data.about.startDate).toLocaleDateString(
-                          "en-US",
-                          {
-                            month: "short",
-                            day: "numeric",
-                          }
-                        )} - ${new Date(data.about.endDate).toLocaleDateString(
-                          "en-US",
-                          {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          }
-                        )}`
-                      : "Dates not set"}
+              <div className="prose prose-slate max-w-none">
+                <p className="text-lg text-slate-700 leading-relaxed mb-6">
+                  Discover the amazing {data.about.tripName} experience in{" "}
+                  {data.about.location}. This{" "}
+                  {data.about.tripType.toLowerCase()} trip offers an
+                  unforgettable adventure for travelers aged {data.about.ageMin}
+                  -{data.about.ageMax} years.
+                </p>
+
+                {/* Trip Details */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <h4 className="font-semibold text-slate-900 mb-2">
+                      Location
+                    </h4>
+                    <p className="text-slate-700">{data.about.location}</p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <h4 className="font-semibold text-slate-900 mb-2">
+                      Trip Type
+                    </h4>
+                    <p className="text-slate-700">{data.about.tripType}</p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <h4 className="font-semibold text-slate-900 mb-2">
+                      Group Size
+                    </h4>
+                    <p className="text-slate-700">
+                      {data.about.groupSizeMin}-{data.about.groupSizeMax} people
+                    </p>
                   </div>
                 </div>
-                <div>
-                  <div className="text-xs text-slate-500">Group size</div>
-                  <div className="text-sm">
-                    {data.about.groupSizeMin}-{data.about.groupSizeMax}
+
+                {/* Date Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <h4 className="font-semibold text-slate-900 mb-2">
+                      Start Date
+                    </h4>
+                    <p className="text-slate-700">
+                      {"startDate" in data.about && data.about.startDate
+                        ? formatDate(data.about.startDate)
+                        : "Date TBD"}
+                    </p>
                   </div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-500">Age group</div>
-                  <div className="text-sm">
-                    {data.about.ageMin}-{data.about.ageMax}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-500">Trip type</div>
-                  <div className="text-sm">{data.about.tripType}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-500">Status</div>
-                  <div className="text-sm">
-                    <span
-                      className={
-                        "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium border " +
-                        ("status" in data && data.status === "Active"
-                          ? "bg-green-100 text-green-800 border-green-200"
-                          : "status" in data && data.status === "Upcoming"
-                          ? "bg-blue-100 text-blue-800 border-blue-200"
-                          : "status" in data && data.status === "Completed"
-                          ? "bg-gray-100 text-gray-800 border-gray-200"
-                          : "bg-red-100 text-red-800 border-red-200")
-                      }
-                    >
-                      {"status" in data ? data.status || "Unknown" : "Unknown"}
-                    </span>
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <h4 className="font-semibold text-slate-900 mb-2">
+                      End Date
+                    </h4>
+                    <p className="text-slate-700">
+                      {"endDate" in data.about && data.about.endDate
+                        ? formatDate(data.about.endDate)
+                        : "Date TBD"}
+                    </p>
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* Host */}
-            <section className="mt-10">
+            {/* Host Information */}
+            <section>
               <h2 className="font-garetheavy text-slate-900 text-xl mb-3">
                 Your host
               </h2>
               <div className="flex items-start gap-4">
                 {"organizerImage" in data.host && data.host.organizerImage ? (
-                  <Image
-                    src={data.host.organizerImage}
-                    alt={data.host.name}
-                    width={64}
-                    height={64}
-                    className="shrink-0 w-16 h-16 rounded-full object-cover"
-                  />
+                  <div className="shrink-0 relative w-16 h-16 rounded-full overflow-hidden">
+                    {/* Loading skeleton */}
+                    {!hostImageLoaded && (
+                      <div className="absolute inset-0 bg-gray-100 animate-pulse flex items-center justify-center">
+                        <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                      </div>
+                    )}
+                    <Image
+                      src={data.host.organizerImage}
+                      alt={data.host.name}
+                      width={64}
+                      height={64}
+                      className={`shrink-0 w-16 h-16 rounded-full object-cover transition-opacity duration-300 ${
+                        hostImageLoaded ? "opacity-100" : "opacity-0"
+                      }`}
+                      onLoad={() => setHostImageLoaded(true)}
+                    />
+                  </div>
                 ) : (
                   <div className="shrink-0 w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
                     <span className="text-slate-400 text-sm font-medium">
@@ -235,7 +274,7 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
               <h2 className="font-garetheavy text-slate-900 text-xl mb-3">
                 Itinerary
               </h2>
-              <Accordion type="multiple" className="w-full space-y-3">
+              <Accordion type="multiple" className="w-full space-y-3 pb-4">
                 {data.itinerary.map((it) => (
                   <AccordionItem
                     key={it.day}
@@ -262,18 +301,21 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
               </Accordion>
             </section>
 
-            {/* Inclusions / Exclusions */}
-            <section className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-10">
+            {/* Inclusions & Exclusions */}
+            <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
                 <h3 className="font-garetheavy text-slate-900 text-lg mb-3">
                   What&apos;s included
                 </h3>
                 <ul className="space-y-3">
                   {data.inclusions && data.inclusions.length > 0 ? (
-                    data.inclusions.map((x) => (
-                      <li key={x} className="flex items-start gap-3 text-sm">
+                    data.inclusions.map((inclusion, index) => (
+                      <li
+                        key={index}
+                        className="flex items-start gap-3 text-sm"
+                      >
                         <Check className="mt-0.5 w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span>{x}</span>
+                        <span>{inclusion}</span>
                       </li>
                     ))
                   ) : (
@@ -289,10 +331,13 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
                 </h3>
                 <ul className="space-y-3">
                   {data.exclusions && data.exclusions.length > 0 ? (
-                    data.exclusions.map((x) => (
-                      <li key={x} className="flex items-start gap-3 text-sm">
+                    data.exclusions.map((exclusion, index) => (
+                      <li
+                        key={index}
+                        className="flex items-start gap-3 text-sm"
+                      >
                         <X className="mt-0.5 w-4 h-4 text-red-600 flex-shrink-0" />
-                        <span>{x}</span>
+                        <span>{exclusion}</span>
                       </li>
                     ))
                   ) : (
@@ -305,78 +350,52 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
             </section>
 
             {/* Trip Gallery */}
-            {"galleryImages" in data &&
-              data.galleryImages &&
-              data.galleryImages.length > 0 && (
-                <TripGallery images={data.galleryImages} title={data.title} />
-              )}
+            {data.galleryImages && data.galleryImages.length > 0 && (
+              <TripGallery images={data.galleryImages} title={data.title} />
+            )}
 
             {/* Reviews */}
-            <section className="mt-10">
+            <section>
               <h2 className="font-garetheavy text-slate-900 text-xl mb-3">
                 Reviews
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-[320px,1fr] gap-8">
                 <div>
-                  <div className="text-4xl font-garetheavy text-slate-900">
-                    {data.reviewsSummary.average.toFixed(1)}
-                  </div>
-                  <div className="mt-2">
-                    <StarsAverage rating={data.reviewsSummary.average} />
-                  </div>
-                  <div className="mt-1 text-xs text-slate-500">
-                    {data.reviewsSummary.totalCount} reviews
-                  </div>
-                  <div className="mt-3 space-y-2">
-                    {[5, 4, 3, 2, 1].map((star) => {
-                      const pct =
-                        data.reviewsSummary.distribution[
-                          star as 1 | 2 | 3 | 4 | 5
-                        ];
-                      return (
-                        <div
-                          key={star}
-                          className="flex items-center gap-2 text-xs text-slate-600"
-                        >
-                          <span className="w-4 text-right">{star}</span>
-                          <div className="h-2 bg-slate-200 rounded w-full">
-                            <div
-                              className="h-2 bg-primary rounded"
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-                          <span className="w-10 text-right">{pct}%</span>
-                        </div>
-                      );
-                    })}
+                  <div className="text-center p-6 border border-slate-200 rounded-lg">
+                    <div className="text-4xl font-bold text-slate-900 mb-2">
+                      {data.reviewsSummary.average}
+                    </div>
+                    <div className="mb-3">
+                      <StarsSolid rating={data.reviewsSummary.average} />
+                    </div>
+                    <div className="text-sm text-slate-600">
+                      Based on {data.reviewsSummary.totalCount} reviews
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-6">
+                <div>
                   {data.reviews && data.reviews.length > 0 ? (
-                    data.reviews.map((r, idx) => (
-                      <div key={idx} className="border rounded-md p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-slate-200" />
-                          <div>
-                            <div className="text-sm font-semibold">
-                              {r.author}
-                            </div>
-                            <div className="text-xs text-slate-500">
-                              {r.dateIso}
-                            </div>
+                    <div className="space-y-4">
+                      {data.reviews.slice(0, 3).map((review, index) => (
+                        <div
+                          key={index}
+                          className="border-l-4 border-primary pl-4"
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <StarsSolid rating={review.rating} />
+                            <span className="text-sm font-medium">
+                              {review.author}
+                            </span>
                           </div>
+                          <p className="text-sm text-slate-700">
+                            {review.content}
+                          </p>
                         </div>
-                        <div className="mt-2">
-                          <StarsSolid rating={r.rating} />
-                        </div>
-                        <div className="mt-2 text-sm text-slate-700">
-                          {r.content}
-                        </div>
-                      </div>
-                    ))
+                      ))}
+                    </div>
                   ) : (
                     <div className="text-center py-8 text-gray-500">
-                      <p>No reviews yet. Be the first to review this trip!</p>
+                      <p>No reviews yet.</p>
                     </div>
                   )}
                 </div>
@@ -392,7 +411,7 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
                 <Accordion
                   type="single"
                   collapsible
-                  className="w-full space-y-3"
+                  className="w-full space-y-3 pb-4"
                 >
                   {data.faqs.map((f, i) => (
                     <AccordionItem
@@ -400,7 +419,7 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
                       value={`faq-${i}`}
                       className="rounded-md text-white border-0"
                     >
-                      <AccordionTrigger className="px-4 py-3 bg-primary/90 hover:no-underline text-white [&>svg]:text-white data-[state=open]:rounded-b-none">
+                      <AccordionTrigger className="px-4 py-3 hover:no-underline bg-primary/90 text-white [&>svg]:text-white data-[state=open]:rounded-b-none">
                         <span className="text-sm text-left">{f.question}</span>
                       </AccordionTrigger>
                       <AccordionContent className="bg-[#f28c0030] rounded-b-md text-slate-700 px-4 py-3 text-sm">
@@ -423,24 +442,40 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 {data.relatedTrips && data.relatedTrips.length > 0 ? (
-                  data.relatedTrips.map((t) => (
+                  data.relatedTrips.map((t, index) => (
                     <div
                       key={t.title}
                       className="rounded-md border overflow-hidden"
                     >
                       <div className="relative w-full h-[140px]">
+                        {/* Loading skeleton */}
+                        {!relatedImagesLoaded[index] && (
+                          <div className="absolute inset-0 bg-gray-100 animate-pulse flex items-center justify-center">
+                            <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                          </div>
+                        )}
                         <Image
                           src={t.imageUrl}
                           alt={t.title}
                           fill
-                          className="object-cover"
+                          className={`object-cover transition-opacity duration-300 ${
+                            relatedImagesLoaded[index]
+                              ? "opacity-100"
+                              : "opacity-0"
+                          }`}
+                          onLoad={() =>
+                            setRelatedImagesLoaded((prev) => ({
+                              ...prev,
+                              [index]: true,
+                            }))
+                          }
                         />
                       </div>
-                      <div className="p-3">
-                        <div className="text-sm font-semibold">{t.title}</div>
-                        <div className="text-xs text-slate-500">
-                          {t.country}
-                        </div>
+                      <div className="p-4">
+                        <h3 className="font-semibold text-slate-900 mb-1">
+                          {t.title}
+                        </h3>
+                        <p className="text-sm text-slate-600">{t.country}</p>
                       </div>
                     </div>
                   ))
@@ -453,13 +488,56 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
             </section>
           </div>
 
-          <div className="order-1 lg:order-1 lg:basis-[320px] lg:w-[320px] lg:shrink-0 lg:self-stretch">
-            <aside className="sticky top-24 h-full max-h-[calc(100vh-8rem)] flex flex-col">
-              <div className="bg-white rounded-lg border border-slate-200 p-4 md:p-5 h-fit">
-                <div className="text-2xl font-garetheavy text-slate-900">
-                  ₹{data.priceInInr.toLocaleString("en-IN")}
+          {/* Right Column - Booking Card */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-6">
+              <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
+                <div className="text-center mb-6">
+                  <div className="text-3xl font-bold text-slate-900 mb-2">
+                    {formatPrice(data.priceInInr, data.currency || "INR")}
+                  </div>
+                  <div className="text-sm text-slate-600">per person</div>
                 </div>
-                <div className="text-xs text-slate-500">Per person</div>
+
+                <div className="space-y-4 mb-6">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-600">Start date</span>
+                    <span className="font-medium">
+                      {"startDate" in data.about && data.about.startDate
+                        ? formatDate(data.about.startDate)
+                        : "TBD"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-600">End date</span>
+                    <span className="font-medium">
+                      {"endDate" in data.about && data.about.endDate
+                        ? formatDate(data.about.endDate)
+                        : "TBD"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-600">Duration</span>
+                    <span className="font-medium">
+                      {"startDate" in data.about &&
+                      "endDate" in data.about &&
+                      data.about.startDate &&
+                      data.about.endDate
+                        ? `${Math.ceil(
+                            (new Date(data.about.endDate).getTime() -
+                              new Date(data.about.startDate).getTime()) /
+                              (1000 * 60 * 60 * 24)
+                          )} days`
+                        : "TBD"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-600">Group size</span>
+                    <span className="font-medium">
+                      {data.about.groupSizeMin}-{data.about.groupSizeMax} people
+                    </span>
+                  </div>
+                </div>
 
                 <button
                   onClick={() => {
@@ -473,17 +551,28 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
                       },
                     });
                   }}
-                  className="mt-4 block w-full text-center bg-primary text-white rounded-md py-2 font-bebas tracking-wide hover:bg-primary/90"
+                  className="w-full bg-primary text-white py-3 px-4 rounded-lg font-medium text-center hover:bg-primary/90 transition-colors"
                 >
-                  Book now
+                  Book this trip
                 </button>
+
+                <div className="mt-4 text-center">
+                  <Link
+                    href="/booking-status"
+                    className="text-sm text-primary hover:text-primary/80"
+                  >
+                    Check booking status
+                  </Link>
+                </div>
               </div>
-            </aside>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Terms and Conditions Link */}
-        <div className="mt-12 pt-8 border-t border-gray-200 text-center">
+      {/* Terms and Conditions Link */}
+      <div className="container mx-auto px-4 pb-12">
+        <div className="pt-8 border-t border-gray-200 text-center">
           <p className="text-sm text-gray-600 mb-2">
             By booking this trip, you agree to our
           </p>
@@ -494,7 +583,7 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
             Trip Terms and Conditions
           </Link>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

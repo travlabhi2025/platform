@@ -36,7 +36,7 @@ export default function OrganizerSignupPage() {
     try {
       await signUp(email, password, name, role);
 
-      // Redirect to unified dashboard
+      // User profile is now immediately available, redirect to dashboard
       router.push("/dashboard");
     } catch (err: unknown) {
       setError((err as Error).message || "An error occurred");

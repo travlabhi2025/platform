@@ -24,7 +24,6 @@ import {
   Phone,
   MapPin,
   User,
-  Camera,
 } from "lucide-react";
 import Image from "next/image";
 import ImageUpload from "@/components/ui/image-upload";

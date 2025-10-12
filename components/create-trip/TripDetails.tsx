@@ -120,7 +120,14 @@ export default function TripDetails({
         updateHost(hostUpdates);
       }
     }
-  }, [userProfile, user, updateHost]); // Include updateHost in dependencies
+  }, [
+    userProfile,
+    user,
+    updateHost,
+    formData.host.name,
+    formData.host.description,
+    formData.host.organizerImage,
+  ]); // Include all dependencies
 
   return (
     <div className="space-y-6">

@@ -57,9 +57,9 @@ export default function Pagination({
     onPageChange(Math.min(totalPages, currentPage + 1));
   const goToLastPage = () => onPageChange(totalPages);
 
-  // Calculate the range of items being shown
-  const startItem = (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+  // Calculate the range of items being shown (for future use)
+  // const startItem = (currentPage - 1) * itemsPerPage + 1;
+  // const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
   // Don't show pagination if there are no items
   // But show it even if there's only one page so users can adjust page size

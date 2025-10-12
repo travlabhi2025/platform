@@ -48,6 +48,9 @@ export default function BookingPage({ tripId }: { tripId: string }) {
     }
   }, [isCustomer, userProfile]);
 
+  // Get user email for display
+  const userEmail = userProfile?.email || "";
+
   // Check for duplicate booking when component loads
   useEffect(() => {
     const checkDuplicateBooking = async () => {
@@ -89,9 +92,11 @@ export default function BookingPage({ tripId }: { tripId: string }) {
       newErrors.travelerName = "Full name is required";
     }
 
-    if (!form.travelerEmail.trim()) {
+    // For authenticated users, use userEmail; for guests, use form.travelerEmail
+    const emailToValidate = userEmail || form.travelerEmail;
+    if (!emailToValidate.trim()) {
       newErrors.travelerEmail = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.travelerEmail)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailToValidate)) {
       newErrors.travelerEmail = "Please enter a valid email address";
     }
 
@@ -147,7 +152,7 @@ export default function BookingPage({ tripId }: { tripId: string }) {
         body: JSON.stringify({
           tripId: trip.id!,
           travelerName: form.travelerName,
-          travelerEmail: form.travelerEmail,
+          travelerEmail: userEmail || form.travelerEmail, // Use user email if available
           travelerPhone: form.travelerPhone,
           groupSize: form.groupSize,
           preferences: form.preferences,
@@ -411,23 +416,43 @@ export default function BookingPage({ tripId }: { tripId: string }) {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="travelerEmail">Email *</Label>
-                    <Input
-                      id="travelerEmail"
-                      type="email"
-                      value={form.travelerEmail}
-                      onChange={(e) => {
-                        setForm({ ...form, travelerEmail: e.target.value });
-                        if (errors.travelerEmail) {
-                          setErrors({ ...errors, travelerEmail: "" });
-                        }
-                      }}
-                      className={errors.travelerEmail ? "border-red-500" : ""}
-                      required
-                    />
-                    {errors.travelerEmail && (
-                      <p className="text-sm text-red-500 mt-1">
-                        {errors.travelerEmail}
-                      </p>
+                    {userEmail ? (
+                      <>
+                        <Input
+                          id="travelerEmail"
+                          type="email"
+                          value={userEmail}
+                          disabled
+                          className="bg-gray-50 text-gray-600"
+                        />
+                        <p className="text-sm text-gray-500">
+                          Your account email (cannot be changed)
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <Input
+                          id="travelerEmail"
+                          type="email"
+                          value={form.travelerEmail}
+                          onChange={(e) => {
+                            setForm({ ...form, travelerEmail: e.target.value });
+                            if (errors.travelerEmail) {
+                              setErrors({ ...errors, travelerEmail: "" });
+                            }
+                          }}
+                          className={
+                            errors.travelerEmail ? "border-red-500" : ""
+                          }
+                          placeholder="Enter your email address"
+                          required
+                        />
+                        {errors.travelerEmail && (
+                          <p className="text-sm text-red-500 mt-1">
+                            {errors.travelerEmail}
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

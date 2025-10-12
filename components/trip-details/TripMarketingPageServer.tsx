@@ -208,35 +208,36 @@ export default function TripMarketingPageServer({
               </section>
 
               {/* Itinerary */}
-              {trip.itinerary && trip.itinerary.length > 0 && (
-                <section>
-                  <h2 className="font-garetheavy text-slate-900 text-2xl mb-6">
-                    Itinerary
-                  </h2>
-                  <div className="space-y-6">
-                    {trip.itinerary.map((day, index) => (
-                      <div
-                        key={index}
-                        className="border border-slate-200 rounded-lg p-6"
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className="bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center font-semibold text-sm flex-shrink-0">
-                            {day.day}
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-slate-900 text-lg mb-2">
-                              {day.title}
-                            </h3>
-                            <p className="text-slate-700 mb-3">
-                              {day.description}
-                            </p>
-                          </div>
+              <section className="mt-10">
+                <h2 className="font-garetheavy text-slate-900 text-xl mb-3">
+                  Itinerary
+                </h2>
+                <Accordion type="multiple" className="w-full space-y-3 pb-4">
+                  {trip.itinerary.map((it) => (
+                    <AccordionItem
+                      key={it.day}
+                      value={`day-${it.day}`}
+                      className="rounded-md text-white border-0"
+                    >
+                      <AccordionTrigger className="px-4 py-3 hover:no-underline bg-primary/90 text-white [&>svg]:text-white data-[state=open]:rounded-b-none">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-semibold">
+                            Day {it.day}
+                          </span>
+                          {it.title && (
+                            <span className="text-sm opacity-90">
+                              - {it.title}
+                            </span>
+                          )}
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
+                      </AccordionTrigger>
+                      <AccordionContent className="bg-[#f28c0030] rounded-b-md text-slate-700 px-4 py-3 text-sm">
+                        {it.description || "Details coming soon."}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </section>
 
               {/* Inclusions & Exclusions */}
               <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -346,25 +347,39 @@ export default function TripMarketingPageServer({
               </section>
 
               {/* FAQs */}
-              {trip.faqs && trip.faqs.length > 0 && (
-                <section>
-                  <h2 className="font-garetheavy text-slate-900 text-xl mb-3">
-                    Frequently Asked Questions
-                  </h2>
-                  <Accordion type="single" collapsible className="w-full">
-                    {trip.faqs.map((faq, index) => (
-                      <AccordionItem key={index} value={`faq-${index}`}>
-                        <AccordionTrigger className="text-left">
-                          {faq.question}
+              <section className="mt-10">
+                <h2 className="font-garetheavy text-slate-900 text-xl mb-3">
+                  FAQs
+                </h2>
+                {trip.faqs && trip.faqs.length > 0 ? (
+                  <Accordion
+                    type="single"
+                    collapsible
+                    className="w-full space-y-3 pb-4"
+                  >
+                    {trip.faqs.map((f, i) => (
+                      <AccordionItem
+                        key={i}
+                        value={`faq-${i}`}
+                        className="rounded-md text-white border-0"
+                      >
+                        <AccordionTrigger className="px-4 py-3 hover:no-underline bg-primary/90 text-white [&>svg]:text-white data-[state=open]:rounded-b-none">
+                          <span className="text-sm text-left">
+                            {f.question}
+                          </span>
                         </AccordionTrigger>
-                        <AccordionContent className="text-slate-700">
-                          {faq.answer}
+                        <AccordionContent className="bg-[#f28c0030] rounded-b-md text-slate-700 px-4 py-3 text-sm">
+                          {f.answer}
                         </AccordionContent>
                       </AccordionItem>
                     ))}
                   </Accordion>
-                </section>
-              )}
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No FAQs available yet.</p>
+                  </div>
+                )}
+              </section>
             </div>
 
             {/* Right Column - Booking Card */}

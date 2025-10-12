@@ -43,6 +43,9 @@ export default function EditTripPage({ tripId }: EditTripPageProps) {
   const [formData, setFormData] = useState<TripFormData | null>(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [uploadingIndexes, setUploadingIndexes] = useState<Set<number>>(
+    new Set()
+  );
   const { trip, loading: tripLoading, error: tripError } = useTrip(tripId);
   const { user } = useAuth();
   const router = useRouter();
@@ -78,6 +81,18 @@ export default function EditTripPage({ tripId }: EditTripPageProps) {
 
   const prevStep = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleUploadStart = (index: number) => {
+    setUploadingIndexes((prev) => new Set(prev).add(index));
+  };
+
+  const handleUploadEnd = (index: number) => {
+    setUploadingIndexes((prev) => {
+      const next = new Set(prev);
+      next.delete(index);
+      return next;
+    });
   };
 
   const validateStep = (step: number): boolean => {
@@ -315,6 +330,9 @@ export default function EditTripPage({ tripId }: EditTripPageProps) {
             onNext={nextStep}
             onPrev={prevStep}
             errors={errors}
+            uploadingIndexes={uploadingIndexes}
+            onUploadStart={handleUploadStart}
+            onUploadEnd={handleUploadEnd}
           />
         );
       case 5:

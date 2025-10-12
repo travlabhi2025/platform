@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,132 +21,6 @@ import {
 } from "@/components/ui/table";
 import Pagination, { usePagination } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
-
-// Component for displaying individual booking cards
-function BookingCard({
-  booking,
-}: {
-  booking: {
-    id: string;
-    tripId: string;
-    travelerName: string;
-    travelerEmail: string;
-    travelerPhone: string;
-    groupSize: number;
-    preferences?: string;
-    totalAmount: number;
-    status: string;
-    bookingDate: { seconds: number } | string;
-  };
-}) {
-  const { trip } = useTrip(booking.tripId);
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-green-700">Booking Found!</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="font-semibold text-blue-900 mb-3">Booking Details</h3>
-          <div className="text-sm space-y-2">
-            <div className="flex justify-between">
-              <span className="font-medium text-blue-800">Booking ID:</span>
-              <span className="text-blue-700 font-mono">{booking.id}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium text-blue-800">Trip:</span>
-              <span className="text-blue-700">
-                {trip?.title || "Loading..."}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium text-blue-800">Host:</span>
-              <span className="text-blue-700">
-                {trip?.host?.name || "Loading..."}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium text-blue-800">Traveler:</span>
-              <span className="text-blue-700">{booking.travelerName}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium text-blue-800">Email:</span>
-              <span className="text-blue-700">{booking.travelerEmail}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium text-blue-800">Phone:</span>
-              <span className="text-blue-700">{booking.travelerPhone}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium text-blue-800">Group Size:</span>
-              <span className="text-blue-700">{booking.groupSize} people</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium text-blue-800">Total Amount:</span>
-              <span className="text-blue-700 font-semibold">
-                ₹{Number(booking.totalAmount).toLocaleString("en-IN")}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium text-blue-800">Status:</span>
-              <span
-                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  booking.status === "Approved"
-                    ? "bg-green-100 text-green-800"
-                    : booking.status === "Pending"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : "bg-red-100 text-red-800"
-                }`}
-              >
-                {booking.status}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium text-blue-800">Booking Date:</span>
-              <span className="text-blue-700">
-                {(() => {
-                  try {
-                    if (
-                      typeof booking.bookingDate === "object" &&
-                      booking.bookingDate.seconds
-                    ) {
-                      return new Date(
-                        booking.bookingDate.seconds * 1000
-                      ).toLocaleDateString();
-                    }
-                    return new Date(
-                      booking.bookingDate as string
-                    ).toLocaleDateString();
-                  } catch {
-                    return "Invalid Date";
-                  }
-                })()}
-              </span>
-            </div>
-            {booking.preferences && (
-              <div className="flex flex-col">
-                <span className="font-medium text-blue-800">Preferences:</span>
-                <span className="text-blue-700 mt-1">
-                  {booking.preferences}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex justify-center pt-2">
-          <Button
-            onClick={() => (window.location.href = `/trip/${booking.tripId}`)}
-            className="bg-primary text-white"
-          >
-            View Trip Details
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 // Component for displaying bookings in a table row
 function BookingTableRow({
@@ -245,8 +119,6 @@ export default function BookingStatusPage() {
   const { userProfile } = useAuth();
   const [searchType, setSearchType] = useState<"id" | "details">("details");
   const [bookingId, setBookingId] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [tripName, setTripName] = useState("");
   const [hostName, setHostName] = useState("");
 
@@ -293,16 +165,11 @@ export default function BookingStatusPage() {
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
-  // Auto-fill form with user profile information
-  useEffect(() => {
-    if (userProfile) {
-      setEmail(userProfile.email || "");
-      setPhone(userProfile.contact?.phone || "");
-    }
-  }, [userProfile]);
+  // User email is automatically used from profile
+  const userEmail = userProfile?.email || "";
 
   // Fetch trip details when we have a booking
-  const { trip, loading: tripLoading } = useTrip(booking?.tripId || "");
+  const { trip } = useTrip(booking?.tripId || "");
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -338,8 +205,8 @@ export default function BookingStatusPage() {
         setLoading(false);
       }
     } else {
-      if (!email.trim() && !phone.trim()) {
-        toast.error("Please enter your email or phone number");
+      if (!userEmail.trim()) {
+        toast.error("Please sign in to search for your bookings");
         return;
       }
 
@@ -349,14 +216,18 @@ export default function BookingStatusPage() {
         setHasSearched(true);
         setBooking(null);
 
+        // Get auth headers for authenticated search
+        const { getAuthHeaders } = await import("@/lib/auth-helpers");
+        const authHeaders = await getAuthHeaders();
+
         const response = await fetch("/api/bookings/search", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            ...authHeaders,
           },
           body: JSON.stringify({
-            email: email.trim() || undefined,
-            phone: phone.trim() || undefined,
+            email: userEmail.trim(),
             tripName: tripName.trim() || undefined,
             hostName: hostName.trim() || undefined,
           }),
@@ -388,8 +259,6 @@ export default function BookingStatusPage() {
 
   const handleClear = () => {
     setBookingId("");
-    setEmail("");
-    setPhone("");
     setTripName("");
     setHostName("");
     setBooking(null);
@@ -470,32 +339,35 @@ export default function BookingStatusPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email Address *</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="your.email@example.com"
-                      />
+                  {!userEmail ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-600 mb-4">
+                        Please sign in to search for your bookings.
+                      </p>
+                      <Link
+                        href="/signin"
+                        className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                      >
+                        Sign In
+                      </Link>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number *</Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="Your phone number"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="text-sm text-gray-600 text-center">
-                    <p>Enter at least one of the above fields</p>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Your Email Address</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={userEmail}
+                          disabled
+                          className="bg-gray-50 text-gray-600"
+                        />
+                        <p className="text-sm text-gray-500">
+                          Bookings will be searched for this email address
+                        </p>
+                      </div>
+                    </>
+                  )}
 
                   <div className="border-t pt-4">
                     <h4 className="font-medium mb-3 text-gray-700">
@@ -534,7 +406,7 @@ export default function BookingStatusPage() {
               <div className="flex gap-3 justify-center">
                 <Button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || (searchType === "details" && !userEmail)}
                   className="bg-primary text-white"
                 >
                   {loading ? "Searching..." : "Search Bookings"}

@@ -75,7 +75,8 @@ export async function POST(request: NextRequest) {
 
           return true;
         }) as (Booking & { trip: Trip | null })[]
-      ).map(({ trip: _trip, ...booking }) => booking);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      ).map(({ trip, ...booking }) => booking);
     }
 
     return NextResponse.json({

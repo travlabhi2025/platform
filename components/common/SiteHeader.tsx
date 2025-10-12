@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 
 export default function SiteHeader() {
   const [open, setOpen] = useState(false);
-  const { user, userProfile, signOut, isOrganizer, isCustomer } = useAuth();
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     const onResize = () => {

@@ -57,12 +57,9 @@ export default function WhyTravlAbhi() {
                 {feature.title}
               </h3>
 
-              <ul className="text-slate-600 text-sm leading-6 space-y-0.5">
-                <li>lorem ipsum lorem</li>
-                <li>ipsum lorem ipsum</li>
-                <li>lorem ipsum lorem</li>
-                <li>ipsum lorem ipsum</li>
-              </ul>
+              <p className="text-slate-600 text-sm leading-6">
+                {feature.description}
+              </p>
             </div>
           ))}
         </div>

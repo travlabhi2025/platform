@@ -7,7 +7,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { auth } from "./firebase";
-import { userService } from "./firestore";
+import { userService, User } from "./firestore";
 
 export interface AuthUser {
   uid: string;
@@ -23,7 +23,7 @@ export const authService = {
     password: string,
     name: string,
     role: "trip-organizer" | "customer"
-  ): Promise<AuthUser> {
+  ): Promise<{ authUser: AuthUser; userProfile: User }> {
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       email,
@@ -35,7 +35,7 @@ export const authService = {
     await updateProfile(user, { displayName: name });
 
     // Create user document in Firestore
-    await userService.createOrUpdateUser(
+    const userProfile = await userService.createOrUpdateUser(
       {
         name,
         email,
@@ -47,10 +47,13 @@ export const authService = {
     );
 
     return {
-      uid: user.uid,
-      email: user.email,
-      displayName: user.displayName,
-      photoURL: user.photoURL,
+      authUser: {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+      },
+      userProfile,
     };
   },
 

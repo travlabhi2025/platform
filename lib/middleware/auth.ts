@@ -38,7 +38,7 @@ async function getFirebasePublicKeys(): Promise<{ [key: string]: string }> {
                 Date.now() + (maxAge ? parseInt(maxAge) * 1000 : 3600000);
 
               resolve(publicKeysCache!);
-            } catch (error) {
+            } catch {
               reject(new Error("Failed to parse Firebase public keys"));
             }
           });

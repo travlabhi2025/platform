@@ -518,7 +518,7 @@ export const userService = {
   async createOrUpdateUser(
     userData: Omit<User, "id" | "createdAt" | "updatedAt">,
     userId: string
-  ): Promise<void> {
+  ): Promise<User> {
     const userRef = doc(db, "users", userId);
     const userSnap = await getDoc(userRef);
 
@@ -536,6 +536,10 @@ export const userService = {
         updatedAt: Timestamp.now(),
       });
     }
+
+    // Return the user profile
+    const updatedUserSnap = await getDoc(userRef);
+    return { id: updatedUserSnap.id, ...updatedUserSnap.data() } as User;
   },
 
   // Get user by ID

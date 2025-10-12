@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User as FirebaseUser } from "firebase/auth";
-import { authService } from "./auth";
+import { authService, AuthUser } from "./auth";
 import { userService, User } from "./firestore";
 
 interface AuthContextType {
@@ -15,7 +15,7 @@ interface AuthContextType {
     password: string,
     name: string,
     role: "trip-organizer" | "customer"
-  ) => Promise<void>;
+  ) => Promise<{ authUser: AuthUser; userProfile: User }>;
   signOut: () => Promise<void>;
   isOrganizer: () => boolean;
   isCustomer: () => boolean;
@@ -62,7 +62,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     name: string,
     role: "trip-organizer" | "customer"
   ) => {
-    await authService.signUp(email, password, name, role);
+    const { authUser, userProfile } = await authService.signUp(
+      email,
+      password,
+      name,
+      role
+    );
+
+    // Immediately set the user profile to avoid race conditions
+    setUserProfile(userProfile);
+
+    // The onAuthStateChanged will still fire, but now we already have the profile
+    return { authUser, userProfile };
   };
 
   const signOut = async () => {
@@ -77,7 +88,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return userProfile?.role === "customer";
   };
 
-  const waitForUserProfile = async (): Promise<User | null> => {
+  const waitForUserProfile = async (
+    timeoutMs: number = 5000
+  ): Promise<User | null> => {
     // If we already have the user profile, return it immediately
     if (userProfile) {
       return userProfile;
@@ -88,11 +101,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return null;
     }
 
-    // Wait for the user profile to load
+    // Wait for the user profile to load with timeout
     return new Promise((resolve) => {
+      const startTime = Date.now();
+
       const checkProfile = () => {
         if (userProfile) {
           resolve(userProfile);
+        } else if (Date.now() - startTime > timeoutMs) {
+          // Timeout reached, resolve with null
+          console.warn("Timeout waiting for user profile to load");
+          resolve(null);
         } else {
           // Check again after a short delay
           setTimeout(checkProfile, 50);
