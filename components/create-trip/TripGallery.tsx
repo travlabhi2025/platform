@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import ImageUpload from "@/components/ui/image-upload";
 import { TripFormData } from "@/lib/validations/trip";
 import { X, Plus } from "lucide-react";
+import { useState } from "react";
 
 interface TripGalleryProps {
   formData: TripFormData;
@@ -21,7 +22,20 @@ export default function TripGallery({
   onPrev,
   errors,
 }: TripGalleryProps) {
+  const [uploadingIndexes, setUploadingIndexes] = useState<Set<number>>(
+    new Set()
+  );
+
   const addGalleryImage = () => {
+    // Don't allow adding a new card if there are any empty or uploading cards
+    const hasEmptyOrUploading =
+      (formData.galleryImages || []).some((url) => !url) ||
+      uploadingIndexes.size > 0;
+
+    if (hasEmptyOrUploading) {
+      return;
+    }
+
     const newGalleryImages = [...(formData.galleryImages || []), ""];
     updateFormData({ galleryImages: newGalleryImages });
   };
@@ -30,6 +44,13 @@ export default function TripGallery({
     const newGalleryImages =
       formData.galleryImages?.filter((_, i) => i !== index) || [];
     updateFormData({ galleryImages: newGalleryImages });
+
+    // Remove from uploading set if it was uploading
+    setUploadingIndexes((prev) => {
+      const next = new Set(prev);
+      next.delete(index);
+      return next;
+    });
   };
 
   const updateGalleryImage = (index: number, url: string) => {
@@ -41,6 +62,23 @@ export default function TripGallery({
   const handleImageUpload = async (index: number, url: string) => {
     updateGalleryImage(index, url);
   };
+
+  const handleUploadStart = (index: number) => {
+    setUploadingIndexes((prev) => new Set(prev).add(index));
+  };
+
+  const handleUploadEnd = (index: number) => {
+    setUploadingIndexes((prev) => {
+      const next = new Set(prev);
+      next.delete(index);
+      return next;
+    });
+  };
+
+  // Check if "Add Gallery Image" button should be disabled
+  const hasEmptyOrUploading =
+    (formData.galleryImages || []).some((url) => !url) ||
+    uploadingIndexes.size > 0;
 
   return (
     <div className="space-y-8">
@@ -78,6 +116,8 @@ export default function TripGallery({
             <ImageUpload
               value={imageUrl}
               onChange={(url) => handleImageUpload(index, url)}
+              onUploadStart={() => handleUploadStart(index)}
+              onUploadEnd={() => handleUploadEnd(index)}
               placeholder="Upload a gallery image"
               maxSizeInMB={5}
               storagePath="trip-images"
@@ -91,10 +131,11 @@ export default function TripGallery({
             type="button"
             variant="outline"
             onClick={addGalleryImage}
-            className="border-dashed border-2 border-gray-300 hover:border-primary hover:bg-primary/5 text-gray-600 hover:text-primary"
+            disabled={hasEmptyOrUploading}
+            className="border-dashed border-2 border-gray-300 hover:border-primary hover:bg-primary/5 text-gray-600 hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Add Gallery Image
+            {hasEmptyOrUploading ? "Upload image first" : "Add Gallery Image"}
           </Button>
         </div>
 

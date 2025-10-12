@@ -82,7 +82,6 @@ export interface Trip {
   createdAt: Timestamp;
   updatedAt: Timestamp;
   status: "Active" | "Upcoming" | "Completed";
-  bookings: number;
 }
 
 export interface Booking {
@@ -97,6 +96,7 @@ export interface Booking {
   paymentStatus?: "Pending" | "Paid";
   bookingDate: Timestamp;
   totalAmount: number;
+  createdBy?: string; // User ID of person who made booking (optional for guest bookings)
   // Approval workflow fields
   approvedBy?: string; // User ID of trip organizer who approved/rejected
   approvedAt?: Timestamp;
@@ -268,14 +268,6 @@ export const tripService = {
   async deleteTrip(tripId: string): Promise<void> {
     await deleteDoc(doc(db, "trips", tripId));
   },
-
-  // Update trip bookings count
-  async updateTripBookings(tripId: string, increment: number): Promise<void> {
-    const trip = await this.getTripById(tripId);
-    if (trip) {
-      await this.updateTrip(tripId, { bookings: trip.bookings + increment });
-    }
-  },
 };
 
 // Booking operations
@@ -289,9 +281,6 @@ export const bookingService = {
       status: "Pending",
       bookingDate: Timestamp.now(),
     });
-
-    // Update trip bookings count
-    await tripService.updateTripBookings(bookingData.tripId, 1);
 
     return docRef.id;
   },

@@ -90,7 +90,6 @@ export const tripFormSchema = z.object({
     .optional(),
   relatedTrips: z.array(z.any()).optional(),
   status: z.enum(["Upcoming", "Ongoing", "Active", "Completed", "Cancelled"]),
-  bookings: z.number().min(0),
 });
 
 export type TripFormData = z.infer<typeof tripFormSchema>;

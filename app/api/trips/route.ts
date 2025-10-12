@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { tripService } from "@/lib/firestore";
+import { verifyAuth } from "@/lib/middleware/auth";
 
 export async function GET() {
   try {
@@ -16,26 +17,32 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify JWT token and get authenticated userId
+    const { userId } = await verifyAuth(request);
+
     const tripData = await request.json();
-    // Get user ID from request body
-    const userId = tripData.userId;
-
-    if (!userId) {
-      return NextResponse.json({ error: "User ID required" }, { status: 401 });
-    }
-
-    // Remove userId from tripData before saving
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { userId: _, ...tripDataWithoutUserId } = tripData;
 
     const tripId = await tripService.createTrip({
-      ...tripDataWithoutUserId,
+      ...tripData,
       createdBy: userId,
     });
 
     return NextResponse.json({ id: tripId }, { status: 201 });
   } catch (error) {
     console.error("Error creating trip:", error);
+
+    // Return 401 for authentication errors
+    if (
+      error instanceof Error &&
+      (error.message.includes("token") ||
+        error.message.includes("authenticated"))
+    ) {
+      return NextResponse.json(
+        { error: "Unauthorized - " + error.message },
+        { status: 401 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to create trip" },
       { status: 500 }

@@ -27,11 +27,12 @@ const TripsBookingOverview: React.FC = () => {
       const uid = user?.uid;
       if (!uid) return;
 
-      // Fetch user's trips using the correct endpoint
+      // Fetch user's trips using JWT authentication
+      const { getAuthHeaders } = await import("@/lib/auth-helpers");
+      const authHeaders = await getAuthHeaders();
+
       const tripsResponse = await fetch("/api/trips/my", {
-        headers: {
-          "x-user-id": uid,
-        },
+        headers: authHeaders as HeadersInit,
       });
       if (!tripsResponse.ok) {
         throw new Error("Failed to fetch trips");
@@ -157,7 +158,7 @@ const TripsBookingOverview: React.FC = () => {
                     <td className="px-4 py-3">
                       <div className="w-full flex justify-end">
                         <Link
-                          href={`/trip-organizer/dashboard/bookings?tripId=${trip.tripId}`}
+                          href={`/dashboard/bookings?tripId=${trip.tripId}`}
                           className="border border-primary text-primary px-3 py-1.5 rounded-md inline-flex items-center gap-2 hover:bg-primary/10"
                         >
                           <ExternalLink className="w-4 h-4" />

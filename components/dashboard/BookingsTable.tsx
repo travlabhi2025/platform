@@ -170,7 +170,7 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
                   </td>
                   <td className="px-4 py-3 text-primary">
                     <Link
-                      href={`/trip-organizer/dashboard/bookings/${b.id}`}
+                      href={`/dashboard/bookings/${b.id}`}
                       className="underline text-xs hover:text-primary/80"
                     >
                       View Details

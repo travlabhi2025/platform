@@ -17,6 +17,8 @@ import { toast } from "sonner";
 interface ImageUploadProps {
   value?: string;
   onChange: (url: string) => void;
+  onUploadStart?: () => void;
+  onUploadEnd?: () => void;
   placeholder?: string;
   disabled?: boolean;
   className?: string;
@@ -29,6 +31,8 @@ interface ImageUploadProps {
 export default function ImageUpload({
   value,
   onChange,
+  onUploadStart,
+  onUploadEnd,
   placeholder = "Upload an image",
   disabled = false,
   className = "",
@@ -39,6 +43,7 @@ export default function ImageUpload({
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(value || null);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const [storageRef, setStorageRef] = useState<ReturnType<typeof ref> | null>(
     null
   );
@@ -48,6 +53,7 @@ export default function ImageUpload({
   // Update preview when value prop changes
   useEffect(() => {
     setPreview(value || null);
+    setImageLoaded(false); // Reset image loaded state when value changes
   }, [value]);
 
   // Helper function to extract storage reference from Firebase Storage URL
@@ -101,6 +107,7 @@ export default function ImageUpload({
     }
 
     setUploading(true);
+    onUploadStart?.(); // Notify parent that upload has started
 
     try {
       // Create a unique filename
@@ -124,6 +131,7 @@ export default function ImageUpload({
 
       // Update state
       setPreview(downloadURL);
+      setImageLoaded(false); // Will be set to true when image loads
       setStorageRef(newStorageRef);
       onChange(downloadURL);
 
@@ -133,6 +141,7 @@ export default function ImageUpload({
       toast.error("Failed to upload image. Please try again.");
     } finally {
       setUploading(false);
+      onUploadEnd?.(); // Notify parent that upload has ended
     }
   };
 
@@ -200,14 +209,26 @@ export default function ImageUpload({
         <div className="relative inline-block">
           {preview ? (
             <>
-              <Image
-                src={preview}
-                alt="Preview"
-                width={64}
-                height={64}
-                className="w-16 h-16 rounded-full object-cover cursor-pointer"
-                onClick={handleClick}
-              />
+              <div className="relative w-16 h-16 rounded-full overflow-hidden">
+                {/* Loading skeleton */}
+                {!imageLoaded && (
+                  <div className="absolute inset-0 bg-gray-100 animate-pulse flex items-center justify-center">
+                    <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                  </div>
+                )}
+                <Image
+                  src={preview}
+                  alt="Preview"
+                  width={64}
+                  height={64}
+                  className={`w-16 h-16 rounded-full object-cover cursor-pointer transition-opacity duration-300 ${
+                    imageLoaded ? "opacity-100" : "opacity-0"
+                  }`}
+                  onClick={handleClick}
+                  onLoad={() => setImageLoaded(true)}
+                  onError={() => setImageLoaded(true)}
+                />
+              </div>
               <button
                 type="button"
                 onClick={handleRemove}
@@ -253,12 +274,22 @@ export default function ImageUpload({
         {preview ? (
           <div className="relative group">
             <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+              {/* Loading skeleton - shown until image loads */}
+              {!imageLoaded && (
+                <div className="absolute inset-0 bg-gray-100 animate-pulse flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                </div>
+              )}
               <Image
                 src={preview}
                 alt="Preview"
-                className="w-full h-48 object-cover"
+                className={`w-full h-48 object-cover transition-opacity duration-300 ${
+                  imageLoaded ? "opacity-100" : "opacity-0"
+                }`}
                 width={192}
                 height={192}
+                onLoad={() => setImageLoaded(true)}
+                onError={() => setImageLoaded(true)}
               />
               <Button
                 type="button"
@@ -334,12 +365,22 @@ export default function ImageUpload({
       {preview ? (
         <div className="relative group">
           <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+            {/* Loading skeleton - shown until image loads */}
+            {!imageLoaded && (
+              <div className="absolute inset-0 bg-gray-100 animate-pulse flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              </div>
+            )}
             <Image
               src={preview}
               alt="Preview"
-              className="w-full h-48 object-cover"
+              className={`w-full h-48 object-cover transition-opacity duration-300 ${
+                imageLoaded ? "opacity-100" : "opacity-0"
+              }`}
               width={300}
               height={192}
+              onLoad={() => setImageLoaded(true)}
+              onError={() => setImageLoaded(true)} // Also hide skeleton on error
             />
             <Button
               type="button"

@@ -402,14 +402,14 @@ export default function BookingStatusPage() {
     <div className="min-h-screen bg-white">
       <SiteHeader />
       <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-20 py-16 max-w-7xl">
-        {/* Back to Profile Button */}
+        {/* Back to Dashboard Button */}
         <div className="mb-6">
           <Link
-            href="/profile"
+            href="/dashboard"
             className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Profile
+            Back to Dashboard
           </Link>
         </div>
 

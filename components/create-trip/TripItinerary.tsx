@@ -292,7 +292,7 @@ export default function TripItinerary({
           Previous
         </Button>
         <Button onClick={onNext} className="bg-primary hover:bg-primary/90">
-          Next: FAQs
+          Next: Gallery
         </Button>
       </div>
     </div>

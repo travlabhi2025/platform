@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { tripService } from "@/lib/firestore";
+import { verifyAuth } from "@/lib/middleware/auth";
 
 export async function GET(request: NextRequest) {
   try {
-    // Get user ID from request headers (set by the client)
-    const userId = request.headers.get("x-user-id");
+    // Verify JWT token and get authenticated userId
+    const { userId } = await verifyAuth(request);
 
-    if (!userId) {
-      return NextResponse.json({ error: "User ID required" }, { status: 400 });
-    }
-
-    console.log("Fetching trips for user:", userId);
+    console.log("Fetching trips for verified user:", userId);
     const trips = await tripService.getTripsByCreator(userId);
     console.log("Found trips:", trips.length, trips);
 
@@ -30,7 +27,6 @@ export async function GET(request: NextRequest) {
             trip.createdAt?.toDate?.()?.toISOString()?.split("T")[0] ||
             "Unknown",
           status: trip.status || "Active",
-          bookings: trip.bookings || 0,
         };
       } catch (error) {
         console.error("Error transforming trip:", trip, error);
@@ -39,7 +35,6 @@ export async function GET(request: NextRequest) {
           title: trip.title || "Untitled Trip",
           date: "Unknown",
           status: "Active",
-          bookings: 0,
         };
       }
     });
@@ -48,6 +43,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(dashboardTrips);
   } catch (error) {
     console.error("Error fetching user trips:", error);
+
+    // Return 401 for authentication errors
+    if (
+      error instanceof Error &&
+      (error.message.includes("token") ||
+        error.message.includes("authenticated"))
+    ) {
+      return NextResponse.json(
+        { error: "Unauthorized - " + error.message },
+        { status: 401 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to fetch trips" },
       { status: 500 }

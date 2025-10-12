@@ -66,7 +66,6 @@ export default function DashboardPage() {
           | "Active"
           | "Upcoming"
           | "Completed",
-        bookings: trip.bookings || 0,
       };
     } catch (error) {
       console.error("Error transforming trip in dashboard:", trip, error);
@@ -75,7 +74,6 @@ export default function DashboardPage() {
         title: trip.title || "Untitled Trip",
         date: "Unknown",
         status: "Active" as "Active" | "Upcoming" | "Completed",
-        bookings: 0,
       };
     }
   });
@@ -208,7 +206,7 @@ export default function DashboardPage() {
                   Bookings
                 </div>
                 <Link
-                  href="/trip-organizer/dashboard/bookings"
+                  href="/dashboard/bookings"
                   className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90"
                 >
                   Manage Bookings

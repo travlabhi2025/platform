@@ -10,7 +10,6 @@ export type Trip = {
   title: string;
   date: string;
   status: "Active" | "Upcoming" | "Completed";
-  bookings: number;
 };
 
 export type Booking = {

@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { useTrip } from "@/lib/hooks";
 import SiteHeader from "@/components/common/SiteHeader";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 export default function BookingConfirmationPage({
   bookingId,
@@ -27,7 +29,7 @@ export default function BookingConfirmationPage({
   const [error, setError] = useState<string | null>(null);
 
   // Fetch trip details when we have a booking
-  const { trip, loading: tripLoading } = useTrip(booking?.tripId || "");
+  const { trip } = useTrip(booking?.tripId || "");
 
   useEffect(() => {
     async function fetchBooking() {
@@ -53,6 +55,17 @@ export default function BookingConfirmationPage({
     <div className="min-h-screen bg-white">
       <SiteHeader />
       <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-20 py-8 max-w-3xl">
+        {/* Back to Dashboard Button */}
+        <div className="mb-6">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Link>
+        </div>
+
         {loading ? (
           <div>Loading confirmation…</div>
         ) : error ? (

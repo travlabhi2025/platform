@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { EVEREST_BASE_CAMP_TRIP } from ".";
 import { useTrip } from "@/lib/hooks";
-import { Check, X } from "lucide-react";
+import { Check, X, Loader2 } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -48,6 +49,11 @@ interface TripMarketingPageProps {
 
 export default function TripMarketingPage({ tripId }: TripMarketingPageProps) {
   const { trip, loading, error } = useTrip(tripId);
+  const [heroImageLoaded, setHeroImageLoaded] = useState(false);
+  const [hostImageLoaded, setHostImageLoaded] = useState(false);
+  const [relatedImagesLoaded, setRelatedImagesLoaded] = useState<
+    Record<number, boolean>
+  >({});
 
   // Debug logging
   console.log("TripMarketingPage - tripId:", tripId);
@@ -91,12 +97,21 @@ export default function TripMarketingPage({ tripId }: TripMarketingPageProps) {
         <div className="flex flex-col lg:flex-row lg:items-start gap-4">
           <div className="lg:flex-1">
             <div className="relative w-full h-[280px] md:h-[340px] lg:h-[380px] overflow-hidden rounded-md">
+              {/* Loading skeleton */}
+              {!heroImageLoaded && (
+                <div className="absolute inset-0 bg-gray-100 animate-pulse flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                </div>
+              )}
               <Image
                 src={data.heroImageUrl}
                 alt={data.title}
                 fill
                 priority
-                className="object-cover"
+                className={`object-cover transition-opacity duration-300 ${
+                  heroImageLoaded ? "opacity-100" : "opacity-0"
+                }`}
+                onLoad={() => setHeroImageLoaded(true)}
               />
             </div>
             <div className="mt-4">
@@ -187,13 +202,24 @@ export default function TripMarketingPage({ tripId }: TripMarketingPageProps) {
               </h2>
               <div className="flex items-start gap-4">
                 {"organizerImage" in data.host && data.host.organizerImage ? (
-                  <Image
-                    src={data.host.organizerImage}
-                    alt={data.host.name}
-                    width={64}
-                    height={64}
-                    className="shrink-0 w-16 h-16 rounded-full object-cover"
-                  />
+                  <div className="shrink-0 relative w-16 h-16 rounded-full overflow-hidden">
+                    {/* Loading skeleton */}
+                    {!hostImageLoaded && (
+                      <div className="absolute inset-0 bg-gray-100 animate-pulse flex items-center justify-center">
+                        <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                      </div>
+                    )}
+                    <Image
+                      src={data.host.organizerImage}
+                      alt={data.host.name}
+                      width={64}
+                      height={64}
+                      className={`shrink-0 w-16 h-16 rounded-full object-cover transition-opacity duration-300 ${
+                        hostImageLoaded ? "opacity-100" : "opacity-0"
+                      }`}
+                      onLoad={() => setHostImageLoaded(true)}
+                    />
+                  </div>
                 ) : (
                   <div className="shrink-0 w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
                     <span className="text-slate-400 text-sm font-medium">
@@ -406,17 +432,33 @@ export default function TripMarketingPage({ tripId }: TripMarketingPageProps) {
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 {data.relatedTrips && data.relatedTrips.length > 0 ? (
-                  data.relatedTrips.map((t) => (
+                  data.relatedTrips.map((t, index) => (
                     <div
                       key={t.title}
                       className="rounded-md border overflow-hidden"
                     >
                       <div className="relative w-full h-[140px]">
+                        {/* Loading skeleton */}
+                        {!relatedImagesLoaded[index] && (
+                          <div className="absolute inset-0 bg-gray-100 animate-pulse flex items-center justify-center">
+                            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                          </div>
+                        )}
                         <Image
                           src={t.imageUrl}
                           alt={t.title}
                           fill
-                          className="object-cover"
+                          className={`object-cover transition-opacity duration-300 ${
+                            relatedImagesLoaded[index]
+                              ? "opacity-100"
+                              : "opacity-0"
+                          }`}
+                          onLoad={() =>
+                            setRelatedImagesLoaded((prev) => ({
+                              ...prev,
+                              [index]: true,
+                            }))
+                          }
                         />
                       </div>
                       <div className="p-3">

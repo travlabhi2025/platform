@@ -31,10 +31,7 @@ export default function SiteHeader() {
     <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
       <div className="max-w-[95vw] mx-auto flex items-center justify-between h-16">
         <div className="flex items-center gap-6">
-          <Link
-            href={user && isOrganizer() ? "/trip-organizer/dashboard" : "/"}
-            className="flex items-center"
-          >
+          <Link href={user ? "/dashboard" : "/"} className="flex items-center">
             <Image
               src="/images/logo.png"
               alt="TravlAbhi"
@@ -56,7 +53,7 @@ export default function SiteHeader() {
               About Us
             </Link>
             <Link
-              href="/trip-discovery"
+              href="/"
               className="text-primary hover:text-primary/90 font-garetheavy"
             >
               Discover Trips
@@ -122,13 +119,7 @@ export default function SiteHeader() {
                     <Link href="/profile">Profile</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link
-                      href={
-                        isOrganizer() ? "/trip-organizer/dashboard" : "/profile"
-                      }
-                    >
-                      Dashboard
-                    </Link>
+                    <Link href="/dashboard">Dashboard</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={signOut}>
                     Sign Out
@@ -198,10 +189,7 @@ export default function SiteHeader() {
             <Link href="#" className="text-primary font-garetheavy">
               About Us
             </Link>
-            <Link
-              href="/trip-discovery"
-              className="text-primary font-garetheavy"
-            >
+            <Link href="/" className="text-primary font-garetheavy">
               Discover Trips
             </Link>
             <Link
@@ -238,15 +226,7 @@ export default function SiteHeader() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-40">
                     <DropdownMenuItem asChild>
-                      <Link
-                        href={
-                          isOrganizer()
-                            ? "/trip-organizer/dashboard"
-                            : "/profile"
-                        }
-                      >
-                        Profile
-                      </Link>
+                      <Link href="/dashboard">Dashboard</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={signOut}>
                       Sign Out

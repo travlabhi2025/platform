@@ -19,6 +19,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   isOrganizer: () => boolean;
   isCustomer: () => boolean;
+  waitForUserProfile: () => Promise<User | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -76,6 +77,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return userProfile?.role === "customer";
   };
 
+  const waitForUserProfile = async (): Promise<User | null> => {
+    // If we already have the user profile, return it immediately
+    if (userProfile) {
+      return userProfile;
+    }
+
+    // If we don't have a user, return null
+    if (!user) {
+      return null;
+    }
+
+    // Wait for the user profile to load
+    return new Promise((resolve) => {
+      const checkProfile = () => {
+        if (userProfile) {
+          resolve(userProfile);
+        } else {
+          // Check again after a short delay
+          setTimeout(checkProfile, 50);
+        }
+      };
+      checkProfile();
+    });
+  };
+
   const value = {
     user,
     userProfile,
@@ -85,6 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
     isOrganizer,
     isCustomer,
+    waitForUserProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -125,13 +125,17 @@ export default function ProfilePage() {
 
     setLoading(true);
     try {
+      // Get auth headers with JWT token
+      const { getAuthHeaders } = await import("@/lib/auth-helpers");
+      const authHeaders = await getAuthHeaders();
+
       const response = await fetch("/api/profile", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          ...authHeaders,
         },
         body: JSON.stringify({
-          userId: user.uid,
           profile,
         }),
       });

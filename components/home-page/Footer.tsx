@@ -59,8 +59,20 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-primary-foreground/20 mt-8 pt-8 text-center text-primary-foreground/80">
-          <p>&copy; 2024 TravlAbhi. All rights reserved.</p>
+        <div className="border-t border-primary-foreground/20 mt-8 pt-8">
+          <div className="flex flex-col items-center space-y-4 mb-6">
+            <Link href="/signup-organizer">
+              <button className="bg-white text-primary hover:bg-primary-foreground/90 transition-colors px-8 py-3 rounded-lg font-semibold shadow-lg">
+                Become an Organizer
+              </button>
+            </Link>
+            <p className="text-primary-foreground/60 text-sm">
+              Start creating amazing travel experiences
+            </p>
+          </div>
+          <div className="text-center text-primary-foreground/80">
+            <p>&copy; 2024 TravlAbhi. All rights reserved.</p>
+          </div>
         </div>
       </div>
     </footer>

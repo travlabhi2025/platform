@@ -4,6 +4,7 @@ import { Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { useMyBookings } from "@/lib/hooks";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +23,34 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Pagination, { usePagination } from "@/components/ui/pagination";
+
+// Component to display booking count for a trip
+function TripBookingCount({ tripId }: { tripId: string }) {
+  const { bookings: allBookings } = useMyBookings();
+
+  // Filter bookings for this specific trip
+  const tripBookings = allBookings.filter(
+    (booking) => booking.tripId === tripId
+  );
+  const bookingCount = tripBookings.length;
+
+  return (
+    <>
+      {bookingCount > 0 ? (
+        <Link
+          href={`/dashboard/bookings?tripId=${tripId}`}
+          className="text-slate-800 hover:text-primary hover:underline flex items-center gap-1"
+          title="View bookings for this trip"
+        >
+          {bookingCount}
+          <ExternalLink className="h-3 w-3" />
+        </Link>
+      ) : (
+        <span className="text-slate-800">{bookingCount}</span>
+      )}
+    </>
+  );
+}
 
 export default function MyTripsTable({
   trips,
@@ -88,14 +117,18 @@ export default function MyTripsTable({
 
     setUpdatingStatus(tripId);
     try {
+      // Get auth headers with JWT token
+      const { getAuthHeaders } = await import("@/lib/auth-helpers");
+      const authHeaders = await getAuthHeaders();
+
       const response = await fetch(`/api/trips/${tripId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          ...authHeaders,
         },
         body: JSON.stringify({
           status: newStatus,
-          userId: user.uid,
         }),
       });
 
@@ -159,19 +192,22 @@ export default function MyTripsTable({
         ...completeTripData,
         id: undefined, // Let Firestore generate new ID
         title: newTitle,
-        bookings: 0,
         status: "Upcoming",
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
+      // Get auth headers with JWT token
+      const { getAuthHeaders } = await import("@/lib/auth-helpers");
+      const authHeaders = await getAuthHeaders();
+
       const response = await fetch("/api/trips", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...duplicatedTrip,
-          userId: user.uid,
-        }),
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeaders,
+        },
+        body: JSON.stringify(duplicatedTrip),
       });
 
       if (!response.ok) {
@@ -193,12 +229,24 @@ export default function MyTripsTable({
     if (!confirmState.trip || !user) return;
     try {
       setConfirmState((s) => ({ ...s, loading: true }));
+
+      // Get auth headers with JWT token
+      const { getAuthHeaders } = await import("@/lib/auth-helpers");
+      const authHeaders = await getAuthHeaders();
+
       const response = await fetch(`/api/trips/${confirmState.trip.id}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.uid }),
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeaders,
+        },
       });
-      if (!response.ok) throw new Error("Failed to delete trip");
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete trip");
+      }
+
       toast.success("Trip deleted");
       await refreshTrips();
     } catch (e: unknown) {
@@ -308,17 +356,10 @@ export default function MyTripsTable({
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  {t.bookings > 0 ? (
-                    <Link
-                      href={`/trip-organizer/dashboard/bookings?tripId=${t.id}`}
-                      className="text-slate-800 hover:text-primary hover:underline flex items-center gap-1"
-                      title="View bookings for this trip"
-                    >
-                      {t.bookings}
-                      <ExternalLink className="h-3 w-3" />
-                    </Link>
+                  {t.id ? (
+                    <TripBookingCount tripId={t.id} />
                   ) : (
-                    <span className="text-slate-800">{t.bookings}</span>
+                    <span className="text-slate-800">0</span>
                   )}
                 </td>
                 <td className="px-4 py-3">

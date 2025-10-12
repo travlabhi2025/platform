@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Trip, Booking } from "./firestore";
 import { Trip as DashboardTrip } from "@/components/dashboard/types";
+import { getAuthHeaders } from "./auth-helpers";
 
 // Hook for fetching trips
 export function useTrips() {
@@ -46,23 +47,13 @@ export function useMyTrips() {
         setLoading(true);
       }
 
-      // Get current user from Firebase Auth
-      const { getAuth } = await import("firebase/auth");
-      const auth = getAuth();
-      const user = auth.currentUser;
+      // Get auth headers with JWT token
+      const headers = await getAuthHeaders();
 
-      console.log("useMyTrips - Current user:", user?.uid);
+      console.log("useMyTrips - Fetching trips with JWT authentication");
 
-      if (!user) {
-        setError("User not authenticated");
-        return;
-      }
-
-      console.log("useMyTrips - Fetching trips for user:", user.uid);
       const response = await fetch("/api/trips/my", {
-        headers: {
-          "x-user-id": user.uid,
-        },
+        headers,
       });
 
       console.log("useMyTrips - Response status:", response.status);
@@ -135,14 +126,12 @@ export function useMyBookings() {
     async function fetchMyBookings() {
       try {
         setLoading(true);
-        // include user id like we do for /api/trips/my
-        const { getAuth } = await import("firebase/auth");
-        const auth = getAuth();
-        const user = auth.currentUser;
-        if (!user) throw new Error("User not authenticated");
+
+        // Get auth headers with JWT token
+        const headers = await getAuthHeaders();
 
         const response = await fetch("/api/bookings", {
-          headers: { "x-user-id": user.uid },
+          headers,
         });
         if (!response.ok) {
           throw new Error("Failed to fetch bookings");
@@ -160,50 +149,4 @@ export function useMyBookings() {
   }, []);
 
   return { bookings, loading, error };
-}
-
-// Hook for creating a booking
-export function useCreateBooking() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const createBooking = async (
-    bookingData: Omit<Booking, "id" | "bookingDate" | "createdBy">
-  ) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // include user id in body for server auth
-      const { getAuth } = await import("firebase/auth");
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (!user) throw new Error("User not authenticated");
-
-      const response = await fetch("/api/bookings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ...bookingData, userId: user.uid }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to create booking");
-      }
-
-      const data = await response.json();
-      return data.id;
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "An error occurred";
-      setError(errorMessage);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return { createBooking, loading, error };
 }

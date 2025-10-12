@@ -37,7 +37,7 @@ export default function TopDestinations() {
           {destinations.map((destination) => (
             <Link
               key={destination.id}
-              href="/trip-discovery"
+              href="/"
               className="bg-white rounded-3xl shadow-[0_8px_24px_rgba(0,0,0,0.06)] overflow-hidden hover:shadow-[0_12px_32px_rgba(0,0,0,0.12)] transition-shadow duration-300"
             >
               <div className="relative h-96">

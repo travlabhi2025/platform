@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { bookingService, Booking, Trip } from "@/lib/firestore";
+import { verifyAuth } from "@/lib/middleware/auth";
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify authentication - only organizers can search bookings
+    await verifyAuth(request);
+
     const searchData = await request.json();
     const { email, phone, tripName, hostName } = searchData || {};
 

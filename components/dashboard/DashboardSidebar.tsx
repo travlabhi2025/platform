@@ -27,8 +27,6 @@ export default function DashboardSidebar({
 
   // Use scroll spy to track active section
   const { activeSection, scrollToSection } = useScrollSpy(sectionIds, {
-    threshold: 0.3,
-    rootMargin: "-20% 0px -70% 0px",
     offset: 100, // Account for fixed header
   });
 

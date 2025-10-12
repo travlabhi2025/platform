@@ -3,24 +3,46 @@ import {
   bookingService,
   notificationService,
   tripService,
+  userService,
 } from "@/lib/firestore";
+import { verifyAuth } from "@/lib/middleware/auth";
 
 export async function GET(request: NextRequest) {
   try {
-    // Prefer explicit user header to avoid server-side auth context issues
-    const userId = request.headers.get("x-user-id");
-    if (!userId) {
+    // Verify JWT token and get authenticated userId
+    const { userId } = await verifyAuth(request);
+
+    // Fetch user profile to determine role
+    const userProfile = await userService.getUserById(userId);
+    if (!userProfile) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    let bookings;
+    if (userProfile.role === "trip-organizer") {
+      // For organizers: return bookings for their trips
+      bookings = await bookingService.getBookingsForOrganizer(userId);
+    } else {
+      // For customers: return their own bookings by email
+      bookings = await bookingService.getBookingsByEmail(userProfile.email);
+    }
+
+    return NextResponse.json(bookings);
+  } catch (error) {
+    console.error("Error fetching bookings:", error);
+
+    // Return 401 for authentication errors
+    if (
+      error instanceof Error &&
+      (error.message.includes("token") ||
+        error.message.includes("authenticated"))
+    ) {
       return NextResponse.json(
-        { error: "User ID is required" },
+        { error: "Unauthorized - " + error.message },
         { status: 401 }
       );
     }
 
-    // Return bookings for trips created by this organizer (not the user's own bookings)
-    const bookings = await bookingService.getBookingsForOrganizer(userId);
-    return NextResponse.json(bookings);
-  } catch (error) {
-    console.error("Error fetching bookings:", error);
     return NextResponse.json(
       { error: "Failed to fetch bookings" },
       { status: 500 }
@@ -40,6 +62,24 @@ export async function POST(request: NextRequest) {
       preferences,
     } = bookingData || {};
 
+    // Try to get authenticated user, but don't fail if not authenticated (guest bookings)
+    let userId = null;
+    let userProfile = null;
+    try {
+      const authResult = await verifyAuth(request);
+      userId = authResult.userId;
+
+      // Fetch user profile to check role
+      if (userId) {
+        userProfile = await userService.getUserById(userId);
+      }
+    } catch (error) {
+      // User not authenticated - this is okay for guest bookings
+      console.log(
+        "No authenticated user for booking creation - allowing guest booking"
+      );
+    }
+
     // Validate required fields
     if (!tripId) {
       return NextResponse.json(
@@ -55,16 +95,73 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if authenticated user is a trip organizer
+    if (userProfile && userProfile.role === "trip-organizer") {
+      return NextResponse.json(
+        {
+          error:
+            "Trip organizers cannot book trips. Please use a customer account to make bookings.",
+          code: "ORGANIZER_BOOKING_NOT_ALLOWED",
+        },
+        { status: 403 }
+      );
+    }
+
     // Get trip details to calculate total amount
     const trip = await tripService.getTripById(tripId);
     if (!trip) {
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
+    // SERVER-SIDE DUPLICATE CHECK
+    // Check if user has already booked this trip
+    if (userId) {
+      const hasExistingBooking = await bookingService.hasUserBookedTrip(
+        userId,
+        tripId
+      );
+      if (hasExistingBooking) {
+        // Get existing booking details for better error message
+        const existingBooking = await bookingService.getUserBookingForTrip(
+          userId,
+          tripId
+        );
+        return NextResponse.json(
+          {
+            error: "You have already booked this trip",
+            existingBooking: existingBooking
+              ? {
+                  id: existingBooking.id,
+                  status: existingBooking.status,
+                  bookingDate: existingBooking.bookingDate,
+                  totalAmount: existingBooking.totalAmount,
+                }
+              : null,
+          },
+          { status: 409 } // Conflict status code
+        );
+      }
+    }
+
+    // For guest users, check by email to prevent spam
+    if (!userId) {
+      const existingGuestBooking = await bookingService.hasEmailBookedTrip(
+        travelerEmail,
+        tripId
+      );
+      if (existingGuestBooking) {
+        return NextResponse.json(
+          { error: "A booking with this email already exists for this trip" },
+          { status: 409 }
+        );
+      }
+    }
+
     const validGroupSize = Math.max(1, Number(groupSize || 1));
     const totalAmount = (trip.priceInInr || 0) * validGroupSize;
 
-    // Create booking with only essential information
+    // Create booking with essential information
+    // Include createdBy if user is logged in (for duplicate prevention)
     const bookingId = await bookingService.createBooking({
       tripId,
       travelerName,
@@ -74,15 +171,20 @@ export async function POST(request: NextRequest) {
       preferences: preferences || "",
       totalAmount,
       status: "Pending",
+      ...(userId && { createdBy: userId }), // Add createdBy only if userId exists
     });
 
     // Send email notifications
     const organizerName = trip.host?.name || "Organizer";
     const tripName = trip.title || "Trip";
 
+    // Fetch organizer profile to get actual email
+    const organizerProfile = await userService.getUserById(trip.createdBy);
+    const organizerEmail = organizerProfile?.email || "support@travlabhi.com";
+
     // Organizer notification
     await notificationService.sendEmail({
-      to: trip.createdBy || "organizer@example.com",
+      to: organizerEmail, // Use actual email, not userId
       subject: `New booking request for ${tripName}`,
       message: `${travelerName} has requested to book the ${tripName} for ${validGroupSize} people. Estimated amount: ₹${totalAmount.toLocaleString(
         "en-IN"

@@ -1,37 +1,71 @@
 import { NextRequest, NextResponse } from "next/server";
 import { bookingService } from "@/lib/firestore";
+import { verifyAuth } from "@/lib/middleware/auth";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
     const tripId = searchParams.get("tripId");
 
-    if (!userId || !tripId) {
+    if (!tripId) {
       return NextResponse.json(
-        { error: "User ID and Trip ID are required" },
+        { error: "Trip ID is required" },
         { status: 400 }
       );
     }
 
-    const hasBooked = await bookingService.hasUserBookedTrip(userId, tripId);
-    const existingBooking = hasBooked
-      ? await bookingService.getUserBookingForTrip(userId, tripId)
-      : null;
+    // Try to get authenticated user, but don't fail if not authenticated (guest bookings)
+    let userId = null;
+    try {
+      const authResult = await verifyAuth(request);
+      userId = authResult.userId;
+    } catch (error) {
+      // User not authenticated - this is okay for guest bookings
+      console.log("No authenticated user for booking check");
+    }
 
+    // If user is authenticated, check for duplicates by userId
+    if (userId) {
+      const hasBooked = await bookingService.hasUserBookedTrip(userId, tripId);
+      const existingBooking = hasBooked
+        ? await bookingService.getUserBookingForTrip(userId, tripId)
+        : null;
+
+      return NextResponse.json({
+        hasBooked,
+        existingBooking: existingBooking
+          ? {
+              id: existingBooking.id,
+              status: existingBooking.status,
+              bookingDate: existingBooking.bookingDate,
+              totalAmount: existingBooking.totalAmount,
+            }
+          : null,
+        isAuthenticated: true,
+      });
+    }
+
+    // For guest users, return no existing booking
     return NextResponse.json({
-      hasBooked,
-      existingBooking: existingBooking
-        ? {
-            id: existingBooking.id,
-            status: existingBooking.status,
-            bookingDate: existingBooking.bookingDate,
-            totalAmount: existingBooking.totalAmount,
-          }
-        : null,
+      hasBooked: false,
+      existingBooking: null,
+      isAuthenticated: false,
     });
   } catch (error) {
     console.error("Error checking booking status:", error);
+
+    // Return 401 for authentication errors
+    if (
+      error instanceof Error &&
+      (error.message.includes("token") ||
+        error.message.includes("authenticated"))
+    ) {
+      return NextResponse.json(
+        { error: "Unauthorized - " + error.message },
+        { status: 401 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to check booking status" },
       { status: 500 }

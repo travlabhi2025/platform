@@ -107,12 +107,6 @@ export default function CustomerDashboard() {
                 <p className="text-slate-600 mb-4">
                   You haven&apos;t booked any trips yet.
                 </p>
-                <Link
-                  href="/trip-discovery"
-                  className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
-                >
-                  Discover Amazing Trips
-                </Link>
               </div>
             ) : (
               <div className="space-y-4">
@@ -177,26 +171,7 @@ export default function CustomerDashboard() {
         </Card>
 
         {/* Quick Actions */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-garetheavy text-slate-900">
-                Discover New Adventures
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-slate-600 mb-4">
-                Explore amazing trips and start your next adventure.
-              </p>
-              <Link
-                href="/trip-discovery"
-                className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
-              >
-                Browse All Trips
-              </Link>
-            </CardContent>
-          </Card>
-
+        <div className="mt-8">
           <Card>
             <CardHeader>
               <CardTitle className="text-lg font-garetheavy text-slate-900">

@@ -59,13 +59,7 @@ export default function Header() {
                       <Link href="/profile">Profile</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link
-                        href={
-                          isOrganizer()
-                            ? "/trip-organizer/dashboard"
-                            : "/profile"
-                        }
-                      >
+                      <Link href={user ? "/dashboard" : "/profile"}>
                         Dashboard
                       </Link>
                     </DropdownMenuItem>
@@ -96,7 +90,7 @@ export default function Header() {
           {/* Center links on sm+ */}
           <div className="hidden sm:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
             <Link
-              href={"/trip-discovery"}
+              href={"/"}
               className="font-garetheavy text-primary hover:text-primary/90"
             >
               Explore All Trips
@@ -149,10 +143,7 @@ export default function Header() {
       {open && (
         <nav className="sm:hidden border-t border-slate-200">
           <div className="px-4 py-3 flex flex-col gap-3">
-            <Link
-              href={"/trip-discovery"}
-              className="font-garetheavy text-primary"
-            >
+            <Link href={"/"} className="font-garetheavy text-primary">
               Explore All Trips
             </Link>
             <Link
@@ -164,9 +155,7 @@ export default function Header() {
             {user ? (
               <div className="flex flex-col gap-2">
                 <Link
-                  href={
-                    isOrganizer() ? "/trip-organizer/dashboard" : "/profile"
-                  }
+                  href={user ? "/dashboard" : "/profile"}
                   className="text-primary font-medium"
                 >
                   Dashboard

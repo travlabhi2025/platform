@@ -33,7 +33,7 @@ const PendingBookingsBanner: React.FC<PendingBookingsBannerProps> = ({
         </div>
         <div className="flex-shrink-0">
           <Link
-            href="/trip-organizer/dashboard/bookings"
+            href="/dashboard/bookings"
             className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-orange-800 bg-orange-100 hover:bg-orange-200 transition-colors"
           >
             Review Bookings

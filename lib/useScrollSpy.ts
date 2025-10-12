@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 
 interface UseScrollSpyOptions {
-  threshold?: number;
-  rootMargin?: string;
   offset?: number;
 }
 
@@ -12,130 +10,65 @@ export function useScrollSpy(
   sectionIds: string[],
   options: UseScrollSpyOptions = {}
 ) {
-  const {
-    threshold = 0.3,
-    rootMargin = "-20% 0px -70% 0px",
-    offset = 100,
-  } = options;
+  const { offset = 100 } = options;
   const [activeSection, setActiveSection] = useState<string>("");
 
   useEffect(() => {
     if (sectionIds.length === 0) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // Find the section that has crossed into or out of the top third of the screen
-        const viewportHeight = window.innerHeight;
-        const topThirdThreshold = viewportHeight * (1 / 3); // Top third of screen
+    const handleScroll = () => {
+      // Get all section elements
+      const sections = sectionIds
+        .map((id) => document.getElementById(id))
+        .filter((el): el is HTMLElement => el !== null);
 
-        let bestSection = "";
-        let bestDistance = Infinity; // Closest to top third threshold
+      if (sections.length === 0) return;
 
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const rect = entry.boundingClientRect;
-            const sectionTop = rect.top;
+      // Find which section is currently most visible
+      // We check which section's top is closest to the top of the viewport (with offset)
+      const scrollPosition = window.scrollY + offset + 150; // Extra offset for better UX
 
-            // Check if section has crossed into the top third
-            // We want the section that's closest to or has crossed the top third line
-            if (sectionTop <= topThirdThreshold) {
-              const distanceFromTopThird = Math.abs(
-                sectionTop - topThirdThreshold
-              );
+      // Find the section we're currently in
+      let currentSection = sections[0].id;
 
-              if (distanceFromTopThird < bestDistance) {
-                bestDistance = distanceFromTopThird;
-                bestSection = entry.target.id;
-              }
-            }
-          }
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const section = sections[i];
+        const sectionTop = section.offsetTop;
+
+        // If we've scrolled past this section's start, it's the active one
+        if (scrollPosition >= sectionTop) {
+          currentSection = section.id;
+          break;
+        }
+      }
+
+      // Update active section if it changed
+      if (currentSection !== activeSection) {
+        setActiveSection(currentSection);
+      }
+    };
+
+    // Set initial active section
+    handleScroll();
+
+    // Add scroll listener with throttling for better performance
+    let ticking = false;
+    const scrollListener = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          handleScroll();
+          ticking = false;
         });
-
-        // If no section has crossed into top third, find the one closest to crossing
-        if (!bestSection) {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              const rect = entry.boundingClientRect;
-              const sectionTop = rect.top;
-
-              // Find section closest to the top third threshold
-              const distanceFromTopThird = Math.abs(
-                sectionTop - topThirdThreshold
-              );
-
-              if (distanceFromTopThird < bestDistance) {
-                bestDistance = distanceFromTopThird;
-                bestSection = entry.target.id;
-              }
-            }
-          });
-        }
-
-        if (bestSection && bestSection !== activeSection) {
-          setActiveSection(bestSection);
-        }
-      },
-      {
-        threshold: [0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0], // Multiple thresholds for better detection
-        rootMargin: "-20% 0px -70% 0px",
+        ticking = true;
       }
-    );
+    };
 
-    // Observe all sections
-    const elements = sectionIds
-      .map((id) => document.getElementById(id))
-      .filter(Boolean);
-    console.log("ScrollSpy - sectionIds:", sectionIds);
-    console.log("ScrollSpy - elements found:", elements.length);
-    console.log("ScrollSpy - elements:", elements);
-
-    elements.forEach((element) => {
-      if (element) {
-        observer.observe(element);
-        console.log("ScrollSpy - observing element:", element.id);
-      }
-    });
-
-    // Set initial active section if none is set
-    if (!activeSection && elements.length > 0) {
-      const viewportHeight = window.innerHeight;
-      const topThirdThreshold = viewportHeight * (1 / 3);
-
-      // Find the first section that's in the top third or closest to it
-      let bestSection = "";
-      let bestDistance = Infinity;
-
-      elements.forEach((element) => {
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          const sectionTop = rect.top;
-
-          if (sectionTop <= topThirdThreshold) {
-            const distanceFromTopThird = Math.abs(
-              sectionTop - topThirdThreshold
-            );
-            if (distanceFromTopThird < bestDistance) {
-              bestDistance = distanceFromTopThird;
-              bestSection = element.id;
-            }
-          }
-        }
-      });
-
-      // If no section is in top third, use the first one
-      if (!bestSection && elements[0]) {
-        bestSection = elements[0].id;
-      }
-
-      if (bestSection) {
-        setActiveSection(bestSection);
-      }
-    }
+    window.addEventListener("scroll", scrollListener, { passive: true });
 
     return () => {
-      observer.disconnect();
+      window.removeEventListener("scroll", scrollListener);
     };
-  }, [sectionIds, activeSection]);
+  }, [sectionIds, activeSection, offset]);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);

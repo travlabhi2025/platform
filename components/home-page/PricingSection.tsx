@@ -39,7 +39,7 @@ export default function PricingSection() {
         "Marketing tools",
       ],
       cta: "Start Free Trial",
-      href: "/signup",
+      href: "/signup-organizer",
       popular: true,
       buttonVariant: "default" as const,
     },

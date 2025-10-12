@@ -58,7 +58,7 @@ const BookingManagementPage: React.FC = () => {
             {tripId ? (
               <>
                 <Link
-                  href="/trip-organizer/dashboard/bookings"
+                  href="/dashboard/bookings"
                   className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
@@ -67,7 +67,7 @@ const BookingManagementPage: React.FC = () => {
               </>
             ) : (
               <Link
-                href="/trip-organizer/dashboard"
+                href="/dashboard"
                 className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
               >
                 <ArrowLeft className="w-4 h-4" />

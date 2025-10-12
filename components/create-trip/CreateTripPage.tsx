@@ -55,7 +55,6 @@ const initialFormData: TripFormData = {
   faqs: [],
   relatedTrips: [],
   status: "Upcoming",
-  bookings: 0,
 };
 
 const steps = [
@@ -283,15 +282,17 @@ export default function CreateTripPage() {
         },
       });
 
+      // Get auth headers with JWT token
+      const { getAuthHeaders } = await import("@/lib/auth-helpers");
+      const authHeaders = await getAuthHeaders();
+
       const response = await fetch("/api/trips", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...authHeaders,
         },
-        body: JSON.stringify({
-          ...validatedData,
-          userId: user.uid,
-        }),
+        body: JSON.stringify(validatedData),
       });
 
       if (!response.ok) {
@@ -300,7 +301,7 @@ export default function CreateTripPage() {
       }
 
       toast.success("Trip created successfully!");
-      router.push("/trip-organizer/dashboard");
+      router.push("/dashboard");
     } catch (error: unknown) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((error as any).name === "ZodError") {
@@ -398,7 +399,7 @@ export default function CreateTripPage() {
         {/* Back to Dashboard Button */}
         <div className="mb-6">
           <Link
-            href="/trip-organizer/dashboard"
+            href="/dashboard"
             className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors font-medium"
           >
             <ArrowLeft className="w-4 h-4" />

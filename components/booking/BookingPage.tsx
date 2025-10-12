@@ -13,10 +13,18 @@ import SiteHeader from "@/components/common/SiteHeader";
 
 export default function BookingPage({ tripId }: { tripId: string }) {
   const { trip, loading: tripLoading } = useTrip(tripId);
-  const { userProfile, isCustomer } = useAuth();
+  const { userProfile, isCustomer, user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [bookingSubmitted, setBookingSubmitted] = useState(false);
   const [bookingId, setBookingId] = useState<string | null>(null);
+  const [checkingDuplicate, setCheckingDuplicate] = useState(false);
+  const [hasExistingBooking, setHasExistingBooking] = useState(false);
+  const [existingBooking, setExistingBooking] = useState<{
+    id: string;
+    status: string;
+    bookingDate?: { seconds: number };
+    totalAmount?: number;
+  } | null>(null);
 
   const [form, setForm] = useState({
     travelerName: "",
@@ -39,6 +47,40 @@ export default function BookingPage({ tripId }: { tripId: string }) {
       }));
     }
   }, [isCustomer, userProfile]);
+
+  // Check for duplicate booking when component loads
+  useEffect(() => {
+    const checkDuplicateBooking = async () => {
+      if (!user || !tripId) return;
+
+      setCheckingDuplicate(true);
+      try {
+        // Get auth headers with JWT token
+        const { getAuthHeaders } = await import("@/lib/auth-helpers");
+        const authHeaders = await getAuthHeaders();
+
+        const response = await fetch(`/api/bookings/check?tripId=${tripId}`, {
+          headers: authHeaders as HeadersInit,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setHasExistingBooking(data.hasBooked);
+          setExistingBooking(data.existingBooking);
+
+          if (data.hasBooked) {
+            toast.warning("You have already booked this trip!");
+          }
+        }
+      } catch (error) {
+        console.error("Error checking duplicate booking:", error);
+      } finally {
+        setCheckingDuplicate(false);
+      }
+    };
+
+    checkDuplicateBooking();
+  }, [user, tripId]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -70,6 +112,13 @@ export default function BookingPage({ tripId }: { tripId: string }) {
 
   const onSubmitBooking = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Prevent submission if user already has a booking for this trip
+    if (hasExistingBooking) {
+      toast.error("You have already booked this trip!");
+      return;
+    }
+
     if (!validateForm()) {
       toast.error("Please fix the validation errors");
       return;
@@ -80,12 +129,21 @@ export default function BookingPage({ tripId }: { tripId: string }) {
     try {
       setLoading(true);
 
+      // Get auth headers with JWT token if user is logged in
+      let headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      if (user) {
+        const { getAuthHeaders } = await import("@/lib/auth-helpers");
+        const authHeaders = await getAuthHeaders();
+        headers = { ...headers, ...authHeaders };
+      }
+
       // Create booking with only essential information
       const response = await fetch("/api/bookings", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({
           tripId: trip.id!,
           travelerName: form.travelerName,
@@ -98,6 +156,31 @@ export default function BookingPage({ tripId }: { tripId: string }) {
 
       if (!response.ok) {
         const errorData = await response.json();
+
+        // Handle organizer booking restriction (403 Forbidden)
+        if (
+          response.status === 403 &&
+          errorData.code === "ORGANIZER_BOOKING_NOT_ALLOWED"
+        ) {
+          toast.error(
+            errorData.error ||
+              "Trip organizers cannot book trips. Please use a customer account to make bookings."
+          );
+          return;
+        }
+
+        // Handle duplicate booking error (409 Conflict)
+        if (response.status === 409) {
+          toast.error(errorData.error || "You have already booked this trip!");
+
+          // If server returns existing booking info, update the state
+          if (errorData.existingBooking) {
+            setHasExistingBooking(true);
+            setExistingBooking(errorData.existingBooking);
+          }
+          return;
+        }
+
         throw new Error(errorData.error || "Failed to create booking");
       }
 
@@ -195,136 +278,244 @@ export default function BookingPage({ tripId }: { tripId: string }) {
           Fill out your information to request a booking
         </div>
 
+        {/* Show existing booking if user has already booked this trip */}
+        {hasExistingBooking && existingBooking && (
+          <Card className="mb-6 border-amber-200 bg-amber-50">
+            <CardHeader>
+              <CardTitle className="text-amber-800">
+                Existing Booking Found
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <p className="text-amber-700">
+                  You have already booked this trip. Here are the details of
+                  your existing booking:
+                </p>
+                <div className="bg-white p-4 rounded-lg border border-amber-200">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium text-gray-700">
+                        Booking ID:
+                      </span>
+                      <span className="ml-2 text-gray-900">
+                        {existingBooking.id}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">Status:</span>
+                      <span
+                        className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
+                          existingBooking.status === "Approved"
+                            ? "bg-green-100 text-green-800"
+                            : existingBooking.status === "Pending"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {existingBooking.status}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">
+                        Total Amount:
+                      </span>
+                      <span className="ml-2 text-gray-900">
+                        ₹{existingBooking.totalAmount?.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">
+                        Booking Date:
+                      </span>
+                      <span className="ml-2 text-gray-900">
+                        {existingBooking.bookingDate
+                          ? new Date(
+                              existingBooking.bookingDate.seconds * 1000
+                            ).toLocaleDateString()
+                          : "Unknown"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() =>
+                      (window.location.href = `/booking-confirmation/${existingBooking.id}`)
+                    }
+                    className="bg-amber-600 hover:bg-amber-700 text-white"
+                  >
+                    View Booking Details
+                  </Button>
+                  <Button
+                    onClick={() => (window.location.href = "/dashboard")}
+                    variant="outline"
+                    className="border-amber-300 text-amber-700 hover:bg-amber-100"
+                  >
+                    Go to Dashboard
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Show loading state while checking for duplicates */}
+        {checkingDuplicate && (
+          <Card className="mb-6">
+            <CardContent className="p-6 text-center">
+              <div className="flex items-center justify-center space-x-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                <span className="text-gray-600">
+                  Checking for existing bookings...
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle>Booking Request</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={onSubmitBooking} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="travelerName">Full Name *</Label>
-                  <Input
-                    id="travelerName"
-                    value={form.travelerName}
-                    onChange={(e) => {
-                      setForm({ ...form, travelerName: e.target.value });
-                      if (errors.travelerName) {
-                        setErrors({ ...errors, travelerName: "" });
-                      }
-                    }}
-                    className={errors.travelerName ? "border-red-500" : ""}
-                    required
-                  />
-                  {errors.travelerName && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {errors.travelerName}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="travelerEmail">Email *</Label>
-                  <Input
-                    id="travelerEmail"
-                    type="email"
-                    value={form.travelerEmail}
-                    onChange={(e) => {
-                      setForm({ ...form, travelerEmail: e.target.value });
-                      if (errors.travelerEmail) {
-                        setErrors({ ...errors, travelerEmail: "" });
-                      }
-                    }}
-                    className={errors.travelerEmail ? "border-red-500" : ""}
-                    required
-                  />
-                  {errors.travelerEmail && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {errors.travelerEmail}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="travelerPhone">Phone *</Label>
-                  <Input
-                    id="travelerPhone"
-                    type="tel"
-                    value={form.travelerPhone}
-                    onChange={(e) => {
-                      setForm({ ...form, travelerPhone: e.target.value });
-                      if (errors.travelerPhone) {
-                        setErrors({ ...errors, travelerPhone: "" });
-                      }
-                    }}
-                    className={errors.travelerPhone ? "border-red-500" : ""}
-                    placeholder="Enter 10-digit phone number"
-                    required
-                  />
-                  {errors.travelerPhone && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {errors.travelerPhone}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="groupSize">Group Size *</Label>
-                  <Input
-                    id="groupSize"
-                    type="number"
-                    min={1}
-                    value={form.groupSize}
-                    onChange={(e) => {
-                      const value = Math.max(1, parseInt(e.target.value) || 1);
-                      setForm({ ...form, groupSize: value });
-                      if (errors.groupSize) {
-                        setErrors({ ...errors, groupSize: "" });
-                      }
-                    }}
-                    className={errors.groupSize ? "border-red-500" : ""}
-                  />
-                  {errors.groupSize && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {errors.groupSize}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="preferences">Preferences (Optional)</Label>
-                <Textarea
-                  id="preferences"
-                  rows={3}
-                  value={form.preferences}
-                  onChange={(e) =>
-                    setForm({ ...form, preferences: e.target.value })
-                  }
-                />
-              </div>
-
-              {trip && (
-                <div className="text-right text-sm text-gray-700">
-                  Estimated total: ₹
-                  {(trip.priceInInr * form.groupSize).toLocaleString("en-IN")}
-                </div>
-              )}
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-blue-800 text-sm">
-                  <strong>Note:</strong> This is a booking request. The trip
-                  organizer will review your request and contact you for payment
-                  details and final confirmation.
+            {hasExistingBooking ? (
+              <div className="text-center py-8">
+                <p className="text-gray-600 mb-4">
+                  You have already booked this trip. Please check your existing
+                  booking details above.
                 </p>
               </div>
+            ) : (
+              <form onSubmit={onSubmitBooking} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="travelerName">Full Name *</Label>
+                    <Input
+                      id="travelerName"
+                      value={form.travelerName}
+                      onChange={(e) => {
+                        setForm({ ...form, travelerName: e.target.value });
+                        if (errors.travelerName) {
+                          setErrors({ ...errors, travelerName: "" });
+                        }
+                      }}
+                      className={errors.travelerName ? "border-red-500" : ""}
+                      required
+                    />
+                    {errors.travelerName && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {errors.travelerName}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="travelerEmail">Email *</Label>
+                    <Input
+                      id="travelerEmail"
+                      type="email"
+                      value={form.travelerEmail}
+                      onChange={(e) => {
+                        setForm({ ...form, travelerEmail: e.target.value });
+                        if (errors.travelerEmail) {
+                          setErrors({ ...errors, travelerEmail: "" });
+                        }
+                      }}
+                      className={errors.travelerEmail ? "border-red-500" : ""}
+                      required
+                    />
+                    {errors.travelerEmail && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {errors.travelerEmail}
+                      </p>
+                    )}
+                  </div>
+                </div>
 
-              <div className="flex justify-end">
-                <Button type="submit" disabled={tripLoading || loading}>
-                  {loading ? "Submitting..." : "Submit Booking Request"}
-                </Button>
-              </div>
-            </form>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="travelerPhone">Phone *</Label>
+                    <Input
+                      id="travelerPhone"
+                      type="tel"
+                      value={form.travelerPhone}
+                      onChange={(e) => {
+                        setForm({ ...form, travelerPhone: e.target.value });
+                        if (errors.travelerPhone) {
+                          setErrors({ ...errors, travelerPhone: "" });
+                        }
+                      }}
+                      className={errors.travelerPhone ? "border-red-500" : ""}
+                      placeholder="Enter 10-digit phone number"
+                      required
+                    />
+                    {errors.travelerPhone && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {errors.travelerPhone}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="groupSize">Group Size *</Label>
+                    <Input
+                      id="groupSize"
+                      type="number"
+                      min={1}
+                      value={form.groupSize}
+                      onChange={(e) => {
+                        const value = Math.max(
+                          1,
+                          parseInt(e.target.value) || 1
+                        );
+                        setForm({ ...form, groupSize: value });
+                        if (errors.groupSize) {
+                          setErrors({ ...errors, groupSize: "" });
+                        }
+                      }}
+                      className={errors.groupSize ? "border-red-500" : ""}
+                    />
+                    {errors.groupSize && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {errors.groupSize}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="preferences">Preferences (Optional)</Label>
+                  <Textarea
+                    id="preferences"
+                    rows={3}
+                    value={form.preferences}
+                    onChange={(e) =>
+                      setForm({ ...form, preferences: e.target.value })
+                    }
+                  />
+                </div>
+
+                {trip && (
+                  <div className="text-right text-sm text-gray-700">
+                    Estimated total: ₹
+                    {(trip.priceInInr * form.groupSize).toLocaleString("en-IN")}
+                  </div>
+                )}
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-blue-800 text-sm">
+                    <strong>Note:</strong> This is a booking request. The trip
+                    organizer will review your request and contact you for
+                    payment details and final confirmation.
+                  </p>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button type="submit" disabled={tripLoading || loading}>
+                    {loading ? "Submitting..." : "Submit Booking Request"}
+                  </Button>
+                </div>
+              </form>
+            )}
           </CardContent>
         </Card>
       </main>

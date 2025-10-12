@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { tripService } from "@/lib/firestore";
+import { verifyAuth } from "@/lib/middleware/auth";
 
 export async function GET(
   request: NextRequest,
@@ -47,15 +48,10 @@ export async function PUT(
       );
     }
 
-    const body = await request.json();
-    const { userId, ...tripData } = body;
+    // Verify JWT token and get authenticated userId
+    const { userId } = await verifyAuth(request);
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: "User ID is required" },
-        { status: 400 }
-      );
-    }
+    const tripData = await request.json();
 
     console.log("Updating trip with ID:", tripId);
     console.log("Update data:", JSON.stringify(tripData, null, 2));
@@ -77,6 +73,19 @@ export async function PUT(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error updating trip:", error);
+
+    // Return 401 for authentication errors
+    if (
+      error instanceof Error &&
+      (error.message.includes("token") ||
+        error.message.includes("authenticated"))
+    ) {
+      return NextResponse.json(
+        { error: "Unauthorized - " + error.message },
+        { status: 401 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to update trip" },
       { status: 500 }
@@ -98,15 +107,8 @@ export async function DELETE(
       );
     }
 
-    const body = await request.json();
-    const { userId } = body;
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "User ID is required" },
-        { status: 400 }
-      );
-    }
+    // Verify JWT token and get authenticated userId
+    const { userId } = await verifyAuth(request);
 
     console.log("Deleting trip with ID:", tripId);
 
@@ -120,6 +122,22 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
+    // Check for existing bookings before allowing deletion
+    const { bookingService } = await import("@/lib/firestore");
+    const tripBookings = await bookingService.getBookingsForTrip(tripId);
+    const activeBookings = tripBookings.filter(
+      (b) => b.status === "Pending" || b.status === "Approved"
+    );
+
+    if (activeBookings.length > 0) {
+      return NextResponse.json(
+        {
+          error: `Cannot delete trip with ${activeBookings.length} active booking(s). Please reject or complete all bookings first.`,
+        },
+        { status: 400 }
+      );
+    }
+
     // Delete the trip
     await tripService.deleteTrip(tripId);
 
@@ -127,6 +145,19 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting trip:", error);
+
+    // Return 401 for authentication errors
+    if (
+      error instanceof Error &&
+      (error.message.includes("token") ||
+        error.message.includes("authenticated"))
+    ) {
+      return NextResponse.json(
+        { error: "Unauthorized - " + error.message },
+        { status: 401 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to delete trip" },
       { status: 500 }

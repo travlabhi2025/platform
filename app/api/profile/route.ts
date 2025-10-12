@@ -1,17 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { verifyAuth } from "@/lib/middleware/auth";
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get("x-user-id");
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "User ID is required" },
-        { status: 400 }
-      );
-    }
+    // Verify JWT token and get authenticated userId
+    const { userId } = await verifyAuth(request);
 
     const userRef = doc(db, "users", userId);
     const userSnap = await getDoc(userRef);
@@ -33,14 +28,10 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const { userId, profile } = await request.json();
+    // Verify JWT token and get authenticated userId
+    const { userId } = await verifyAuth(request);
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: "User ID is required" },
-        { status: 400 }
-      );
-    }
+    const { profile } = await request.json();
 
     if (!profile) {
       return NextResponse.json(
