@@ -8,6 +8,7 @@ import { useTrip } from "@/lib/hooks";
 import { tripFormSchema, TripFormData } from "@/lib/validations/trip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import TripBasicInfo from "../create-trip/TripBasicInfo";
@@ -362,8 +363,68 @@ export default function EditTripPage({ tripId }: EditTripPageProps) {
 
   if (tripLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg">Loading trip data...</div>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header Skeleton */}
+        <div className="bg-white border-b">
+          <div className="max-w-7xl mx-auto px-4 py-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Skeleton className="h-8 w-8" />
+                <Skeleton className="h-6 w-48" />
+              </div>
+              <Skeleton className="h-8 w-32" />
+            </div>
+          </div>
+        </div>
+
+        {/* Progress Skeleton */}
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <Skeleton className="h-2 w-full mb-2" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+
+        {/* Form Content Skeleton */}
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-96" />
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Form Fields Skeleton */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              </div>
+
+              {/* Textarea Skeleton */}
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-24 w-full" />
+              </div>
+
+              {/* Action Buttons Skeleton */}
+              <div className="flex justify-end gap-4 pt-6">
+                <Skeleton className="h-10 w-24" />
+                <Skeleton className="h-10 w-32" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import BookingActions from "./BookingActions";
 
 interface Booking {
@@ -65,9 +66,56 @@ const BookingApprovalPanel: React.FC<BookingApprovalPanelProps> = ({
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-8">
-        <div className="text-gray-500">Loading bookings...</div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>{tripId ? "Trip Bookings" : "All Bookings"}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-gray-600 border-b">
+                  <th className="px-4 py-2 font-medium">Traveler</th>
+                  <th className="px-4 py-2 font-medium">Contact</th>
+                  <th className="px-4 py-2 font-medium">Group Size</th>
+                  <th className="px-4 py-2 font-medium">Amount</th>
+                  <th className="px-4 py-2 font-medium">Date</th>
+                  <th className="px-4 py-2 font-medium">Status</th>
+                  <th className="px-4 py-2 font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[1, 2, 3, 4].map((i) => (
+                  <tr key={i} className="border-b">
+                    <td className="px-4 py-3">
+                      <Skeleton className="h-4 w-24" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-20 mt-1" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton className="h-4 w-8" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton className="h-4 w-16" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton className="h-4 w-20" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton className="h-6 w-16" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Skeleton className="h-8 w-20" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -95,7 +143,7 @@ const BookingApprovalPanel: React.FC<BookingApprovalPanelProps> = ({
           <CardTitle>{tripId ? "Trip Bookings" : "All Bookings"}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div>
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-gray-600 border-b">

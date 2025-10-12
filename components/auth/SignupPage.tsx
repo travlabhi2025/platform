@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
 
 export default function SignupPage() {
@@ -45,9 +46,55 @@ export default function SignupPage() {
     }
   };
 
+  // Show skeleton loader while loading
+  if (loading) {
+    return (
+      <section className="relative h-screen w-screen bg-gradient-to-br from-orange-100 to-orange-200">
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/images/home/TravelAbhiHero.png"
+            alt="Travel Adventure"
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-black/10"></div>
+        </div>
+
+        {/* Skeleton Content */}
+        <div className="absolute z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md">
+          <Card className="shadow-2xl border-0">
+            <CardHeader className="space-y-2 text-center">
+              <Skeleton className="h-8 w-48 mx-auto" />
+              <Skeleton className="h-4 w-64 mx-auto" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <Skeleton className="h-10 w-full" />
+            </CardContent>
+            <CardFooter className="flex flex-col space-y-2">
+              <Skeleton className="h-4 w-48 mx-auto" />
+              <Skeleton className="h-4 w-32 mx-auto" />
+            </CardFooter>
+          </Card>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="relative h-screen w-screen bg-gradient-to-br from-orange-100 to-orange-200">
-      {" "}
       <div className="absolute inset-0 z-0">
         <Image
           src="/images/home/TravelAbhiHero.png"

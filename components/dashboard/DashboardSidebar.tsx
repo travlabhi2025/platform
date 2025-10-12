@@ -35,7 +35,7 @@ export default function DashboardSidebar({
   console.log("Sidebar - activeSection:", activeSection);
 
   return (
-    <aside className="sticky top-24 bg-white rounded-lg border border-slate-200 p-4 md:p-5 flex flex-col h-full max-h-[calc(100vh-8rem)]">
+    <aside className="hidden lg:flex sticky top-24 bg-white rounded-lg border border-slate-200 p-4 md:p-5 flex-col h-full max-h-[calc(100vh-8rem)]">
       <div className="flex items-center gap-3">
         <Image
           src={profile.avatar}

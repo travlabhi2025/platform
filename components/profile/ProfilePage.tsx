@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import {
   Save,
@@ -205,18 +206,79 @@ export default function ProfilePage() {
     }));
   };
 
+  // Show skeleton loader while profile data is loading
+  if (!userProfile && !user) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <SiteHeader />
+        <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-20 py-8 pb-28 lg:pb-8 max-w-4xl">
+          <div className="mb-8">
+            <Skeleton className="h-8 w-48 mb-2" />
+            <Skeleton className="h-4 w-96" />
+          </div>
+
+          <div className="space-y-6">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="bg-white border border-gray-200 rounded-lg p-6"
+              >
+                <Skeleton className="h-6 w-32 mb-4" />
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                  <Skeleton className="h-20 w-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <SiteHeader />
 
       <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-20 py-8 pb-28 lg:pb-8 max-w-4xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Profile Setup
-          </h1>
-          <p className="text-gray-600">
-            Manage your profile information, contact details, and social links
-          </p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Profile Setup
+              </h1>
+              <p className="text-gray-600">
+                Manage your profile information, contact details, and social
+                links
+              </p>
+            </div>
+            <div>
+              {isEditing ? (
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={handleCancel}
+                    disabled={loading}
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSave} disabled={loading}>
+                    <Save className="w-4 h-4 mr-2" />
+                    {loading ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              ) : (
+                <Button onClick={() => setIsEditing(true)}>
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Profile
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="space-y-6">
@@ -639,31 +701,6 @@ export default function ProfilePage() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-3">
-            {isEditing ? (
-              <>
-                <Button
-                  variant="outline"
-                  onClick={handleCancel}
-                  disabled={loading}
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Cancel
-                </Button>
-                <Button onClick={handleSave} disabled={loading}>
-                  <Save className="w-4 h-4 mr-2" />
-                  {loading ? "Saving..." : "Save Changes"}
-                </Button>
-              </>
-            ) : (
-              <Button onClick={() => setIsEditing(true)}>
-                <Edit className="w-4 h-4 mr-2" />
-                Edit Profile
-              </Button>
-            )}
-          </div>
         </div>
       </main>
     </div>

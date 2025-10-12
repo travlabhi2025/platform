@@ -42,25 +42,25 @@ export default function SiteHeader() {
           <nav className="hidden lg:flex items-center gap-8">
             <Link
               href="/"
-              className="text-primary hover:text-primary/90 font-garetheavy"
+              className="text-primary hover:text-primary/90 font-garetheavy cursor-pointer"
             >
               Home
             </Link>
             <Link
               href="#"
-              className="text-primary hover:text-primary/90 font-garetheavy"
+              className="text-primary hover:text-primary/90 font-garetheavy cursor-not-allowed opacity-60"
             >
               About Us
             </Link>
             <Link
-              href="/"
-              className="text-primary hover:text-primary/90 font-garetheavy"
+              href="#"
+              className="text-primary hover:text-primary/90 font-garetheavy cursor-not-allowed opacity-60"
             >
               Discover Trips
             </Link>
             <Link
               href="/booking-status"
-              className="text-primary hover:text-primary/90 font-garetheavy"
+              className="text-primary hover:text-primary/90 font-garetheavy cursor-pointer"
             >
               Check Booking
             </Link>
@@ -106,6 +106,7 @@ export default function SiteHeader() {
                 alt="Notifications"
                 width={32}
                 height={32}
+                className="cursor-not-allowed opacity-60"
               />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -131,13 +132,13 @@ export default function SiteHeader() {
             <div className="flex items-center gap-2">
               <Link
                 href="/signin"
-                className="bg-primary text-white px-4 py-2 rounded-md font-bebas tracking-wide"
+                className="bg-primary text-white px-4 py-2 rounded-md font-bebas tracking-wide cursor-pointer"
               >
                 LOGIN
               </Link>
               <Link
                 href="/signup"
-                className="border border-primary text-primary px-4 py-2 rounded-md font-bebas tracking-wide"
+                className="border border-primary text-primary px-4 py-2 rounded-md font-bebas tracking-wide cursor-pointer"
               >
                 SIGN UP
               </Link>
@@ -146,7 +147,7 @@ export default function SiteHeader() {
         </div>
 
         <button
-          className="lg:hidden p-2 rounded-md border border-slate-200 text-primary"
+          className="lg:hidden p-2 rounded-md border border-slate-200 text-primary cursor-pointer"
           aria-label="Toggle menu"
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
@@ -183,18 +184,27 @@ export default function SiteHeader() {
       {open && (
         <nav className="lg:hidden border-t border-slate-200">
           <div className="max-w-[95vw] mx-auto py-3 flex flex-col gap-3">
-            <Link href="/" className="text-primary font-garetheavy">
+            <Link
+              href="/"
+              className="text-primary font-garetheavy cursor-pointer"
+            >
               Home
             </Link>
-            <Link href="#" className="text-primary font-garetheavy">
+            <Link
+              href="#"
+              className="text-primary font-garetheavy cursor-not-allowed opacity-60"
+            >
               About Us
             </Link>
-            <Link href="/" className="text-primary font-garetheavy">
+            <Link
+              href="#"
+              className="text-primary font-garetheavy cursor-not-allowed opacity-60"
+            >
               Discover Trips
             </Link>
             <Link
               href="/booking-status"
-              className="text-primary font-garetheavy"
+              className="text-primary font-garetheavy cursor-pointer"
             >
               Check Booking
             </Link>
@@ -212,6 +222,7 @@ export default function SiteHeader() {
                   alt="Notifications"
                   width={32}
                   height={32}
+                  className="cursor-not-allowed opacity-60"
                 />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -238,13 +249,13 @@ export default function SiteHeader() {
               <div className="flex flex-col gap-2">
                 <Link
                   href="/signin"
-                  className="bg-primary text-white px-4 py-2 rounded-md font-bebas tracking-wide w-max"
+                  className="bg-primary text-white px-4 py-2 rounded-md font-bebas tracking-wide w-max cursor-pointer"
                 >
                   LOGIN
                 </Link>
                 <Link
                   href="/signup"
-                  className="border border-primary text-primary px-4 py-2 rounded-md font-bebas tracking-wide w-max"
+                  className="border border-primary text-primary px-4 py-2 rounded-md font-bebas tracking-wide w-max cursor-pointer"
                 >
                   SIGN UP
                 </Link>

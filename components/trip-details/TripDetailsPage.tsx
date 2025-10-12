@@ -15,6 +15,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Skeleton } from "@/components/ui/skeleton";
 import TripGallery from "./TripGallery";
 
 function StarsSolid({ rating }: { rating: number }) {
@@ -54,8 +55,71 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
       <div className="min-h-screen bg-white">
         <SiteHeader />
         <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-20 py-8 pb-28 lg:pb-8 max-w-7xl">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-lg">Loading trip details...</div>
+          {/* Hero Section Skeleton */}
+          <section className="relative h-[60vh] md:h-[70vh] overflow-hidden mb-12">
+            <Skeleton className="w-full h-full" />
+            <div className="absolute inset-0 bg-black/40" />
+            <div className="relative z-10 h-full flex items-end">
+              <div className="container mx-auto px-4 pb-12">
+                <div className="max-w-3xl">
+                  <div className="flex items-center justify-between mb-4">
+                    <Skeleton className="h-12 w-96" />
+                    <Skeleton className="h-8 w-16" />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-4">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-6 w-24" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Main Content Skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div className="lg:col-span-2 space-y-8">
+              {/* About Section */}
+              <div className="space-y-4">
+                <Skeleton className="h-8 w-32" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+
+              {/* Trip Details Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="bg-gray-50 rounded-lg p-6">
+                    <Skeleton className="h-6 w-24 mb-2" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Host Section */}
+              <div className="bg-gray-50 rounded-lg p-6">
+                <Skeleton className="h-6 w-32 mb-4" />
+                <div className="flex items-start gap-4">
+                  <Skeleton className="h-16 w-16 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-2/3" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              {/* Booking Card Skeleton */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6 sticky top-8">
+                <Skeleton className="h-8 w-48 mb-4" />
+                <Skeleton className="h-6 w-32 mb-2" />
+                <Skeleton className="h-4 w-24 mb-4" />
+                <Skeleton className="h-10 w-full mb-4" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+            </div>
           </div>
         </main>
       </div>
@@ -135,12 +199,6 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
               </div>
               <div className="flex flex-wrap items-center gap-4 text-white/90">
                 <div className="flex items-center gap-2">
-                  <span className="text-lg font-semibold">
-                    {formatPrice(data.priceInInr, data.currency || "INR")}
-                  </span>
-                  <span className="text-sm">per person</span>
-                </div>
-                <div className="flex items-center gap-2">
                   <StarsSolid rating={data.reviewsSummary.average} />
                   <span className="text-sm">
                     {data.reviewsSummary.average.toFixed(1)} (
@@ -148,7 +206,9 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">{data.about.tripType}</span>
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white/20 backdrop-blur-sm border border-white/30 text-white">
+                    {data.about.tripType}
+                  </span>
                 </div>
               </div>
             </div>
@@ -551,7 +611,7 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
                       },
                     });
                   }}
-                  className="w-full bg-primary text-white py-3 px-4 rounded-lg font-medium text-center hover:bg-primary/90 transition-colors"
+                  className="w-full bg-primary text-white py-3 px-4 rounded-lg font-medium text-center hover:bg-primary/90 transition-colors cursor-pointer"
                 >
                   Book this trip
                 </button>

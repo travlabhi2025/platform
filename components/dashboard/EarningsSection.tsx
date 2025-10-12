@@ -16,7 +16,7 @@ export default function EarningsSection({ earnings }: { earnings: Earnings }) {
         </div>
       </div>
       <div className="mt-3">
-        <button className="bg-primary text-white rounded-full px-4 py-2 text-sm font-medium">
+        <button className="bg-primary text-white rounded-full px-4 py-2 text-sm font-medium cursor-not-allowed opacity-60">
           Withdraw Earnings
         </button>
       </div>

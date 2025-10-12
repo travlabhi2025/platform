@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ExternalLink, Users } from "lucide-react";
 import Link from "next/link";
 
@@ -95,11 +96,47 @@ const TripsBookingOverview: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-8">
-        <div className="text-gray-500">
-          Loading trips and booking statistics...
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="w-5 h-5" />
+            Trips Booking Overview
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <Skeleton className="h-5 w-48" />
+                  <Skeleton className="h-6 w-16" />
+                </div>
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <Skeleton className="h-6 w-8 mx-auto mb-1" />
+                    <Skeleton className="h-3 w-12 mx-auto" />
+                  </div>
+                  <div className="text-center">
+                    <Skeleton className="h-6 w-8 mx-auto mb-1" />
+                    <Skeleton className="h-3 w-12 mx-auto" />
+                  </div>
+                  <div className="text-center">
+                    <Skeleton className="h-6 w-8 mx-auto mb-1" />
+                    <Skeleton className="h-3 w-12 mx-auto" />
+                  </div>
+                  <div className="text-center">
+                    <Skeleton className="h-6 w-8 mx-auto mb-1" />
+                    <Skeleton className="h-3 w-12 mx-auto" />
+                  </div>
+                </div>
+                <div className="mt-3 flex justify-end">
+                  <Skeleton className="h-8 w-20" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -129,7 +166,7 @@ const TripsBookingOverview: React.FC = () => {
           <CardTitle>Your Trips & Booking Statistics</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div>
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-gray-600 border-b">

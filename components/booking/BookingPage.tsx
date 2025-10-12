@@ -520,9 +520,27 @@ export default function BookingPage({ tripId }: { tripId: string }) {
                 </div>
 
                 {trip && (
-                  <div className="text-right text-sm text-gray-700">
-                    Estimated total: ₹
-                    {(trip.priceInInr * form.groupSize).toLocaleString("en-IN")}
+                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm text-gray-600">Estimated Total</p>
+                        <p className="text-xs text-gray-500">
+                          For {form.groupSize}{" "}
+                          {form.groupSize === 1 ? "person" : "people"}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-primary">
+                          ₹
+                          {(trip.priceInInr * form.groupSize).toLocaleString(
+                            "en-IN"
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          ₹{trip.priceInInr.toLocaleString("en-IN")} per person
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
 

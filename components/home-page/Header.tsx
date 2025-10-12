@@ -26,7 +26,7 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="shadow-sm fixed z-100 max-w-[95vw] min-w-[95vw] bg-white mx-auto left-1/2 -translate-x-1/2 top-10 rounded-md">
+    <header className="shadow-lg fixed z-100 max-w-[95vw] min-w-[95vw] bg-white mx-auto left-1/2 -translate-x-1/2 top-6 rounded-md">
       <div className="max-w-full mx-auto pr-4 relative">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -79,7 +79,7 @@ export default function Header() {
                 </Link>
                 <Link
                   href="/signup"
-                  className="border border-primary text-primary px-4 py-1 rounded-md font-bebas tracking-wide hover:bg-primary hover:text-white transition-colors duration-200"
+                  className="border border-primary text-primary px-4 py-1 rounded-md font-bebas tracking-wide hover:bg-primary hover:text-white transition-colors duration-200 cursor-pointer"
                 >
                   SIGN UP
                 </Link>
@@ -90,14 +90,14 @@ export default function Header() {
           {/* Center links on sm+ */}
           <div className="hidden sm:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
             <Link
-              href={"/"}
-              className="font-garetheavy text-primary hover:text-primary/90"
+              href="#"
+              className="font-garetheavy text-primary hover:text-primary/90 cursor-not-allowed opacity-60"
             >
               Explore All Trips
             </Link>
             <Link
               href={"/booking-status"}
-              className="font-garetheavy text-primary hover:text-primary/90"
+              className="font-garetheavy text-primary hover:text-primary/90 cursor-pointer"
             >
               Check Booking
             </Link>
@@ -105,7 +105,7 @@ export default function Header() {
 
           {/* Burger button */}
           <button
-            className="sm:hidden p-2 rounded-md border border-slate-200 text-primary"
+            className="sm:hidden p-2 rounded-md border border-slate-200 text-primary cursor-pointer"
             aria-label="Toggle menu"
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
@@ -143,12 +143,15 @@ export default function Header() {
       {open && (
         <nav className="sm:hidden border-t border-slate-200">
           <div className="px-4 py-3 flex flex-col gap-3">
-            <Link href={"/"} className="font-garetheavy text-primary">
+            <Link
+              href={"#"}
+              className="font-garetheavy text-primary cursor-not-allowed opacity-60"
+            >
               Explore All Trips
             </Link>
             <Link
               href={"/booking-status"}
-              className="font-garetheavy text-primary"
+              className="font-garetheavy text-primary cursor-pointer"
             >
               Check Booking
             </Link>
@@ -156,13 +159,13 @@ export default function Header() {
               <div className="flex flex-col gap-2">
                 <Link
                   href={user ? "/dashboard" : "/profile"}
-                  className="text-primary font-medium"
+                  className="text-primary font-medium cursor-pointer"
                 >
                   Dashboard
                 </Link>
                 <button
                   onClick={signOut}
-                  className="text-sm text-gray-600 hover:text-gray-800 w-max"
+                  className="text-sm text-gray-600 hover:text-gray-800 w-max cursor-pointer"
                 >
                   Sign Out
                 </button>
@@ -171,13 +174,13 @@ export default function Header() {
               <div className="flex flex-col gap-2">
                 <Link
                   href="/signin"
-                  className="bg-primary font-bebas hover:bg-primary/90 text-primary-foreground px-8 py-2 rounded-md w-max"
+                  className="bg-primary font-bebas hover:bg-primary/90 text-primary-foreground px-8 py-2 rounded-md w-max cursor-pointer"
                 >
                   LOGIN
                 </Link>
                 <Link
                   href="/signup"
-                  className="border border-primary text-primary px-4 py-2 rounded-md font-bebas tracking-wide w-max"
+                  className="border border-primary text-primary px-4 py-2 rounded-md font-bebas tracking-wide w-max cursor-pointer"
                 >
                   SIGN UP
                 </Link>

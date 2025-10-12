@@ -39,7 +39,7 @@ function TripBookingCount({ tripId }: { tripId: string }) {
       {bookingCount > 0 ? (
         <Link
           href={`/dashboard/bookings?tripId=${tripId}`}
-          className="text-slate-800 hover:text-primary hover:underline flex items-center gap-1"
+          className="text-slate-800 hover:text-primary hover:underline flex items-center gap-1 cursor-pointer"
           title="View bookings for this trip"
         >
           {bookingCount}
@@ -274,8 +274,8 @@ export default function MyTripsTable({
           <div className="h-full bg-primary animate-pulse"></div>
         </div>
       )}
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm min-w-[600px]">
+      <div>
+        <table className="w-full text-sm">
           <thead>
             <tr className="bg-slate-50 text-slate-600">
               <th className="text-left font-medium px-4 py-3">Trip Title</th>
@@ -366,7 +366,7 @@ export default function MyTripsTable({
                   {t.id ? (
                     <button
                       onClick={() => copyTripLink(t.id)}
-                      className="flex items-center gap-1 text-slate-600 hover:text-primary transition-colors"
+                      className="flex items-center gap-1 text-slate-600 hover:text-primary transition-colors cursor-pointer"
                       title="Copy trip link"
                     >
                       <Copy className="h-4 w-4" />
@@ -384,19 +384,19 @@ export default function MyTripsTable({
                     <>
                       <Link
                         href={`/edit-trip/${t.id}`}
-                        className="underline text-xs mr-2 hover:text-primary"
+                        className="underline text-xs mr-2 hover:text-primary cursor-pointer"
                       >
                         Edit
                       </Link>
                       <button
                         onClick={() => openConfirm("duplicate", t)}
-                        className="underline text-xs mr-2 hover:text-primary"
+                        className="underline text-xs mr-2 hover:text-primary cursor-pointer"
                       >
                         Duplicate
                       </button>
                       <button
                         onClick={() => openConfirm("delete", t)}
-                        className="underline text-xs hover:text-red-600"
+                        className="underline text-xs hover:text-red-600 cursor-pointer"
                       >
                         Delete
                       </button>

@@ -67,7 +67,7 @@ function BookingTableRow({
 
   return (
     <TableRow className="hover:bg-gray-50">
-      <TableCell className="font-medium w-[20%]">
+      <TableCell className="font-medium w-[160px] px-2">
         <div className="flex flex-col">
           <span className="font-mono text-sm">{booking.id}</span>
           <span className="text-xs text-gray-500">
@@ -75,7 +75,7 @@ function BookingTableRow({
           </span>
         </div>
       </TableCell>
-      <TableCell className="w-[25%]">
+      <TableCell className="min-w-[240px] px-2">
         <div className="flex flex-col">
           <span className="font-medium">{trip?.title || "Loading..."}</span>
           <span className="text-sm text-gray-500 truncate">
@@ -83,7 +83,7 @@ function BookingTableRow({
           </span>
         </div>
       </TableCell>
-      <TableCell className="w-[20%]">
+      <TableCell className="min-w-[200px] px-2">
         <div className="flex flex-col">
           <span className="font-medium">{booking.travelerName}</span>
           <span className="text-sm text-gray-500 truncate">
@@ -91,21 +91,22 @@ function BookingTableRow({
           </span>
         </div>
       </TableCell>
-      <TableCell className="text-center w-[10%]">
+      <TableCell className="text-center w-[90px] px-2">
         {booking.groupSize} {booking.groupSize === 1 ? "person" : "people"}
       </TableCell>
-      <TableCell className="text-right font-medium w-[12%]">
+      <TableCell className="text-right font-medium w-[90px] px-2">
         ₹{booking.totalAmount.toLocaleString()}
       </TableCell>
-      <TableCell className="w-[8%]">
+      <TableCell className="w-[90px] px-2">
         <Badge variant={getStatusBadgeVariant(booking.status)}>
           {booking.status}
         </Badge>
       </TableCell>
-      <TableCell className="w-[5%]">
+      <TableCell className="w-[90px] px-2">
         <Button
           variant="outline"
           size="sm"
+          className="text-xs px-2 py-1 h-7"
           onClick={() => (window.location.href = `/trip/${booking.tripId}`)}
         >
           View Trip
@@ -423,7 +424,7 @@ export default function BookingStatusPage() {
 
         {/* Results Section */}
         {hasSearched && (
-          <div className="mt-8 max-w-2xl mx-auto">
+          <div className="mt-8 max-w-5xl mx-auto">
             {loading ? (
               <Card>
                 <CardContent className="text-center py-8">
@@ -442,8 +443,8 @@ export default function BookingStatusPage() {
                 </CardContent>
               </Card>
             ) : bookings.length > 0 ? (
-              <div className="space-y-4">
-                <div className="text-center mb-4">
+              <div className="space-y-4 -mx-4 sm:-mx-6 md:-mx-8 lg:-mx-20">
+                <div className="text-center mb-4 px-4 sm:px-6 md:px-8 lg:px-20">
                   <h3 className="text-lg font-semibold text-green-700">
                     Found {bookings.length} Booking
                     {bookings.length > 1 ? "s" : ""}
@@ -452,20 +453,26 @@ export default function BookingStatusPage() {
 
                 {/* Results Table */}
                 <div className="border rounded-lg overflow-hidden w-full">
-                  <Table className="w-full">
+                  <Table className="w-full [&_th]:py-2 [&_td]:py-2 [&_th]:text-xs [&_td]:text-sm">
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[20%]">Booking ID</TableHead>
-                        <TableHead className="w-[25%]">Trip</TableHead>
-                        <TableHead className="w-[20%]">Traveler</TableHead>
-                        <TableHead className="text-center w-[10%]">
+                        <TableHead className="w-[160px] px-2">
+                          Booking ID
+                        </TableHead>
+                        <TableHead className="min-w-[240px] px-2">
+                          Trip
+                        </TableHead>
+                        <TableHead className="min-w-[200px] px-2">
+                          Traveler
+                        </TableHead>
+                        <TableHead className="text-center w-[90px] px-2">
                           Group Size
                         </TableHead>
-                        <TableHead className="text-right w-[12%]">
+                        <TableHead className="text-right w-[90px] px-2">
                           Amount
                         </TableHead>
-                        <TableHead className="w-[8%]">Status</TableHead>
-                        <TableHead className="w-[5%]">Action</TableHead>
+                        <TableHead className="w-[90px] px-2">Status</TableHead>
+                        <TableHead className="w-[90px] px-2">Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

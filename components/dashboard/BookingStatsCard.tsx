@@ -10,6 +10,7 @@ import {
   AlertCircle,
   TrendingUp,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth-context";
 
 interface BookingStats {
@@ -58,10 +59,36 @@ const BookingStatsCard: React.FC = () => {
             Booking Statistics
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <span className="ml-2 text-sm text-gray-600">Loading...</span>
+        <CardContent className="space-y-4">
+          {/* Overview Stats Skeleton */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center p-3 bg-gray-50 rounded-lg">
+              <Skeleton className="h-8 w-12 mx-auto mb-2" />
+              <Skeleton className="h-4 w-20 mx-auto" />
+            </div>
+            <div className="text-center p-3 bg-gray-50 rounded-lg">
+              <Skeleton className="h-8 w-12 mx-auto mb-2" />
+              <Skeleton className="h-4 w-20 mx-auto" />
+            </div>
+          </div>
+
+          {/* Detailed Stats Skeleton */}
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between p-2 bg-gray-50 rounded-md"
+              >
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-4 w-4" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-5 w-8" />
+                  <Skeleton className="h-3 w-8" />
+                </div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -213,7 +240,7 @@ const BookingStatsCard: React.FC = () => {
             </p>
             <button
               onClick={() => (window.location.href = "/dashboard/bookings")}
-              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              className="text-sm text-blue-600 hover:text-blue-800 font-medium cursor-pointer"
             >
               Review Pending Bookings →
             </button>

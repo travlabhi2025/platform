@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useMyBookings } from "@/lib/hooks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 
 export default function CustomerDashboard() {
@@ -16,7 +17,40 @@ export default function CustomerDashboard() {
       <div className="min-h-screen bg-slate-50">
         <SiteHeader />
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="text-center">Loading your bookings...</div>
+          {/* Header Skeleton */}
+          <div className="mb-8">
+            <Skeleton className="h-8 w-64 mb-2" />
+            <Skeleton className="h-4 w-96" />
+          </div>
+
+          {/* Summary Cards Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="bg-white border border-slate-200 rounded-lg p-6"
+              >
+                <Skeleton className="h-4 w-20 mb-2" />
+                <Skeleton className="h-8 w-16" />
+              </div>
+            ))}
+          </div>
+
+          {/* Bookings Table Skeleton */}
+          <div className="bg-white border border-slate-200 rounded-lg p-6">
+            <Skeleton className="h-6 w-32 mb-4" />
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex items-center space-x-4">
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-6 w-20" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );

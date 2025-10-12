@@ -31,7 +31,7 @@ interface TripMarketingPageProps {
 
 export default function TripMarketingPage({ tripId }: TripMarketingPageProps) {
   const { trip, loading, error } = useTrip(tripId);
-  const [hostImageLoaded, setHostImageLoaded] = useState(false);
+  // const [hostImageLoaded, setHostImageLoaded] = useState(false);
   const [relatedImagesLoaded, setRelatedImagesLoaded] = useState<
     Record<number, boolean>
   >({});

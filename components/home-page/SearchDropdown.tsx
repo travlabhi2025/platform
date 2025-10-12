@@ -44,8 +44,8 @@ export default function SearchDropdown() {
   const select = (value: string) => {
     setQuery(value);
     setOpen(false);
-    // Navigate to trip discovery page with search query
-    router.push(`/trip-details?search=${encodeURIComponent(value)}`);
+    // Search functionality disabled - display only
+    // router.push(`/trip-details?search=${encodeURIComponent(value)}`);
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -65,9 +65,10 @@ export default function SearchDropdown() {
       );
     } else if (e.key === "Enter") {
       e.preventDefault();
-      const pick = filtered[activeIndex] ?? query;
-      select(pick);
-      inputRef.current?.blur();
+      // Enter functionality disabled - display only
+      // const pick = filtered[activeIndex] ?? query;
+      // select(pick);
+      // inputRef.current?.blur();
     }
   };
 
@@ -94,8 +95,11 @@ export default function SearchDropdown() {
         <button
           type="button"
           aria-label="Search"
-          className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-primary text-primary-foreground grid place-items-center shadow-md"
-          onClick={() => select(query)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-primary text-primary-foreground grid place-items-center shadow-md cursor-not-allowed opacity-60"
+          onClick={() => {
+            // Search functionality disabled - display only
+            // select(query);
+          }}
         >
           <ArrowRight className="w-5 h-5" />
         </button>
@@ -116,10 +120,11 @@ export default function SearchDropdown() {
               aria-selected={idx === activeIndex}
               onMouseDown={(e) => {
                 e.preventDefault();
-                select(d);
+                // Search functionality disabled - display only
+                // select(d);
               }}
               onMouseEnter={() => setActiveIndex(idx)}
-              className={`w-full text-left px-6 py-4 text-white hover:bg-white/20 transition-colors duration-150 ${
+              className={`w-full text-left px-6 py-4 text-white hover:bg-white/20 transition-colors duration-150 cursor-not-allowed opacity-60 ${
                 idx !== filtered.length - 1 ? "border-b border-white/40" : ""
               } ${idx === activeIndex ? "bg-white/10" : ""}`}
             >

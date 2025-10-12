@@ -118,14 +118,6 @@ export default function TripMarketingPageServer({
                 </h1>
                 <div className="flex flex-wrap items-center gap-4 text-white/90">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-semibold">
-                      {formatPrice(trip.priceInInr, trip.currency)}
-                    </span>
-                    {trip.perPerson && (
-                      <span className="text-sm">per person</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
                     <StarsSolid rating={trip.reviewsSummary.average} />
                     <span className="text-sm">
                       {trip.reviewsSummary.average.toFixed(1)} (
@@ -133,7 +125,9 @@ export default function TripMarketingPageServer({
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm">{trip.about.tripType}</span>
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white/20 backdrop-blur-sm border border-white/30 text-white">
+                      {trip.about.tripType}
+                    </span>
                   </div>
                 </div>
               </div>

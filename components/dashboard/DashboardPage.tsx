@@ -11,6 +11,7 @@ import CustomerDashboard from "./CustomerDashboard";
 import { useAuth } from "@/lib/auth-context";
 import { useMyTrips } from "@/lib/hooks";
 import { useMyBookings } from "@/lib/hooks";
+import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 
 export default function DashboardPage() {
@@ -148,8 +149,122 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-white">
         <SiteHeader />
         <main className="mx-auto px-4 md:px-8 lg:px-12 pt-8 md:pt-8 pb-10">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-lg">Loading dashboard...</div>
+          <div className="flex flex-col lg:flex-row lg:items-stretch gap-8 lg:gap-10">
+            {/* Sidebar Skeleton - Hidden on mobile */}
+            <div className="hidden lg:block order-1 lg:order-1 lg:basis-[320px] lg:w-[320px] lg:shrink-0 lg:self-stretch">
+              <div className="sticky top-24 bg-white rounded-lg border border-slate-200 p-4 md:p-5 flex flex-col h-full max-h-[calc(100vh-8rem)]">
+                {/* Profile section skeleton */}
+                <div className="flex items-center gap-3 mb-4">
+                  <Skeleton className="w-9 h-9 rounded-full" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+
+                {/* Navigation skeleton */}
+                <nav className="mt-4 space-y-1 flex-1">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="px-3 py-2">
+                      <Skeleton className="h-4 w-28" />
+                    </div>
+                  ))}
+                </nav>
+              </div>
+            </div>
+
+            {/* Main Content Skeleton */}
+            <section className="order-2 lg:order-2 lg:flex-1">
+              {/* Header Skeleton */}
+              <div className="mb-6">
+                <Skeleton className="h-8 w-64 mb-2" />
+                <Skeleton className="h-4 w-96" />
+              </div>
+
+              {/* Summary Cards Skeleton */}
+              <div className="mb-6">
+                <Skeleton className="h-4 w-16 mb-3" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div
+                      key={i}
+                      className="bg-white border border-slate-200 rounded-lg p-4"
+                    >
+                      <Skeleton className="h-3 w-16 mb-2" />
+                      <Skeleton className="h-6 w-12" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* My Trips Section Skeleton */}
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-3">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-8 w-24" />
+                </div>
+                <div className="bg-white border border-slate-200 rounded-lg p-6">
+                  <div className="space-y-3">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="flex items-center space-x-4">
+                        <Skeleton className="h-4 w-48" />
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-6 w-20" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bookings Section Skeleton */}
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-3">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-8 w-32" />
+                </div>
+                <div className="bg-white border border-slate-200 rounded-lg p-6">
+                  <div className="space-y-3">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="flex items-center space-x-4">
+                        <Skeleton className="h-4 w-40" />
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-6 w-16" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Earnings Section Skeleton */}
+              <div className="mb-6">
+                <Skeleton className="h-4 w-16 mb-3" />
+                <div className="bg-white border border-slate-200 rounded-lg p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Skeleton className="h-4 w-20 mb-2" />
+                      <Skeleton className="h-6 w-16" />
+                    </div>
+                    <div>
+                      <Skeleton className="h-4 w-24 mb-2" />
+                      <Skeleton className="h-6 w-20" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Profile Section Skeleton */}
+              <div className="mb-6">
+                <Skeleton className="h-4 w-32 mb-3" />
+                <div className="bg-white border border-slate-200 rounded-lg p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="w-14 h-14 rounded-full" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-3 w-32" />
+                      <Skeleton className="h-3 w-28" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-8 w-20" />
+                </div>
+              </div>
+            </section>
           </div>
         </main>
       </div>
@@ -167,7 +282,7 @@ export default function DashboardPage() {
       <SiteHeader />
       <main className="mx-auto px-4 md:px-8 lg:px-12 pt-8 md:pt-8 pb-10">
         <div className="flex flex-col lg:flex-row lg:items-stretch gap-8 lg:gap-10">
-          <div className="order-1 lg:order-1 lg:basis-[320px] lg:w-[320px] lg:shrink-0 lg:self-stretch">
+          <div className="hidden lg:block order-1 lg:order-1 lg:basis-[320px] lg:w-[320px] lg:shrink-0 lg:self-stretch">
             <DashboardSidebar profile={profileData} items={items} />
           </div>
 

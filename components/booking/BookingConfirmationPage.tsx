@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
 import { useTrip } from "@/lib/hooks";
 import SiteHeader from "@/components/common/SiteHeader";
@@ -67,7 +68,69 @@ export default function BookingConfirmationPage({
         </div>
 
         {loading ? (
-          <div>Loading confirmation…</div>
+          <div className="space-y-6">
+            {/* Header Skeleton */}
+            <div className="text-center space-y-4">
+              <Skeleton className="h-8 w-64 mx-auto" />
+              <Skeleton className="h-4 w-96 mx-auto" />
+            </div>
+
+            {/* Main Card Skeleton */}
+            <Card>
+              <CardHeader className="text-center">
+                <Skeleton className="h-6 w-48 mx-auto" />
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Success Icon Skeleton */}
+                <div className="flex justify-center">
+                  <Skeleton className="h-16 w-16 rounded-full" />
+                </div>
+
+                {/* Booking Details Skeleton */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-6 w-32" />
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-6 w-40" />
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-6 w-28" />
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-6 w-36" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Trip Details Skeleton */}
+                <div className="border-t pt-6">
+                  <Skeleton className="h-5 w-32 mb-4" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-6 w-40" />
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-6 w-32" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons Skeleton */}
+                <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+                  <Skeleton className="h-10 w-32" />
+                  <Skeleton className="h-10 w-28" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         ) : error ? (
           <div className="text-red-600">{error}</div>
         ) : (

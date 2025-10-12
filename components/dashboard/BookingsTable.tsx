@@ -127,8 +127,8 @@ export default function BookingsTable({ bookings }: { bookings: Booking[] }) {
 
       <div className="border-t border-slate-200" />
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm min-w-[600px]">
+      <div>
+        <table className="w-full text-sm">
           <thead>
             <tr className="bg-slate-50 text-slate-600">
               <th className="text-left font-medium px-4 py-3">Traveler Name</th>
