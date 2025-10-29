@@ -10,6 +10,7 @@ interface AuthContextType {
   userProfile: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: (role?: "trip-organizer" | "customer") => Promise<void>;
   signUp: (
     email: string,
     password: string,
@@ -54,6 +55,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     await authService.signIn(email, password);
+  };
+
+  const signInWithGoogle = async (
+    role: "trip-organizer" | "customer" = "customer"
+  ) => {
+    const { userProfile } = await authService.signInWithGoogle(role);
+    // Ensure profile is immediately available to consumers
+    setUserProfile(userProfile);
   };
 
   const signUp = async (
@@ -126,6 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     userProfile,
     loading,
     signIn,
+    signInWithGoogle,
     signUp,
     signOut,
     isOrganizer,
