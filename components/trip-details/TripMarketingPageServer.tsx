@@ -7,6 +7,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import TripGallery from "./TripGallery";
+import ShareButton from "./ShareButton";
 import Link from "next/link";
 import { TripData } from "@/lib/trip-data";
 import {
@@ -96,21 +97,38 @@ export default function TripMarketingPageServer({
       )}
 
       <div className="min-h-screen bg-white">
-        {/* Hero Section */}
-        <section className="relative h-[60vh] md:h-[70vh] overflow-hidden">
-          <div className="absolute inset-0">
-            <Image
+        {/* Hero Section - preserve original image dimensions */}
+        <section className="relative overflow-hidden">
+          <div className="relative">
+            <img
               src={trip.heroImageUrl}
               alt={trip.title}
-              fill
-              className="object-cover"
-              priority
-              sizes="100vw"
+              className="w-full h-auto"
             />
             <div className="absolute inset-0 bg-black/40" />
+
+            {/* Top-left: App logo */}
+            <div className="absolute top-3 left-3 z-20">
+              <img
+                src="/images/logo.png"
+                alt="TravlAbhi"
+                className="h-auto  w-24 drop-shadow-lg"
+              />
+            </div>
+
+            {/* Top-right: Host avatar */}
+            {trip.host.organizerImage && (
+              <div className="absolute top-3 right-3 z-20">
+                <img
+                  src={trip.host.organizerImage}
+                  alt={trip.host.name}
+                  className="h-10 w-10 rounded-full object-cover border border-white/70 shadow-md"
+                />
+              </div>
+            )}
           </div>
 
-          <div className="relative z-10 h-full flex items-end">
+          <div className="absolute inset-0 z-10 flex items-end">
             <div className="container mx-auto px-4 pb-12">
               <div className="max-w-3xl">
                 <h1 className="text-4xl md:text-6xl font-garetheavy text-white mb-4 leading-tight">
@@ -124,11 +142,21 @@ export default function TripMarketingPageServer({
                       {trip.reviewsSummary.totalCount} reviews)
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white/20 backdrop-blur-sm border border-white/30 text-white">
-                      {trip.about.tripType}
-                    </span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {trip.about.tripTypes?.map((t) => (
+                      <span
+                        key={t}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white/20 backdrop-blur-sm border border-white/30 text-white"
+                      >
+                        {t}
+                      </span>
+                    ))}
                   </div>
+                  {/* Share button (client component) */}
+                  <ShareButton
+                    title={trip.title}
+                    url={`https://travlabhi.com/trip/${trip.id}`}
+                  />
                 </div>
               </div>
             </div>
@@ -149,8 +177,10 @@ export default function TripMarketingPageServer({
                   <p className="text-lg text-slate-700 leading-relaxed mb-6">
                     Discover the amazing {trip.about.tripName} experience in{" "}
                     {trip.about.location}. This{" "}
-                    {trip.about.tripType.toLowerCase()} trip offers an
-                    unforgettable adventure for travelers aged{" "}
+                    {trip.about.tripTypes
+                      .map((t) => t.toLowerCase())
+                      .join(", ")}{" "}
+                    trip offers an unforgettable adventure for travelers aged{" "}
                     {trip.about.ageMin}-{trip.about.ageMax} years.
                   </p>
 
@@ -164,9 +194,18 @@ export default function TripMarketingPageServer({
                     </div>
                     <div className="bg-slate-50 rounded-lg p-4">
                       <h4 className="font-semibold text-slate-900 mb-2">
-                        Trip Type
+                        Trip Types
                       </h4>
-                      <p className="text-slate-700">{trip.about.tripType}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {trip.about.tripTypes.map((t) => (
+                          <span
+                            key={t}
+                            className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border"
+                          >
+                            {t}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                     <div className="bg-slate-50 rounded-lg p-4">
                       <h4 className="font-semibold text-slate-900 mb-2">
@@ -402,8 +441,10 @@ export default function TripMarketingPageServer({
                       <span className="font-medium">{trip.about.location}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-600">Trip Type:</span>
-                      <span className="font-medium">{trip.about.tripType}</span>
+                      <span className="text-slate-600">Trip Types:</span>
+                      <span className="font-medium">
+                        {trip.about.tripTypes.join(", ")}
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-600">Group Size:</span>
@@ -427,11 +468,7 @@ export default function TripMarketingPageServer({
                     Book This Trip
                   </Link>
 
-                  <div className="mt-4 text-center">
-                    <p className="text-xs text-slate-500">
-                      Free cancellation up to 24 hours before trip
-                    </p>
-                  </div>
+                  {/* Removed free cancellation note */}
                 </div>
 
                 {/* Host Info */}

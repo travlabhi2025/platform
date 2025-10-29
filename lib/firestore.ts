@@ -32,7 +32,7 @@ export interface Trip {
     groupSizeMax: number;
     ageMin: number;
     ageMax: number;
-    tripType: string;
+    tripTypes: string[]; // multiple types supported
   };
   host: {
     name: string;

@@ -89,19 +89,27 @@ export const authService = {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
 
-    // Ensure a user profile exists/updated in Firestore
-    const userProfile = await userService.createOrUpdateUser(
-      {
-        name: user.displayName ?? user.email ?? "",
-        email: user.email ?? "",
-        avatar: user.photoURL ?? undefined,
-        verified: !!user.emailVerified,
-        kycVerified: false,
-        // Use the specified role for Google sign-ins
-        role: role,
-      },
-      user.uid
-    );
+    // Check if the user already exists; if so, do NOT change their role
+    const existingProfile = await userService.getUserById(user.uid);
+
+    let userProfile: User;
+    if (existingProfile) {
+      // Preserve existing profile as-is to avoid accidentally downgrading role
+      userProfile = existingProfile;
+    } else {
+      // New user: create with the specified role (defaults to customer)
+      userProfile = await userService.createOrUpdateUser(
+        {
+          name: user.displayName ?? user.email ?? "",
+          email: user.email ?? "",
+          avatar: user.photoURL ?? undefined,
+          verified: !!user.emailVerified,
+          kycVerified: false,
+          role: role,
+        },
+        user.uid
+      );
+    }
 
     return {
       authUser: {

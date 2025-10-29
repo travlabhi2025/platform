@@ -56,6 +56,9 @@ export default function Header() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-44 z-[110]">
                     <DropdownMenuItem asChild>
+                      <Link href="/booking-status">Check Booking</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
                       <Link href="/profile">Profile</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
@@ -96,10 +99,10 @@ export default function Header() {
               Explore All Trips
             </Link>
             <Link
-              href={"/booking-status"}
+              href={"/dashboard"}
               className="font-garetheavy text-primary hover:text-primary/90 cursor-pointer"
             >
-              Check Booking
+              Dashboard
             </Link>
           </div>
 
@@ -150,10 +153,10 @@ export default function Header() {
               Explore All Trips
             </Link>
             <Link
-              href={"/booking-status"}
+              href={"/dashboard"}
               className="font-garetheavy text-primary cursor-pointer"
             >
-              Check Booking
+              Dashboard
             </Link>
             {user ? (
               <div className="flex flex-col gap-2">

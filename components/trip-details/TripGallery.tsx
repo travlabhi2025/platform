@@ -73,13 +73,12 @@ export default function TripGallery({ images, title }: TripGalleryProps) {
           <CarouselContent className="-ml-2 md:-ml-4">
             {images.map((image, index) => (
               <CarouselItem key={index} className="pl-2 md:pl-4 basis-full">
-                <div className="relative w-full h-[280px] md:h-[340px] lg:h-[380px] overflow-hidden rounded-md">
-                  <Image
+                <div className="relative w-full overflow-hidden rounded-md">
+                  {/* Preserve natural dimensions */}
+                  <img
                     src={image}
                     alt={`${title} - Gallery image ${index + 1}`}
-                    fill
-                    className="object-cover hover:scale-105 transition-transform duration-300"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
+                    className="w-full h-auto block"
                   />
                 </div>
               </CarouselItem>

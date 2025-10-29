@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -11,11 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { X } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import ImageUpload from "@/components/ui/image-upload";
 import { TripFormData } from "@/lib/validations/trip";
 import { useAuth } from "@/lib/auth-context";
 import { useEffect, useCallback } from "react";
+import { userService, type User as UserProfile } from "@/lib/firestore";
 
 interface TripDetailsProps {
   formData: TripFormData;
@@ -46,6 +49,64 @@ export default function TripDetails({
   errors,
 }: TripDetailsProps) {
   const { user, userProfile } = useAuth();
+  // Always fetch latest host profile from backend to avoid stale context
+  useEffect(() => {
+    let isCancelled = false;
+    const fetchLatestProfile = async () => {
+      try {
+        if (!user?.uid) return;
+        const latest: UserProfile | null = await userService.getUserById(
+          user.uid
+        );
+        if (isCancelled || !latest) return;
+
+        const selectedProfileImage =
+          latest.profilePicture || latest.avatar || user?.photoURL || "";
+
+        const hostUpdates: Partial<TripFormData["host"]> = {};
+        let hasUpdates = false;
+
+        if (
+          (!formData.host.name || formData.host.name.trim() === "") &&
+          latest.name
+        ) {
+          hostUpdates.name = latest.name;
+          hasUpdates = true;
+        }
+
+        if (
+          (!formData.host.description ||
+            formData.host.description.trim() === "") &&
+          latest.bio
+        ) {
+          hostUpdates.description = latest.bio;
+          hasUpdates = true;
+        }
+
+        if (
+          (!formData.host.organizerImage ||
+            formData.host.organizerImage.trim() === "") &&
+          selectedProfileImage
+        ) {
+          hostUpdates.organizerImage = selectedProfileImage;
+          hasUpdates = true;
+        }
+
+        if (hasUpdates) {
+          updateHost(hostUpdates);
+        }
+      } catch (e) {
+        console.error("Failed to fetch latest host profile:", e);
+      }
+    };
+
+    fetchLatestProfile();
+    return () => {
+      isCancelled = true;
+    };
+    // Intentionally depend only on user?.uid and formData.host to avoid overwriting user edits repeatedly
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid]);
 
   const updateAbout = useCallback(
     (updates: Partial<TripFormData["about"]>) => {
@@ -181,28 +242,66 @@ export default function TripDetails({
         </div>
 
         <div className="space-y-2 w-full">
-          <Label htmlFor="tripType" className="w-full">
-            Trip Type *
-          </Label>
-          <Select
-            value={formData.about.tripType}
-            onValueChange={(value) => updateAbout({ tripType: value })}
+          <Label className="w-full">Trip Types *</Label>
+          {/* Selected chips */}
+          <div
+            className={`min-h-10 flex flex-wrap gap-2 rounded-md border p-2 ${
+              errors.tripTypes ? "border-red-500" : "border-gray-200"
+            }`}
           >
-            <SelectTrigger
-              className={`${errors.tripType ? "border-red-500" : ""} w-full`}
-            >
-              <SelectValue placeholder="Select trip type" />
+            {(formData.about.tripTypes || []).length === 0 && (
+              <span className="text-xs text-gray-500">No types selected</span>
+            )}
+            {(formData.about.tripTypes || []).map((t) => (
+              <Badge
+                key={t}
+                variant="secondary"
+                className="flex items-center gap-1"
+              >
+                {t}
+                <button
+                  type="button"
+                  aria-label={`Remove ${t}`}
+                  onClick={() => {
+                    const next = (formData.about.tripTypes || []).filter(
+                      (x) => x !== t
+                    );
+                    updateAbout({ tripTypes: next });
+                  }}
+                  className="ml-1 hover:text-red-600"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))}
+          </div>
+
+          {/* Add via dropdown */}
+          <Select
+            onValueChange={(value) => {
+              const current = new Set(formData.about.tripTypes || []);
+              current.add(value);
+              updateAbout({ tripTypes: Array.from(current) });
+            }}
+          >
+            <SelectTrigger className="w-full mt-2">
+              <SelectValue placeholder="Add a trip type" />
             </SelectTrigger>
             <SelectContent>
               {tripTypes.map((type) => (
-                <SelectItem key={type} value={type}>
+                <SelectItem
+                  key={type}
+                  value={type}
+                  disabled={(formData.about.tripTypes || []).includes(type)}
+                >
                   {type}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          {errors.tripType && (
-            <p className="text-sm text-red-500">{errors.tripType}</p>
+
+          {errors.tripTypes && (
+            <p className="text-sm text-red-500">{errors.tripTypes}</p>
           )}
         </div>
 

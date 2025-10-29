@@ -21,7 +21,9 @@ export const tripFormSchema = z.object({
       groupSizeMax: z.number().min(1, "Maximum group size must be at least 1"),
       ageMin: z.number().min(1, "Minimum age must be at least 1"),
       ageMax: z.number().min(1, "Maximum age must be at least 1"),
-      tripType: z.string().min(1, "Trip type is required"),
+      tripTypes: z
+        .array(z.string().min(1, "Trip type cannot be empty"))
+        .min(1, "Select at least one trip type"),
     })
     .refine((data) => data.groupSizeMax >= data.groupSizeMin, {
       message:

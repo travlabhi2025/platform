@@ -79,27 +79,26 @@ export default function TripReview({
       {/* Trip Overview */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 flex-wrap">
             <span>Trip Overview</span>
-            <Badge variant="secondary">{formData.about.tripType}</Badge>
+            {(formData.about.tripTypes || []).map((t) => (
+              <Badge key={t} variant="secondary">{t}</Badge>
+            ))}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Hero Image */}
           {formData.heroImageUrl && (
-            <div className="relative w-full h-[280px] md:h-[340px] lg:h-[380px] overflow-hidden rounded-md">
-              {/* Loading skeleton */}
+            <div className="relative w-full overflow-hidden rounded-md">
               {!heroImageLoaded && (
                 <div className="absolute inset-0 bg-gray-100 animate-pulse flex items-center justify-center">
                   <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
                 </div>
               )}
-              <Image
+              <img
                 src={formData.heroImageUrl}
                 alt={formData.title}
-                fill
-                priority
-                className={`object-cover transition-opacity duration-300 ${
+                className={`w-full h-auto block transition-opacity duration-300 ${
                   heroImageLoaded ? "opacity-100" : "opacity-0"
                 }`}
                 onLoad={() => setHeroImageLoaded(true)}
@@ -125,25 +124,22 @@ export default function TripReview({
                         key={index}
                         className="pl-2 md:pl-4 basis-full"
                       >
-                        <div className="relative w-full h-[280px] md:h-[340px] lg:h-[380px] overflow-hidden rounded-md">
-                          {/* Loading skeleton */}
+                        <div className="relative w-full overflow-hidden rounded-md">
                           {!galleryImagesLoaded[index] && (
                             <div className="absolute inset-0 bg-gray-100 animate-pulse flex items-center justify-center">
                               <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
                             </div>
                           )}
-                          <Image
+                          <img
                             src={imageUrl}
                             alt={`${formData.title} - Gallery image ${
                               index + 1
                             }`}
-                            fill
-                            className={`object-cover transition-opacity duration-300 ${
+                            className={`w-full h-auto block transition-opacity duration-300 ${
                               galleryImagesLoaded[index]
                                 ? "opacity-100"
                                 : "opacity-0"
                             }`}
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
                             onLoad={() =>
                               setGalleryImagesLoaded((prev) => ({
                                 ...prev,
@@ -174,7 +170,9 @@ export default function TripReview({
 
           <div>
             <h4 className="font-semibold text-lg">{formData.title}</h4>
-            <p className="text-gray-600">{formData.about.tripType} Trip</p>
+            <p className="text-gray-600">
+              {(formData.about.tripTypes || []).join(", ")} Trip
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

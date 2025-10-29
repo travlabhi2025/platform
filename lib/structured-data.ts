@@ -15,7 +15,9 @@ export function generateTripStructuredData(trip: TripData) {
     name: trip.title,
     description: `Discover the amazing ${trip.about.tripName} experience in ${
       trip.about.location
-    }. This ${trip.about.tripType.toLowerCase()} trip offers an unforgettable adventure for travelers aged ${
+    }. This ${trip.about.tripTypes
+      .map((t) => t.toLowerCase())
+      .join(", ")} trip offers an unforgettable adventure for travelers aged ${
       trip.about.ageMin
     }-${trip.about.ageMax} years.`,
     url: tripUrl,
@@ -47,7 +49,7 @@ export function generateTripStructuredData(trip: TripData) {
       description: trip.host.description,
     },
     duration: `From ${trip.about.startDate} to ${trip.about.endDate}`,
-    touristType: trip.about.tripType,
+    touristType: trip.about.tripTypes && trip.about.tripTypes.length > 0 ? trip.about.tripTypes : undefined,
     location: {
       "@type": "Place",
       name: trip.about.location,

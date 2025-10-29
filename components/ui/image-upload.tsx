@@ -280,14 +280,12 @@ export default function ImageUpload({
                   <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
                 </div>
               )}
-              <Image
+              <img
                 src={preview}
                 alt="Preview"
-                className={`w-full h-48 object-cover transition-opacity duration-300 ${
+                className={`w-full h-auto transition-opacity duration-300 ${
                   imageLoaded ? "opacity-100" : "opacity-0"
                 }`}
-                width={192}
-                height={192}
                 onLoad={() => setImageLoaded(true)}
                 onError={() => setImageLoaded(true)}
               />
@@ -371,14 +369,12 @@ export default function ImageUpload({
                 <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
               </div>
             )}
-            <Image
+            <img
               src={preview}
               alt="Preview"
-              className={`w-full h-48 object-cover transition-opacity duration-300 ${
+              className={`w-full h-auto transition-opacity duration-300 ${
                 imageLoaded ? "opacity-100" : "opacity-0"
               }`}
-              width={300}
-              height={192}
               onLoad={() => setImageLoaded(true)}
               onError={() => setImageLoaded(true)} // Also hide skeleton on error
             />

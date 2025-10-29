@@ -17,7 +17,7 @@ export interface TripData {
     groupSizeMax: number;
     ageMin: number;
     ageMax: number;
-    tripType: string;
+    tripTypes: string[];
   };
   host: {
     name: string;
@@ -91,7 +91,18 @@ export async function getTripData(tripId: string): Promise<TripData | null> {
         groupSizeMax: trip.about?.groupSizeMax || 10,
         ageMin: trip.about?.ageMin || 18,
         ageMax: trip.about?.ageMax || 65,
-        tripType: trip.about?.tripType || "Adventure",
+        tripTypes:
+          (trip.about as unknown as { tripTypes?: string[]; tripType?: string })
+            .tripTypes ||
+          ((trip.about as unknown as { tripTypes?: string[]; tripType?: string })
+            .tripType
+            ? [
+                (trip.about as unknown as {
+                  tripTypes?: string[];
+                  tripType?: string;
+                }).tripType as string,
+              ]
+            : ["Adventure"]),
       },
       host: {
         name: trip.host?.name || "Unknown Host",
@@ -147,7 +158,9 @@ export function generateTripMetadata(trip: TripData) {
     trip.about.tripName
   } experience in ${
     trip.about.location
-  }. This ${trip.about.tripType.toLowerCase()} trip offers an unforgettable adventure for travelers aged ${
+  }. This ${trip.about.tripTypes
+    .map((t) => t.toLowerCase())
+    .join(", ")} trip offers an unforgettable adventure for travelers aged ${
     trip.about.ageMin
   }-${trip.about.ageMax} years. Book now for the best travel experience.`;
   const imageUrl = trip.heroImageUrl || "/images/logo.png";
@@ -195,7 +208,7 @@ export function generateTripMetadata(trip: TripData) {
     keywords: [
       trip.title,
       trip.about.location,
-      trip.about.tripType,
+      ...trip.about.tripTypes,
       "travel",
       "adventure",
       "trip",

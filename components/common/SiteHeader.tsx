@@ -59,10 +59,10 @@ export default function SiteHeader() {
               Discover Trips
             </Link>
             <Link
-              href="/booking-status"
+              href="/dashboard"
               className="text-primary hover:text-primary/90 font-garetheavy cursor-pointer"
             >
-              Check Booking
+              Dashboard
             </Link>
           </nav>
         </div>
@@ -116,6 +116,9 @@ export default function SiteHeader() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44 z-[110]">
+                  <DropdownMenuItem asChild>
+                    <Link href="/booking-status">Check Booking</Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/profile">Profile</Link>
                   </DropdownMenuItem>
@@ -203,10 +206,10 @@ export default function SiteHeader() {
               Discover Trips
             </Link>
             <Link
-              href="/booking-status"
+              href="/dashboard"
               className="text-primary font-garetheavy cursor-pointer"
             >
-              Check Booking
+              Dashboard
             </Link>
             <div className="pt-2">
               <input
@@ -236,6 +239,9 @@ export default function SiteHeader() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuItem asChild>
+                      <Link href="/booking-status">Check Booking</Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link href="/dashboard">Dashboard</Link>
                     </DropdownMenuItem>

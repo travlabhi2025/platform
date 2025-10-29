@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/accordion";
 import TripGallery from "./TripGallery";
 import Link from "next/link";
+import ShareButton from "./ShareButton";
 
 function StarsSolid({ rating }: { rating: number }) {
   const full = Math.round(Math.max(0, Math.min(5, rating)));
@@ -44,6 +45,10 @@ export default function TripMarketingPage({ tripId }: TripMarketingPageProps) {
 
   // Use mock data if trip is not loaded yet or there's an error
   const data = trip || EVEREST_BASE_CAMP_TRIP;
+  type AboutMaybeMulti = { tripTypes?: string[]; tripType?: string };
+  const aboutMulti = (data.about as unknown as AboutMaybeMulti) || {};
+  const tripTypes: string[] =
+    aboutMulti.tripTypes || (aboutMulti.tripType ? [aboutMulti.tripType] : []);
 
   if (loading) {
     return (
@@ -94,21 +99,42 @@ export default function TripMarketingPage({ tripId }: TripMarketingPageProps) {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="relative h-[60vh] md:h-[70vh] overflow-hidden">
-        <div className="absolute inset-0">
-          <Image
+      {/* Hero Section - preserve original image dimensions */}
+      <section className="relative overflow-hidden">
+        <div className="relative w-full">
+          <img
             src={data.heroImageUrl}
             alt={data.title}
-            fill
-            className="object-cover"
-            priority
-            sizes="100vw"
+            className="w-full h-auto block"
           />
-          <div className="absolute inset-0 bg-black/40" />
+          <div className="absolute inset-0 bg-black/40 pointer-events-none" />
+
+          {/* Top-left: App logo */}
+          <div className="absolute top-3 left-3">
+            <img
+              src="/images/logo.png"
+              alt="TravlAbhi"
+              className="h-auto  w-24 drop-shadow-lg"
+            />
+          </div>
+
+          {/* Top-right: Host avatar */}
+          {"organizerImage" in (data.host as Record<string, unknown>) &&
+            (data.host as { organizerImage?: string }).organizerImage && (
+              <div className="absolute top-3 right-3">
+                <img
+                  src={
+                    (data.host as { organizerImage?: string })
+                      .organizerImage as string
+                  }
+                  alt={data.host.name}
+                  className="h-10 w-10 rounded-full object-cover border border-white/70 shadow-md"
+                />
+              </div>
+            )}
         </div>
 
-        <div className="relative z-10 h-full flex items-end">
+        <div className="relative z-10 -mt-24 md:-mt-32 lg:-mt-40 flex items-end">
           <div className="container mx-auto px-4 pb-12">
             <div className="max-w-3xl">
               <h1 className="text-4xl md:text-6xl font-garetheavy text-white mb-4 leading-tight">
@@ -128,9 +154,18 @@ export default function TripMarketingPage({ tripId }: TripMarketingPageProps) {
                     {data.reviewsSummary.totalCount} reviews)
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">{data.about.tripType}</span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {tripTypes.map((t) => (
+                    <span
+                      key={t}
+                      className="text-sm inline-flex items-center px-2 py-0.5 rounded-full bg-white/20 border border-white/30"
+                    >
+                      {t}
+                    </span>
+                  ))}
                 </div>
+                {/* Share button */}
+                <ShareButton title={data.title} url="" />
               </div>
             </div>
           </div>
@@ -151,9 +186,9 @@ export default function TripMarketingPage({ tripId }: TripMarketingPageProps) {
                 <p className="text-lg text-slate-700 leading-relaxed mb-6">
                   Discover the amazing {data.about.tripName} experience in{" "}
                   {data.about.location}. This{" "}
-                  {data.about.tripType.toLowerCase()} trip offers an
-                  unforgettable adventure for travelers aged {data.about.ageMin}
-                  -{data.about.ageMax} years.
+                  {tripTypes.map((t) => t.toLowerCase()).join(", ")} trip offers
+                  an unforgettable adventure for travelers aged{" "}
+                  {data.about.ageMin}-{data.about.ageMax} years.
                 </p>
 
                 {/* Trip Details */}
@@ -166,9 +201,18 @@ export default function TripMarketingPage({ tripId }: TripMarketingPageProps) {
                   </div>
                   <div className="bg-slate-50 rounded-lg p-4">
                     <h4 className="font-semibold text-slate-900 mb-2">
-                      Trip Type
+                      Trip Types
                     </h4>
-                    <p className="text-slate-700">{data.about.tripType}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {tripTypes.map((t) => (
+                        <span
+                          key={t}
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border"
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                   <div className="bg-slate-50 rounded-lg p-4">
                     <h4 className="font-semibold text-slate-900 mb-2">

@@ -34,7 +34,7 @@ const initialFormData: TripFormData = {
     groupSizeMax: 10,
     ageMin: 18,
     ageMax: 65,
-    tripType: "",
+    tripTypes: [],
   },
   host: {
     name: "",
@@ -155,8 +155,8 @@ export default function CreateTripPage() {
           setErrors({ endDate: "End date cannot be before start date" });
           return false;
         }
-        if (!formData.about.tripType) {
-          setErrors({ tripType: "Trip type is required" });
+        if (!formData.about.tripTypes || formData.about.tripTypes.length === 0) {
+          setErrors({ tripTypes: "Select at least one trip type" });
           return false;
         }
         if (!formData.host.name) {
@@ -243,8 +243,8 @@ export default function CreateTripPage() {
         ) {
           validationErrors.endDate = "End date cannot be before start date";
         }
-        if (!formData.about.tripType) {
-          validationErrors.tripType = "Trip type is required";
+        if (!formData.about.tripTypes || formData.about.tripTypes.length === 0) {
+          validationErrors.tripTypes = "Select at least one trip type";
         }
         if (!formData.host.name) {
           validationErrors.hostName = "Host name is required";

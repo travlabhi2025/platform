@@ -13,6 +13,8 @@ import { useMyTrips } from "@/lib/hooks";
 import { useMyBookings } from "@/lib/hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { userService, type User as UserProfile } from "@/lib/firestore";
 
 export default function DashboardPage() {
   const { user, userProfile, isCustomer } = useAuth();
@@ -131,17 +133,38 @@ export default function DashboardPage() {
       .toLocaleString()}`,
   };
 
-  // Profile data from user
+  const [latestProfile, setLatestProfile] = useState<UserProfile | null>(null);
+
+  // Fetch latest user profile to avoid stale context
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      try {
+        if (!user?.uid) return;
+        const fresh = await userService.getUserById(user.uid);
+        if (!cancelled) setLatestProfile(fresh);
+      } catch (e) {
+        console.error("Failed to fetch latest user profile for dashboard:", e);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.uid]);
+
+  // Profile data from freshest source available
+  const src = latestProfile || userProfile || null;
   const profileData = {
-    name: userProfile?.name || user?.displayName || "User",
+    name: src?.name || user?.displayName || "User",
     avatar:
-      userProfile?.profilePicture ||
-      userProfile?.avatar ||
+      src?.profilePicture ||
+      src?.avatar ||
       user?.photoURL ||
       "/images/home/placeholders/profileImg.png",
-    verified: userProfile?.verified || false,
-    kycVerified: userProfile?.kycVerified || false,
-    badge: userProfile?.badge || "Organizer",
+    verified: src?.verified || false,
+    kycVerified: src?.kycVerified || false,
+    badge: src?.badge || "Organizer",
   };
 
   if (tripsLoading || bookingsLoading) {
