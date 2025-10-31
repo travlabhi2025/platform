@@ -421,11 +421,58 @@ export default function TripMarketingPageServer({
               <div className="sticky top-6">
                 <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
                   <div className="text-center mb-6">
-                    <div className="text-3xl font-garetheavy text-slate-900 mb-2">
-                      {formatPrice(trip.priceInInr, trip.currency)}
-                    </div>
-                    {trip.perPerson && (
-                      <div className="text-sm text-slate-600">per person</div>
+                    {trip.packages && trip.packages.length > 0 ? (
+                      <>
+                        {trip.packages.length === 1 ? (
+                          <>
+                            <div className="text-3xl font-garetheavy text-slate-900 mb-2">
+                              {formatPrice(
+                                trip.packages[0].priceInInr,
+                                trip.packages[0].currency || "INR"
+                              )}
+                            </div>
+                            <div className="text-sm text-slate-600">
+                              {trip.packages[0].perPerson
+                                ? "per person"
+                                : "total"}
+                            </div>
+                            {trip.packages[0].name && (
+                              <div className="text-xs text-slate-500 mt-1">
+                                {trip.packages[0].name}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <div className="text-3xl font-garetheavy text-slate-900 mb-2">
+                              Starting from{" "}
+                              {formatPrice(
+                                Math.min(
+                                  ...trip.packages.map((p) => p.priceInInr)
+                                ),
+                                trip.packages[0].currency || "INR"
+                              )}
+                            </div>
+                            <div className="text-sm text-slate-600">
+                              {trip.packages.length} packages available
+                            </div>
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-3xl font-garetheavy text-slate-900 mb-2">
+                          {formatPrice(
+                            trip.priceInInr || 0,
+                            trip.currency || "INR"
+                          )}
+                        </div>
+                        {trip.perPerson && (
+                          <div className="text-sm text-slate-600">
+                            per person
+                          </div>
+                        )}
+                      </>
                     )}
                     <div className="flex items-center justify-center gap-2 mt-2">
                       <StarsSolid rating={trip.reviewsSummary.average} />

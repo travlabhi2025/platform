@@ -66,14 +66,26 @@ export interface RelatedTrip {
   imageUrl: string;
 }
 
+export interface TripPackage {
+  id: string;
+  name: string;
+  description?: string;
+  priceInInr: number;
+  currency: string;
+  perPerson: boolean;
+  features?: string[];
+}
+
 export interface TripDetailsData {
   id: string;
   title: string;
   heroImageUrl: string;
   galleryImages?: string[]; // Optional array of gallery image URLs
-  priceInInr: number;
-  currency: CurrencyCode;
-  perPerson: boolean;
+  // Support both old format (backward compatibility) and new packages format
+  priceInInr?: number; // Deprecated, kept for backward compatibility
+  currency?: CurrencyCode; // Deprecated
+  perPerson?: boolean; // Deprecated
+  packages?: TripPackage[]; // New: array of packages
   about: AboutTrip;
   host: HostInfo;
   itinerary: ItineraryItem[];

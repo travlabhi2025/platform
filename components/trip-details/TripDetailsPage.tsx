@@ -596,10 +596,55 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
             <div className="sticky top-6">
               <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
                 <div className="text-center mb-6">
-                  <div className="text-3xl font-bold text-slate-900 mb-2">
-                    {formatPrice(data.priceInInr, data.currency || "INR")}
-                  </div>
-                  <div className="text-sm text-slate-600">per person</div>
+                  {data.packages && data.packages.length > 0 ? (
+                    <>
+                      {data.packages.length === 1 ? (
+                        <>
+                          <div className="text-3xl font-bold text-slate-900 mb-2">
+                            {formatPrice(
+                              data.packages[0].priceInInr,
+                              data.packages[0].currency || "INR"
+                            )}
+                          </div>
+                          <div className="text-sm text-slate-600">
+                            {data.packages[0].perPerson
+                              ? "per person"
+                              : "total"}
+                          </div>
+                          {data.packages[0].name && (
+                            <div className="text-xs text-slate-500 mt-1">
+                              {data.packages[0].name}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <div className="text-3xl font-bold text-slate-900 mb-2">
+                            Starting from{" "}
+                            {formatPrice(
+                              Math.min(
+                                ...data.packages.map((p) => p.priceInInr)
+                              ),
+                              data.packages[0].currency || "INR"
+                            )}
+                          </div>
+                          <div className="text-sm text-slate-600">
+                            {data.packages.length} packages available
+                          </div>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-3xl font-bold text-slate-900 mb-2">
+                        {formatPrice(
+                          data.priceInInr || 0,
+                          data.currency || "INR"
+                        )}
+                      </div>
+                      <div className="text-sm text-slate-600">per person</div>
+                    </>
+                  )}
                 </div>
 
                 <div className="space-y-4 mb-6">

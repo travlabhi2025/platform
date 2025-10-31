@@ -14,15 +14,28 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 
+// Package type for multiple payment plans
+export interface TripPackage {
+  id: string;
+  name: string;
+  description?: string;
+  priceInInr: number;
+  currency: string;
+  perPerson: boolean;
+  features?: string[]; // Optional features list for this package
+}
+
 // Types for Firestore documents
 export interface Trip {
   id?: string;
   title: string;
   heroImageUrl: string;
   galleryImages?: string[]; // Optional array of gallery image URLs
-  priceInInr: number;
-  currency: "INR";
-  perPerson: boolean;
+  // Support both old format (backward compatibility) and new packages format
+  priceInInr?: number; // Deprecated, kept for backward compatibility
+  currency?: "INR"; // Deprecated
+  perPerson?: boolean; // Deprecated
+  packages?: TripPackage[]; // New: array of packages
   about: {
     tripName: string;
     location: string;
@@ -87,6 +100,7 @@ export interface Trip {
 export interface Booking {
   id?: string;
   tripId: string;
+  packageId?: string; // ID of the selected package
   travelerName: string;
   travelerEmail: string;
   travelerPhone: string;

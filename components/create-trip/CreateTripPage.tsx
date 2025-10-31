@@ -24,7 +24,17 @@ const initialFormData: TripFormData = {
   title: "",
   heroImageUrl: "",
   galleryImages: [],
-  priceInInr: 0,
+  packages: [
+    {
+      id: `package-${Date.now()}`,
+      name: "",
+      description: "",
+      priceInInr: 0,
+      currency: "INR",
+      perPerson: true,
+      features: [],
+    },
+  ],
   about: {
     tripName: "",
     location: "",
@@ -128,13 +138,26 @@ export default function CreateTripPage() {
           setErrors({ title: "Trip title is required" });
           return false;
         }
-        if (!formData.priceInInr || formData.priceInInr <= 0) {
-          setErrors({ priceInInr: "Price must be greater than 0" });
-          return false;
-        }
         if (!formData.heroImageUrl) {
           setErrors({ heroImageUrl: "Hero image is required" });
           return false;
+        }
+        // Validate packages
+        if (!formData.packages || formData.packages.length === 0) {
+          setErrors({ packages: "At least one package is required" });
+          return false;
+        }
+        // Validate each package
+        for (let i = 0; i < formData.packages.length; i++) {
+          const pkg = formData.packages[i];
+          if (!pkg.name || pkg.name.trim() === "") {
+            setErrors({ packages: `Package ${i + 1} name is required` });
+            return false;
+          }
+          if (!pkg.priceInInr || pkg.priceInInr <= 0) {
+            setErrors({ packages: `Package ${i + 1} price must be greater than 0` });
+            return false;
+          }
         }
       } else if (step === 2) {
         if (!formData.about.location) {
@@ -219,11 +242,25 @@ export default function CreateTripPage() {
         if (!formData.title) {
           validationErrors.title = "Trip title is required";
         }
-        if (!formData.priceInInr || formData.priceInInr <= 0) {
-          validationErrors.priceInInr = "Price must be greater than 0";
-        }
         if (!formData.heroImageUrl) {
           validationErrors.heroImageUrl = "Hero image is required";
+        }
+        // Validate packages
+        if (!formData.packages || formData.packages.length === 0) {
+          validationErrors.packages = "At least one package is required";
+        } else {
+          // Validate each package
+          for (let i = 0; i < formData.packages.length; i++) {
+            const pkg = formData.packages[i];
+            if (!pkg.name || pkg.name.trim() === "") {
+              validationErrors.packages = `Package ${i + 1} name is required`;
+              break;
+            }
+            if (!pkg.priceInInr || pkg.priceInInr <= 0) {
+              validationErrors.packages = `Package ${i + 1} price must be greater than 0`;
+              break;
+            }
+          }
         }
 
         // Step 2 validations
@@ -533,3 +570,4 @@ export default function CreateTripPage() {
     </div>
   );
 }
+

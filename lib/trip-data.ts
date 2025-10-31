@@ -1,13 +1,25 @@
 import { tripService } from "./firestore";
 
+export interface TripPackage {
+  id: string;
+  name: string;
+  description?: string;
+  priceInInr: number;
+  currency: string;
+  perPerson: boolean;
+  features?: string[];
+}
+
 export interface TripData {
   id: string;
   title: string;
   heroImageUrl: string;
   galleryImages?: string[];
-  priceInInr: number;
-  currency: string;
-  perPerson: boolean;
+  // Support both old format (backward compatibility) and new packages format
+  priceInInr?: number; // Deprecated, kept for backward compatibility
+  currency?: string; // Deprecated
+  perPerson?: boolean; // Deprecated
+  packages?: TripPackage[]; // New: array of packages
   about: {
     tripName: string;
     location: string;
@@ -74,14 +86,36 @@ export async function getTripData(tripId: string): Promise<TripData | null> {
     }
 
     // Transform the trip data to ensure consistent structure
+    // Migrate old format to packages if needed
+    let packages = trip.packages;
+    if (!packages || packages.length === 0) {
+      // Migrate old format to packages for backward compatibility
+      if (trip.priceInInr) {
+        packages = [
+          {
+            id: `package-${trip.id || tripId}`,
+            name: "Standard Package",
+            description: "",
+            priceInInr: trip.priceInInr,
+            currency: trip.currency || "INR",
+            perPerson: trip.perPerson ?? true,
+            features: [],
+          },
+        ];
+      }
+    }
+
     return {
       id: trip.id || tripId,
       title: trip.title || "Untitled Trip",
       heroImageUrl: trip.heroImageUrl || "/images/placeholder-trip.jpg",
       galleryImages: trip.galleryImages || [],
-      priceInInr: trip.priceInInr || 0,
+      // Keep old format for backward compatibility
+      priceInInr: trip.priceInInr,
       currency: trip.currency || "INR",
-      perPerson: trip.perPerson || true,
+      perPerson: trip.perPerson ?? true,
+      // New packages format
+      packages: packages,
       about: {
         tripName: trip.about?.tripName || trip.title,
         location: trip.about?.location || "Unknown Location",

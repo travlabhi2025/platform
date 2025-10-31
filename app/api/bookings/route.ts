@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
     const bookingData = await request.json();
     const {
       tripId,
+      packageId,
       travelerName,
       travelerEmail,
       travelerPhone,
@@ -158,12 +159,33 @@ export async function POST(request: NextRequest) {
     }
 
     const validGroupSize = Math.max(1, Number(groupSize || 1));
-    const totalAmount = (trip.priceInInr || 0) * validGroupSize;
+    
+    // Calculate total amount based on selected package or fallback to old format
+    let totalAmount = 0;
+    if (packageId && trip.packages && trip.packages.length > 0) {
+      const selectedPackage = trip.packages.find((pkg) => pkg.id === packageId);
+      if (selectedPackage) {
+        if (selectedPackage.perPerson) {
+          totalAmount = selectedPackage.priceInInr * validGroupSize;
+        } else {
+          totalAmount = selectedPackage.priceInInr;
+        }
+      } else {
+        return NextResponse.json(
+          { error: "Selected package not found" },
+          { status: 400 }
+        );
+      }
+    } else {
+      // Fallback to old format for backward compatibility
+      totalAmount = (trip.priceInInr || 0) * validGroupSize;
+    }
 
     // Create booking with essential information
     // Include createdBy if user is logged in (for duplicate prevention)
     const bookingId = await bookingService.createBooking({
       tripId,
+      packageId: packageId || undefined, // Include packageId if provided
       travelerName,
       travelerEmail,
       travelerPhone,

@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useTrip } from "@/lib/hooks";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import SiteHeader from "@/components/common/SiteHeader";
+import { TripPackage } from "@/lib/firestore";
 
 export default function BookingPage({ tripId }: { tripId: string }) {
   const { trip, loading: tripLoading } = useTrip(tripId);
@@ -32,6 +34,7 @@ export default function BookingPage({ tripId }: { tripId: string }) {
     travelerPhone: "",
     groupSize: 1,
     preferences: "",
+    packageId: "", // Selected package ID
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -47,6 +50,32 @@ export default function BookingPage({ tripId }: { tripId: string }) {
       }));
     }
   }, [isCustomer, userProfile]);
+
+  // Auto-select first package if available
+  useEffect(() => {
+    if (trip && !form.packageId) {
+      if (trip.packages && trip.packages.length > 0) {
+        setForm((prev) => ({ ...prev, packageId: trip.packages![0].id }));
+      }
+    }
+  }, [trip, form.packageId]);
+
+  // Get selected package details
+  const selectedPackage = trip?.packages?.find(
+    (pkg) => pkg.id === form.packageId
+  );
+
+  // Calculate total amount based on selected package
+  const calculateTotal = () => {
+    if (!selectedPackage) {
+      // Fallback to old format if no packages
+      return trip?.priceInInr ? trip.priceInInr * form.groupSize : 0;
+    }
+    if (selectedPackage.perPerson) {
+      return selectedPackage.priceInInr * form.groupSize;
+    }
+    return selectedPackage.priceInInr;
+  };
 
   // Get user email for display
   const userEmail = userProfile?.email || "";
@@ -111,6 +140,10 @@ export default function BookingPage({ tripId }: { tripId: string }) {
       newErrors.groupSize = "Group size must be at least 1";
     }
 
+    if (!form.packageId) {
+      newErrors.packageId = "Please select a package";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -151,6 +184,7 @@ export default function BookingPage({ tripId }: { tripId: string }) {
         headers,
         body: JSON.stringify({
           tripId: trip.id!,
+          packageId: form.packageId,
           travelerName: form.travelerName,
           travelerEmail: userEmail || form.travelerEmail, // Use user email if available
           travelerPhone: form.travelerPhone,
@@ -507,6 +541,83 @@ export default function BookingPage({ tripId }: { tripId: string }) {
                   </div>
                 </div>
 
+                {/* Package Selection */}
+                {trip && (trip.packages?.length || 0) > 0 && (
+                  <div className="space-y-3">
+                    <Label>Select Package *</Label>
+                    <RadioGroup
+                      value={form.packageId || ""}
+                      onValueChange={(value) => {
+                        setForm({ ...form, packageId: value });
+                        // Clear any package selection errors
+                        if (errors.packageId) {
+                          setErrors({ ...errors, packageId: "" });
+                        }
+                      }}
+                      className="space-y-3"
+                    >
+                      {trip.packages!.map((pkg) => (
+                        <label
+                          key={pkg.id}
+                          htmlFor={`package-${pkg.id}`}
+                          className={`flex items-start space-x-3 p-4 border rounded-lg cursor-pointer transition-colors ${
+                            form.packageId === pkg.id
+                              ? "border-primary bg-primary/5"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
+                        >
+                          <RadioGroupItem
+                            value={pkg.id}
+                            id={`package-${pkg.id}`}
+                            className="mt-1"
+                          />
+                          <div className="flex-1">
+                            <div className="font-semibold text-base cursor-pointer">
+                              {pkg.name}
+                            </div>
+                            {pkg.description && (
+                              <p className="text-sm text-gray-600 mt-1">
+                                {pkg.description}
+                              </p>
+                            )}
+                            {pkg.features && pkg.features.length > 0 && (
+                              <div className="mt-2">
+                                <p className="text-xs font-medium text-gray-700 mb-1">
+                                  Includes:
+                                </p>
+                                <ul className="space-y-1">
+                                  {pkg.features.map((feature, idx) => (
+                                    <li
+                                      key={idx}
+                                      className="text-xs text-gray-500 flex items-center gap-1"
+                                    >
+                                      <span className="text-primary">•</span>
+                                      {feature}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            <div className="mt-2">
+                              <span className="text-lg font-bold text-primary">
+                                ₹{pkg.priceInInr.toLocaleString("en-IN")}
+                              </span>
+                              {pkg.perPerson && (
+                                <span className="text-sm text-gray-600 ml-1">
+                                  per person
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </RadioGroup>
+                    {errors.packageId && (
+                      <p className="text-sm text-red-500">{errors.packageId}</p>
+                    )}
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="preferences">Preferences (Optional)</Label>
                   <Textarea
@@ -527,18 +638,24 @@ export default function BookingPage({ tripId }: { tripId: string }) {
                         <p className="text-xs text-gray-500">
                           For {form.groupSize}{" "}
                           {form.groupSize === 1 ? "person" : "people"}
+                          {selectedPackage && ` - ${selectedPackage.name}`}
                         </p>
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold text-primary">
-                          ₹
-                          {(trip.priceInInr * form.groupSize).toLocaleString(
-                            "en-IN"
-                          )}
+                          ₹{calculateTotal().toLocaleString("en-IN")}
                         </div>
-                        <div className="text-sm text-gray-600">
-                          ₹{trip.priceInInr.toLocaleString("en-IN")} per person
-                        </div>
+                        {selectedPackage ? (
+                          <div className="text-sm text-gray-600">
+                            {selectedPackage.perPerson
+                              ? `₹${selectedPackage.priceInInr.toLocaleString("en-IN")} per person`
+                              : "Total price"}
+                          </div>
+                        ) : trip.priceInInr ? (
+                          <div className="text-sm text-gray-600">
+                            ₹{trip.priceInInr.toLocaleString("en-IN")} per person
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   </div>

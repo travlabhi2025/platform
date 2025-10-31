@@ -192,8 +192,22 @@ export default function TripReview({
             <div className="flex items-center gap-2">
               <span className="text-lg font-bold text-gray-500">₹</span>
               <span className="text-sm font-semibold text-gray-700">
-                {formData.priceInInr.toLocaleString()}
+                {formData.packages && formData.packages.length > 0
+                  ? formData.packages.length === 1
+                    ? formData.packages[0].priceInInr.toLocaleString()
+                    : `Starting from ${Math.min(
+                        ...formData.packages.map((p) => p.priceInInr)
+                      ).toLocaleString()}`
+                  : formData.priceInInr
+                  ? formData.priceInInr.toLocaleString()
+                  : "0"}
               </span>
+              {formData.packages && formData.packages.length > 0 && (
+                <span className="text-xs text-gray-500">
+                  ({formData.packages.length} package
+                  {formData.packages.length !== 1 ? "s" : ""})
+                </span>
+              )}
             </div>
           </div>
 
@@ -227,6 +241,62 @@ export default function TripReview({
           </div>
         </CardContent>
       </Card>
+
+      {/* Packages Information */}
+      {formData.packages && formData.packages.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Trip Packages</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {formData.packages.map((pkg, index) => (
+                <div
+                  key={pkg.id || index}
+                  className="border rounded-lg p-4 bg-gray-50"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h4 className="font-semibold text-gray-900">{pkg.name}</h4>
+                      {pkg.description && (
+                        <p className="text-sm text-gray-600 mt-1">
+                          {pkg.description}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-primary">
+                        ₹{pkg.priceInInr.toLocaleString("en-IN")}
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        {pkg.perPerson ? "per person" : "total"}
+                      </div>
+                    </div>
+                  </div>
+                  {pkg.features && pkg.features.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-xs font-medium text-gray-700 mb-1">
+                        Includes:
+                      </p>
+                      <ul className="space-y-1">
+                        {pkg.features.map((feature, idx) => (
+                          <li
+                            key={idx}
+                            className="text-xs text-gray-600 flex items-center gap-1"
+                          >
+                            <span className="text-primary">•</span>
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Host Information */}
       <Card>

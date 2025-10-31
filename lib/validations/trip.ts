@@ -1,5 +1,19 @@
 import { z } from "zod";
 
+// Package schema for multiple payment plans
+export const packageSchema = z.object({
+  id: z.string().optional(), // Auto-generated if not provided
+  name: z.string().min(1, "Package name is required"),
+  description: z.string().optional(),
+  priceInInr: z
+    .number()
+    .min(1, "Price must be greater than 0")
+    .max(1000000, "Price seems too high"),
+  currency: z.string().default("INR"),
+  perPerson: z.boolean().default(true),
+  features: z.array(z.string()).optional(), // Optional features list for this package
+});
+
 export const tripFormSchema = z.object({
   title: z
     .string()
@@ -7,10 +21,14 @@ export const tripFormSchema = z.object({
     .max(100, "Title must be less than 100 characters"),
   heroImageUrl: z.string().min(1, "Hero image is required"),
   galleryImages: z.array(z.string()).optional(), // Array of gallery image URLs
-  priceInInr: z
-    .number()
-    .min(1, "Price must be greater than 0")
-    .max(1000000, "Price seems too high"),
+  // Support both old format (backward compatibility) and new packages format
+  priceInInr: z.number().optional(), // Deprecated, kept for backward compatibility
+  currency: z.string().optional(), // Deprecated
+  perPerson: z.boolean().optional(), // Deprecated
+  packages: z
+    .array(packageSchema)
+    .min(1, "At least one package is required")
+    .default([]),
   about: z
     .object({
       tripName: z.string().min(1, "Trip name is required"),

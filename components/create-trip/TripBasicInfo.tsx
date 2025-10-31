@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ImageUpload from "@/components/ui/image-upload";
 import { TripFormData } from "@/lib/validations/trip";
+import TripPackages from "./TripPackages";
 
 interface TripBasicInfoProps {
   formData: TripFormData;
@@ -21,48 +22,21 @@ export default function TripBasicInfo({
 }: TripBasicInfoProps) {
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-3">
-          <Label htmlFor="title" className="text-sm font-medium text-gray-700">
-            Trip Title *
-          </Label>
-          <Input
-            id="title"
-            placeholder="e.g., Amazing Himalayan Adventure"
-            value={formData.title}
-            onChange={(e) => updateFormData({ title: e.target.value })}
-            required
-            className={errors.title ? "border-red-500" : ""}
-          />
-          {errors.title && (
-            <p className="text-sm text-red-500 mt-1">{errors.title}</p>
-          )}
-        </div>
-
-        <div className="space-y-3">
-          <Label htmlFor="price" className="text-sm font-medium text-gray-700">
-            Price (₹) *
-          </Label>
-          <Input
-            id="price"
-            type="number"
-            placeholder="15000"
-            min="0"
-            step="1"
-            value={formData.priceInInr || ""}
-            onChange={(e) => {
-              const value = parseInt(e.target.value) || 0;
-              updateFormData({ priceInInr: Math.max(0, value) });
-            }}
-            required
-            className={`${
-              errors.priceInInr ? "border-red-500" : ""
-            } [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]`}
-          />
-          {errors.priceInInr && (
-            <p className="text-sm text-red-500 mt-1">{errors.priceInInr}</p>
-          )}
-        </div>
+      <div className="space-y-3">
+        <Label htmlFor="title" className="text-sm font-medium text-gray-700">
+          Trip Title *
+        </Label>
+        <Input
+          id="title"
+          placeholder="e.g., Amazing Himalayan Adventure"
+          value={formData.title}
+          onChange={(e) => updateFormData({ title: e.target.value })}
+          required
+          className={errors.title ? "border-red-500" : ""}
+        />
+        {errors.title && (
+          <p className="text-sm text-red-500 mt-1">{errors.title}</p>
+        )}
       </div>
 
       <div className="space-y-3">
@@ -85,6 +59,13 @@ export default function TripBasicInfo({
           Upload a high-quality image that showcases your trip destination
         </p>
       </div>
+
+      {/* Packages Section */}
+      <TripPackages
+        formData={formData}
+        updateFormData={updateFormData}
+        errors={errors}
+      />
 
       <div className="flex justify-end pt-4">
         <Button
