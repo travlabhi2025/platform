@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/accordion";
 import TripGallery from "./TripGallery";
 import ShareButton from "./ShareButton";
+import ItineraryDescription from "./ItineraryDescription";
 import Link from "next/link";
 import { TripData } from "@/lib/trip-data";
 import {
@@ -265,7 +266,7 @@ export default function TripMarketingPageServer({
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="bg-[#f28c0030] rounded-b-md text-slate-700 px-4 py-3 text-sm">
-                        {it.description || "Details coming soon."}
+                        <ItineraryDescription description={it.description} />
                       </AccordionContent>
                     </AccordionItem>
                   ))}

@@ -14,6 +14,7 @@ import {
 import TripGallery from "./TripGallery";
 import Link from "next/link";
 import ShareButton from "./ShareButton";
+import MarkdownRenderer from "@/components/common/MarkdownRenderer";
 
 function StarsSolid({ rating }: { rating: number }) {
   const full = Math.round(Math.max(0, Math.min(5, rating)));
@@ -275,7 +276,11 @@ export default function TripMarketingPage({ tripId }: TripMarketingPageProps) {
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="bg-[#f28c0030] rounded-b-md text-slate-700 px-4 py-3 text-sm">
-                      {it.description || "Details coming soon."}
+                      {it.description ? (
+                        <MarkdownRenderer content={it.description} />
+                      ) : (
+                        <p className="text-slate-500 italic">Details coming soon.</p>
+                      )}
                     </AccordionContent>
                   </AccordionItem>
                 ))}

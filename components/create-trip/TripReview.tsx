@@ -24,6 +24,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { TripFormData, calculateDaysBetween } from "@/lib/validations/trip";
+import MarkdownRenderer from "@/components/common/MarkdownRenderer";
 
 interface TripReviewProps {
   formData: TripFormData;
@@ -289,7 +290,13 @@ export default function TripReview({
                     })}
                   </p>
                 )}
-                <p className="text-sm text-gray-600 mt-1">{day.description}</p>
+                {day.description ? (
+                  <div className="text-sm text-gray-600 mt-1">
+                    <MarkdownRenderer content={day.description} />
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-400 italic mt-1">No description provided</p>
+                )}
               </div>
             ))}
             {formData.itinerary.length > 3 && (

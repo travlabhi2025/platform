@@ -151,17 +151,49 @@ export default function TripItinerary({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor={`day-${index}-description`}>
-                  Description (optional)
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor={`day-${index}-description`}>
+                    Description (optional)
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const popover = document.getElementById(`markdown-hint-${index}`);
+                      if (popover) {
+                        popover.classList.toggle("hidden");
+                      }
+                    }}
+                    className="text-xs text-primary hover:text-primary/80 underline"
+                  >
+                    Formatting help
+                  </button>
+                </div>
+                <div
+                  id={`markdown-hint-${index}`}
+                  className="hidden text-xs text-gray-600 bg-gray-50 p-3 rounded-md mb-2 space-y-1"
+                >
+                  <p className="font-semibold mb-1">Markdown formatting supported:</p>
+                  <ul className="list-disc list-inside space-y-0.5 ml-2">
+                    <li><code className="bg-gray-200 px-1 rounded"># Heading</code> for headings</li>
+                    <li><code className="bg-gray-200 px-1 rounded">- Item</code> or <code className="bg-gray-200 px-1 rounded">* Item</code> for bullets</li>
+                    <li>Press Enter twice for new paragraphs</li>
+                    <li><code className="bg-gray-200 px-1 rounded">**bold**</code> for bold text</li>
+                  </ul>
+                </div>
                 <Textarea
                   id={`day-${index}-description`}
-                  placeholder="Describe the activities for this day... (optional)"
+                  placeholder="Describe the activities for this day... (optional)
+
+You can use markdown formatting:
+- Use # for headings
+- Use - or * for bullet points
+- Press Enter twice for new paragraphs"
                   value={day.description || ""}
                   onChange={(e) =>
                     updateItineraryDay(index, { description: e.target.value })
                   }
-                  rows={3}
+                  rows={6}
+                  className="font-mono text-sm"
                 />
               </div>
             </CardContent>
