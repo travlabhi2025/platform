@@ -693,7 +693,7 @@ export const notificationService = {
           from: "TravlAbhi <noreply@hi.travlabhi.com>",
           to: options.to,
           subject: options.subject,
-          html: html, 
+          html: html,
         });
 
         console.log(`Email sent successfully to ${options.to}`);
