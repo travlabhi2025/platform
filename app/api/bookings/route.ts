@@ -205,21 +205,45 @@ export async function POST(request: NextRequest) {
     const organizerEmail = organizerProfile?.email || "support@travlabhi.com";
 
     // Organizer notification
+    const organizerMessage = `You have received a new booking request!\n\n` +
+      `Booking Details:\n` +
+      `- Traveler: ${travelerName}\n` +
+      `- Email: ${travelerEmail}\n` +
+      `- Phone: ${travelerPhone}\n` +
+      `- Trip: ${tripName}\n` +
+      `- Location: ${trip.about?.location || "Various locations"}\n` +
+      `- Dates: ${trip.about?.startDate || "TBD"} to ${trip.about?.endDate || "TBD"}\n` +
+      `- Group Size: ${validGroupSize} ${validGroupSize === 1 ? "person" : "people"}\n` +
+      `- Total Amount: ₹${totalAmount.toLocaleString("en-IN")}\n` +
+      `${preferences ? `- Preferences: ${preferences}\n` : ""}\n` +
+      `Please review this booking request in your dashboard and approve or reject it.\n\n` +
+      `Booking ID: ${bookingId}`;
+
     await notificationService.sendEmail({
       to: organizerEmail, // Use actual email, not userId
       subject: `New booking request for ${tripName}`,
-      message: `${travelerName} has requested to book the ${tripName} for ${validGroupSize} people. Estimated amount: ₹${totalAmount.toLocaleString(
-        "en-IN"
-      )}. Please review and approve this booking request.`,
+      message: organizerMessage,
       meta: { bookingId, tripId: trip.id, type: "organizer" },
     });
 
-    // Booker notification
+    // Customer notification
+    const customerMessage = `Thank you for your booking request!\n\n` +
+      `Your booking request for ${tripName} by ${organizerName} has been successfully submitted.\n\n` +
+      `Booking Details:\n` +
+      `- Trip: ${tripName}\n` +
+      `- Location: ${trip.about?.location || "Various locations"}\n` +
+      `- Dates: ${trip.about?.startDate || "TBD"} to ${trip.about?.endDate || "TBD"}\n` +
+      `- Group Size: ${validGroupSize} ${validGroupSize === 1 ? "person" : "people"}\n` +
+      `- Total Amount: ₹${totalAmount.toLocaleString("en-IN")}\n\n` +
+      `The organizer will review your request and get back to you shortly. Once approved, they will contact you at ${travelerPhone} with payment details and next steps.\n\n` +
+      `You can check your booking status anytime in your dashboard.\n\n` +
+      `Thank you for choosing TravlAbhi!`;
+
     await notificationService.sendEmail({
       to: travelerEmail,
       subject: `Booking request submitted: ${tripName}`,
-      message: `Your booking request for ${tripName} by ${organizerName} has been submitted. The organizer will review your request and contact you for payment details.`,
-      meta: { bookingId, tripId: trip.id, type: "booker" },
+      message: customerMessage,
+      meta: { bookingId, tripId: trip.id, type: "booking-created" },
     });
 
     return NextResponse.json({ id: bookingId }, { status: 201 });

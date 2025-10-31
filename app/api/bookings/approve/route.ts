@@ -37,23 +37,22 @@ export async function POST(request: NextRequest) {
       await bookingService.approveBooking(bookingId, authResult.userId);
 
       // Send approval notification to customer
+      const approvalMessage = `Great news! Your booking request for ${trip.title} has been approved by ${
+        trip.host?.name || "the organizer"
+      }.\n\n` +
+        `Trip Details:\n` +
+        `- Location: ${trip.about?.location || "Various locations"}\n` +
+        `- Dates: ${trip.about?.startDate || "TBD"} to ${trip.about?.endDate || "TBD"}\n` +
+        `- Group Size: ${booking.groupSize} ${booking.groupSize === 1 ? "person" : "people"}\n` +
+        `- Total Amount: ₹${booking.totalAmount.toLocaleString("en-IN")}\n\n` +
+        `The organizer will contact you shortly at ${booking.travelerPhone} with payment details and next steps.\n\n` +
+        `Thank you for choosing TravlAbhi!`;
+
       await notificationService.sendEmail({
         to: booking.travelerEmail,
         subject: `Your booking for ${trip.title} has been approved! 🎉`,
-        message: `Great news! Your booking request for ${
-          trip.title
-        } has been approved by ${
-          trip.host?.name || "the organizer"
-        }. The organizer will contact you shortly at ${
-          booking.travelerPhone
-        } with payment details and next steps. Trip details: ${
-          trip.about?.location || "Various locations"
-        }, ${trip.about?.startDate || "TBD"} to ${
-          trip.about?.endDate || "TBD"
-        }. Total amount: ₹${booking.totalAmount.toLocaleString("en-IN")} for ${
-          booking.groupSize
-        } ${booking.groupSize === 1 ? "person" : "people"}.`,
-        meta: { bookingId, tripId: trip.id, type: "approval" },
+        message: approvalMessage,
+        meta: { bookingId, tripId: trip.id, type: "booking-approved" },
       });
 
       return NextResponse.json({
@@ -74,11 +73,20 @@ export async function POST(request: NextRequest) {
       );
 
       // Send rejection notification to customer
+      const rejectionMessage = `We regret to inform you that your booking request for ${trip.title} has not been approved at this time.\n\n` +
+        `Trip Details:\n` +
+        `- Location: ${trip.about?.location || "Various locations"}\n` +
+        `- Dates: ${trip.about?.startDate || "TBD"} to ${trip.about?.endDate || "TBD"}\n` +
+        `- Group Size: ${booking.groupSize} ${booking.groupSize === 1 ? "person" : "people"}\n\n` +
+        `Reason: ${rejectionReason}\n\n` +
+        `You can browse other amazing trips on TravlAbhi or contact the organizer for more information.\n\n` +
+        `Thank you for your interest!`;
+
       await notificationService.sendEmail({
         to: booking.travelerEmail,
         subject: `Update on your booking request for ${trip.title}`,
-        message: `We regret to inform you that your booking request for ${trip.title} has not been approved at this time. Reason: ${rejectionReason}. You can browse other amazing trips on TravlAbhi or contact the organizer for more information.`,
-        meta: { bookingId, tripId: trip.id, type: "rejection" },
+        message: rejectionMessage,
+        meta: { bookingId, tripId: trip.id, type: "booking-rejected" },
       });
 
       return NextResponse.json({

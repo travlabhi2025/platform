@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { bookingService, tripService } from "@/lib/firestore";
+import { bookingService, tripService, notificationService, userService } from "@/lib/firestore";
 import { verifyAuth } from "@/lib/middleware/auth";
 
 export async function GET(
@@ -55,9 +55,72 @@ export async function PUT(
     }
 
     const updates = await request.json();
+    const oldStatus = booking.status;
 
     if (updates.status) {
       await bookingService.updateBookingStatus(id, updates.status);
+      
+      // Send email notification if status changed
+      if (updates.status !== oldStatus) {
+        const updatedBooking = await bookingService.getBookingById(id);
+        if (updatedBooking && trip) {
+          // Get organizer info for email
+          const organizerProfile = await userService.getUserById(trip.createdBy);
+          const organizerName = trip.host?.name || organizerProfile?.name || "Organizer";
+          
+          // Determine email content based on status change
+          let subject = "";
+          let message = "";
+          
+          if (updates.status === "Approved") {
+            subject = `Your booking for ${trip.title} has been approved! 🎉`;
+            message = `Great news! Your booking request for ${trip.title} has been approved by ${organizerName}.\n\n` +
+              `Trip Details:\n` +
+              `- Location: ${trip.about?.location || "Various locations"}\n` +
+              `- Dates: ${trip.about?.startDate || "TBD"} to ${trip.about?.endDate || "TBD"}\n` +
+              `- Group Size: ${updatedBooking.groupSize} ${updatedBooking.groupSize === 1 ? "person" : "people"}\n` +
+              `- Total Amount: ₹${updatedBooking.totalAmount.toLocaleString("en-IN")}\n\n` +
+              `The organizer will contact you shortly at ${updatedBooking.travelerPhone} with payment details and next steps.\n\n` +
+              `Thank you for choosing TravlAbhi!`;
+          } else if (updates.status === "Rejected") {
+            subject = `Update on your booking request for ${trip.title}`;
+            message = `We regret to inform you that your booking request for ${trip.title} has not been approved at this time.\n\n` +
+              `Trip Details:\n` +
+              `- Location: ${trip.about?.location || "Various locations"}\n` +
+              `- Dates: ${trip.about?.startDate || "TBD"} to ${trip.about?.endDate || "TBD"}\n` +
+              `- Group Size: ${updatedBooking.groupSize} ${updatedBooking.groupSize === 1 ? "person" : "people"}\n\n` +
+              `${updatedBooking.rejectionReason ? `Reason: ${updatedBooking.rejectionReason}\n\n` : ""}` +
+              `You can browse other amazing trips on TravlAbhi or contact the organizer for more information.\n\n` +
+              `Thank you for your interest!`;
+          } else if (updates.status === "Pending") {
+            subject = `Booking status update for ${trip.title}`;
+            message = `Your booking for ${trip.title} status has been updated to Pending.\n\n` +
+              `Trip Details:\n` +
+              `- Location: ${trip.about?.location || "Various locations"}\n` +
+              `- Dates: ${trip.about?.startDate || "TBD"} to ${trip.about?.endDate || "TBD"}\n` +
+              `- Group Size: ${updatedBooking.groupSize} ${updatedBooking.groupSize === 1 ? "person" : "people"}\n` +
+              `- Total Amount: ₹${updatedBooking.totalAmount.toLocaleString("en-IN")}\n\n` +
+              `The organizer is reviewing your booking. You will be notified once a decision is made.\n\n` +
+              `Thank you for your patience!`;
+          }
+
+          // Send notification to customer
+          if (subject && message) {
+            await notificationService.sendEmail({
+              to: updatedBooking.travelerEmail,
+              subject,
+              message,
+              meta: { 
+                bookingId: id, 
+                tripId: trip.id, 
+                type: "status-change",
+                oldStatus,
+                newStatus: updates.status
+              },
+            });
+          }
+        }
+      }
     }
 
     if (updates.paymentStatus) {

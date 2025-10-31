@@ -13,6 +13,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { Resend } from "resend";
 
 // Package type for multiple payment plans
 export interface TripPackage {
@@ -568,7 +569,90 @@ export const userService = {
   },
 };
 
-// Notification operations (fake email/whatsapp by writing to a collection)
+// Helper function to create HTML email template
+function createEmailTemplate(
+  subject: string,
+  message: string,
+  type?:
+    | "booking-created"
+    | "booking-approved"
+    | "booking-rejected"
+    | "status-change"
+): string {
+  const colors = {
+    primary: "#0f172a", // slate-900
+    secondary: "#64748b", // slate-500
+    success: "#10b981", // emerald-500
+    warning: "#f59e0b", // amber-500
+    error: "#ef4444", // red-500
+  };
+
+  const getHeaderColor = () => {
+    switch (type) {
+      case "booking-approved":
+        return colors.success;
+      case "booking-rejected":
+        return colors.error;
+      case "booking-created":
+        return colors.primary;
+      default:
+        return colors.primary;
+    }
+  };
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td style="padding: 40px 20px;">
+        <table role="presentation" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="background-color: ${getHeaderColor()}; padding: 30px 40px; border-radius: 8px 8px 0 0; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">TravlAbhi</h1>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px;">
+              <div style="color: #1e293b; font-size: 16px; line-height: 1.6;">
+                ${message
+                  .split("\n")
+                  .map((line) => `<p style="margin: 0 0 16px 0;">${line}</p>`)
+                  .join("")}
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px; background-color: #f8fafc; border-radius: 0 0 8px 8px; border-top: 1px solid #e2e8f0;">
+              <p style="margin: 0; color: #64748b; font-size: 14px; text-align: center;">
+                This is an automated email from TravlAbhi. Please do not reply to this email.
+              </p>
+              <p style="margin: 8px 0 0 0; color: #94a3b8; font-size: 12px; text-align: center;">
+                © ${new Date().getFullYear()} TravlAbhi. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}
+
+// Notification operations using Resend
 export const notificationService = {
   async sendEmail(options: {
     to: string;
@@ -576,6 +660,9 @@ export const notificationService = {
     message: string;
     meta?: Record<string, unknown>;
   }): Promise<string> {
+    const resendApiKey = process.env.RESEND_API_KEY;
+
+    // Always log to Firestore for record-keeping
     const docRef = await addDoc(collection(db, "notifications"), {
       type: "email",
       to: options.to,
@@ -584,6 +671,42 @@ export const notificationService = {
       meta: options.meta ?? {},
       createdAt: Timestamp.now(),
     } as Notification);
+
+    // Send email via Resend if API key is configured
+    if (resendApiKey) {
+      try {
+        const resend = new Resend(resendApiKey);
+        const emailType = options.meta?.type as string | undefined;
+
+        const html = createEmailTemplate(
+          options.subject,
+          options.message,
+          emailType as
+            | "booking-created"
+            | "booking-approved"
+            | "booking-rejected"
+            | "status-change"
+            | undefined
+        );
+
+        await resend.emails.send({
+          from: "TravlAbhi <noreply@hi.travlabhi.com>",
+          to: options.to,
+          subject: options.subject,
+          html: html,
+        });
+
+        console.log(`Email sent successfully to ${options.to}`);
+      } catch (error) {
+        console.error("Error sending email via Resend:", error);
+        // Don't throw - we still want to return the notification ID even if email fails
+      }
+    } else {
+      console.warn(
+        "RESEND_API_KEY not configured. Email logged to Firestore only."
+      );
+    }
+
     return docRef.id;
   },
 };
