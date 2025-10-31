@@ -695,7 +695,7 @@ export const notificationService = {
           subject: options.subject,
           html: html,
         });
-
+ 
         console.log(`Email sent successfully to ${options.to}`);
       } catch (error) {
         console.error("Error sending email via Resend:", error);
