@@ -96,6 +96,7 @@ export default function TripReview({
                   <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
                 </div>
               )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={formData.heroImageUrl}
                 alt={formData.title}
@@ -131,6 +132,7 @@ export default function TripReview({
                               <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
                             </div>
                           )}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={imageUrl}
                             alt={`${formData.title} - Gallery image ${

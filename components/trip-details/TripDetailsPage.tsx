@@ -175,6 +175,7 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
       <section className="relative overflow-hidden">
         <div className="relative w-full">
           {/* Use natural dimensions with responsive scaling */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={data.heroImageUrl}
             alt={data.title}
@@ -184,6 +185,7 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
 
           {/* Top-left: App logo */}
           <div className="absolute top-3 left-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/logo.png"
               alt="TravlAbhi"
@@ -194,6 +196,7 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
           {/* Top-right: Host avatar */}
           {"organizerImage" in data.host && data.host.organizerImage && (
             <div className="absolute top-3 right-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={data.host.organizerImage}
                 alt={data.host.name}

@@ -58,7 +58,7 @@ export default function EditTripPage({ tripId }: EditTripPageProps) {
     if (trip) {
       console.log("EditTripPage - Loaded trip data:", trip);
       // Migrate old format to packages if needed
-      let migratedTrip = { ...trip };
+      const migratedTrip = { ...trip };
       if (!migratedTrip.packages || migratedTrip.packages.length === 0) {
         if (migratedTrip.priceInInr) {
           migratedTrip.packages = [
@@ -87,7 +87,12 @@ export default function EditTripPage({ tripId }: EditTripPageProps) {
           ];
         }
       }
-      setFormData(migratedTrip);
+      // Ensure packages is always defined before setting form data
+      const tripWithPackages = {
+        ...migratedTrip,
+        packages: migratedTrip.packages || [],
+      };
+      setFormData(tripWithPackages);
     }
   }, [trip]);
 

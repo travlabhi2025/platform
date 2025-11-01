@@ -103,6 +103,7 @@ export default function TripMarketingPage({ tripId }: TripMarketingPageProps) {
       {/* Hero Section - preserve original image dimensions */}
       <section className="relative overflow-hidden">
         <div className="relative w-full">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={data.heroImageUrl}
             alt={data.title}
@@ -112,6 +113,7 @@ export default function TripMarketingPage({ tripId }: TripMarketingPageProps) {
 
           {/* Top-left: App logo */}
           <div className="absolute top-3 left-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/logo.png"
               alt="TravlAbhi"
@@ -123,6 +125,7 @@ export default function TripMarketingPage({ tripId }: TripMarketingPageProps) {
           {"organizerImage" in (data.host as Record<string, unknown>) &&
             (data.host as { organizerImage?: string }).organizerImage && (
               <div className="absolute top-3 right-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={
                     (data.host as { organizerImage?: string })
@@ -144,7 +147,7 @@ export default function TripMarketingPage({ tripId }: TripMarketingPageProps) {
               <div className="flex flex-wrap items-center gap-4 text-white/90">
                 <div className="flex items-center gap-2">
                   <span className="text-lg font-semibold">
-                    {formatPrice(data.priceInInr, data.currency || "INR")}
+                    {formatPrice(data.priceInInr || 0, data.currency || "INR")}
                   </span>
                   <span className="text-sm">per person</span>
                 </div>
@@ -480,7 +483,7 @@ export default function TripMarketingPage({ tripId }: TripMarketingPageProps) {
               <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
                 <div className="text-center mb-6">
                   <div className="text-3xl font-bold text-slate-900 mb-2">
-                    {formatPrice(data.priceInInr, data.currency || "INR")}
+                    {formatPrice(data.priceInInr || 0, data.currency || "INR")}
                   </div>
                   <div className="text-sm text-slate-600">per person</div>
                 </div>

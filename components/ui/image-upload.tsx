@@ -280,6 +280,7 @@ export default function ImageUpload({
                   <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
                 </div>
               )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={preview}
                 alt="Preview"
@@ -369,6 +370,7 @@ export default function ImageUpload({
                 <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
               </div>
             )}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={preview}
               alt="Preview"

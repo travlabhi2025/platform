@@ -11,7 +11,6 @@ import { useTrip } from "@/lib/hooks";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import SiteHeader from "@/components/common/SiteHeader";
-import { TripPackage } from "@/lib/firestore";
 
 export default function BookingPage({ tripId }: { tripId: string }) {
   const { trip, loading: tripLoading } = useTrip(tripId);

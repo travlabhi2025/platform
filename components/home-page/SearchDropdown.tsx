@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 const DESTINATIONS = [
   "Spain",
@@ -19,7 +18,6 @@ export default function SearchDropdown() {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const router = useRouter();
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -40,13 +38,6 @@ export default function SearchDropdown() {
     window.addEventListener("mousedown", onClickOutside);
     return () => window.removeEventListener("mousedown", onClickOutside);
   }, []);
-
-  const select = (value: string) => {
-    setQuery(value);
-    setOpen(false);
-    // Search functionality disabled - display only
-    // router.push(`/trip-details?search=${encodeURIComponent(value)}`);
-  };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!open && (e.key === "ArrowDown" || e.key === "ArrowUp")) {

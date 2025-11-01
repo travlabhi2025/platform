@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Components } from "react-markdown";
+import type { ExtraProps } from "react-markdown";
 
 interface MarkdownRendererProps {
   content: string;
@@ -56,18 +57,24 @@ export default function MarkdownRenderer({
       <em className="italic" {...props} />
     ),
     // Style code blocks
-    code: ({ inline, ...props }) =>
-      inline ? (
+    code: ({ className, children, ...props }: React.HTMLAttributes<HTMLElement> & ExtraProps) => {
+      const isInline = !className || !className.includes("language-");
+      return isInline ? (
         <code
           className="bg-gray-100 px-1 py-0.5 rounded text-xs font-mono"
-          {...props}
-        />
+          {...(props as React.HTMLAttributes<HTMLElement>)}
+        >
+          {children}
+        </code>
       ) : (
         <code
           className="block bg-gray-100 p-2 rounded text-xs font-mono overflow-x-auto"
-          {...props}
-        />
-      ),
+          {...(props as React.HTMLAttributes<HTMLElement>)}
+        >
+          {children}
+        </code>
+      );
+    },
     // Preserve line breaks
     br: ({ ...props }) => <br {...props} />,
   }), []);

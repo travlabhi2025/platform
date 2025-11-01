@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import {
   Carousel,
@@ -75,6 +74,7 @@ export default function TripGallery({ images, title }: TripGalleryProps) {
               <CarouselItem key={index} className="pl-2 md:pl-4 basis-full">
                 <div className="relative w-full overflow-hidden rounded-md">
                   {/* Preserve natural dimensions */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={image}
                     alt={`${title} - Gallery image ${index + 1}`}

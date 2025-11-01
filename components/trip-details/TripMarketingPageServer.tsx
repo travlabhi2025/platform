@@ -101,6 +101,7 @@ export default function TripMarketingPageServer({
         {/* Hero Section - preserve original image dimensions */}
         <section className="relative overflow-hidden">
           <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={trip.heroImageUrl}
               alt={trip.title}
@@ -110,6 +111,7 @@ export default function TripMarketingPageServer({
 
             {/* Top-left: App logo */}
             <div className="absolute top-3 left-3 z-20">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/images/logo.png"
                 alt="TravlAbhi"
@@ -120,6 +122,7 @@ export default function TripMarketingPageServer({
             {/* Top-right: Host avatar */}
             {trip.host.organizerImage && (
               <div className="absolute top-3 right-3 z-20">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={trip.host.organizerImage}
                   alt={trip.host.name}

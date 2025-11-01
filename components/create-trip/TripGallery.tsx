@@ -158,6 +158,7 @@ export default function TripGallery({
               </div>
               {imageUrl ? (
                 <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={imageUrl}
                     alt={`Gallery Image ${index + 1}`}
