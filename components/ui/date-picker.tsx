@@ -70,16 +70,15 @@ export function DatePicker({
           selected={selectedDate}
           onSelect={handleSelect}
           disabled={(date) => {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
+            // Only disable dates if minDate is provided (for end date picker)
             if (minDate) {
               const minDateObj = new Date(minDate);
               minDateObj.setHours(0, 0, 0, 0);
               return date < minDateObj;
             }
 
-            return date < today; // Disable past dates if no minDate
+            // No constraint - allow all dates including past dates
+            return false;
           }}
           initialFocus
         />
