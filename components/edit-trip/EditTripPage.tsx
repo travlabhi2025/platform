@@ -1,16 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { useTrip } from "@/lib/hooks";
-import { tripFormSchema, TripFormData } from "@/lib/validations/trip";
+import { tripFormSchema, TripFormData, mergeItineraryWithNewDates, calculateDaysBetween } from "@/lib/validations/trip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, AlertTriangle } from "lucide-react";
 import TripBasicInfo from "../create-trip/TripBasicInfo";
 import TripDetails from "../create-trip/TripDetails";
 import TripItinerary from "../create-trip/TripItinerary";
@@ -47,11 +57,27 @@ export default function EditTripPage({ tripId }: EditTripPageProps) {
   const [uploadingIndexes, setUploadingIndexes] = useState<Set<number>>(
     new Set()
   );
+  const [showDateChangeWarning, setShowDateChangeWarning] = useState(false);
+  const [pendingDateUpdate, setPendingDateUpdate] = useState<{
+    startDate: string;
+    endDate: string;
+  } | null>(null);
+  const originalDatesRef = useRef<{ startDate: string; endDate: string } | null>(null);
+  const originalItineraryRef = useRef<Array<{ day: number; title?: string; description?: string; date?: string }> | null>(null);
   const { trip, loading: tripLoading, error: tripError } = useTrip(tripId);
   const { user } = useAuth();
   const router = useRouter();
 
   const progress = (currentStep / steps.length) * 100;
+
+  // Helper function to format date as DD/MM/YYYY
+  const formatDateDDMMYYYY = (dateString: string): string => {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
 
   // Initialize form data when trip is loaded
   useEffect(() => {
@@ -93,6 +119,26 @@ export default function EditTripPage({ tripId }: EditTripPageProps) {
         packages: migratedTrip.packages || [],
       };
       setFormData(tripWithPackages);
+      
+      // Store original dates and itinerary for comparison and restoration
+      if (tripWithPackages.about?.startDate && tripWithPackages.about?.endDate) {
+        originalDatesRef.current = {
+          startDate: tripWithPackages.about.startDate,
+          endDate: tripWithPackages.about.endDate,
+        };
+      }
+      
+      // Store original itinerary - deep copy to preserve it
+      if (tripWithPackages.itinerary && tripWithPackages.itinerary.length > 0) {
+        originalItineraryRef.current = tripWithPackages.itinerary.map((day: { day: number; title?: string; description?: string; date?: string }) => ({
+          day: day.day,
+          title: day.title || "",
+          description: day.description || "",
+          date: day.date || "",
+        }));
+      } else {
+        originalItineraryRef.current = [];
+      }
     }
   }, [trip]);
 
@@ -103,10 +149,172 @@ export default function EditTripPage({ tripId }: EditTripPageProps) {
     }
   }, [trip, user, router]);
 
+
   const updateFormData = (updates: Partial<TripFormData>) => {
-    if (formData) {
-      setFormData({ ...formData, ...updates });
+    if (!formData) return;
+
+    // Check if dates are being changed (compare with current formData dates)
+    const currentStartDate = formData.about.startDate;
+    const currentEndDate = formData.about.endDate;
+    const newStartDate = updates.about?.startDate !== undefined 
+      ? updates.about.startDate 
+      : currentStartDate;
+    const newEndDate = updates.about?.endDate !== undefined 
+      ? updates.about.endDate 
+      : currentEndDate;
+
+    // Show warning if dates are changing from their current values
+    const dateChanged =
+      (updates.about?.startDate !== undefined &&
+        newStartDate !== currentStartDate) ||
+      (updates.about?.endDate !== undefined &&
+        newEndDate !== currentEndDate);
+
+    // Show warning modal for any date change (user can change dates multiple times)
+    if (dateChanged && newStartDate && newEndDate) {
+      // Store pending update and show warning
+      setPendingDateUpdate({
+        startDate: newStartDate,
+        endDate: newEndDate,
+      });
+      setShowDateChangeWarning(true);
+      // Temporarily update the dates in formData so DatePicker shows the new value
+      // If user cancels, we'll revert dates and itinerary in handleDateChangeCancel
+      setFormData({
+        ...formData,
+        about: {
+          ...formData.about,
+          ...updates.about,
+        },
+      });
+      return; // Don't apply other updates yet, wait for user confirmation
     }
+
+    // Normal update (no date change or already confirmed)
+    setFormData({ ...formData, ...updates });
+  };
+
+  const handleDateChangeConfirm = () => {
+    if (!formData || !pendingDateUpdate) return;
+
+    const newStartDate = pendingDateUpdate.startDate;
+    const newEndDate = pendingDateUpdate.endDate;
+
+    // Calculate expected days
+    const expectedDays = calculateDaysBetween(newStartDate, newEndDate);
+    
+    // Use current itinerary (which may have been edited) to merge with new dates
+    // This preserves any edits the user made to the itinerary
+    const currentItinerary = formData.itinerary;
+    
+    // Merge itinerary with new dates, preserving existing data
+    const mergedItinerary = mergeItineraryWithNewDates(
+      currentItinerary,
+      newStartDate,
+      newEndDate
+    );
+    
+    console.log("Date change confirm:", {
+      oldItineraryLength: currentItinerary.length,
+      mergedItineraryLength: mergedItinerary.length,
+      expectedDays,
+      newStartDate,
+      newEndDate,
+      originalItineraryLength: originalItineraryRef.current?.length,
+    });
+    
+    // Ensure itinerary matches the date range exactly
+    let finalItinerary = mergedItinerary;
+    if (mergedItinerary.length !== expectedDays) {
+      console.warn(`Itinerary length mismatch: ${mergedItinerary.length} vs ${expectedDays}, regenerating...`);
+      finalItinerary = mergeItineraryWithNewDates(
+        currentItinerary,
+        newStartDate,
+        newEndDate
+      );
+    }
+
+    // Create completely new object references to force React to detect the change
+    const updatedAbout = {
+      ...formData.about,
+      startDate: newStartDate,
+      endDate: newEndDate,
+    };
+
+    // Create a new array with new object references for each day
+    // IMPORTANT: Preserve the date field from finalItinerary which has the updated dates
+    const updatedItinerary = finalItinerary.map((day) => {
+      const result = {
+        day: day.day,
+        title: day.title || "",
+        description: day.description || "",
+        date: day.date || "", // This should have the new date from mergeItineraryWithNewDates
+      };
+      console.log(`Mapping day ${day.day}:`, { oldDate: day.date, resultDate: result.date });
+      return result;
+    });
+    
+    console.log("Updated itinerary dates:", updatedItinerary.map(d => ({ day: d.day, date: d.date })));
+
+    // Create completely new formData object
+    const updatedFormData: TripFormData = {
+      ...formData,
+      about: updatedAbout,
+      itinerary: updatedItinerary,
+    };
+
+    // Update state - this should trigger a re-render
+    setFormData(updatedFormData);
+
+    // Update original dates ref (but keep original itinerary ref unchanged)
+    // The original itinerary is preserved until the trip is saved
+    originalDatesRef.current = {
+      startDate: newStartDate,
+      endDate: newEndDate,
+    };
+
+    // Close modal and clear pending update
+    setShowDateChangeWarning(false);
+    setPendingDateUpdate(null);
+
+    // Use setTimeout to ensure state has updated before showing toast
+    setTimeout(() => {
+      toast.success(
+        `Dates updated. Itinerary now has ${updatedItinerary.length} days. Your original itinerary is preserved until you save.`
+      );
+    }, 100);
+  };
+
+  const handleDateChangeCancel = () => {
+    // Revert dates and itinerary to original values (from when trip was first loaded)
+    // This ensures users can always go back to their original itinerary
+    if (formData && originalDatesRef.current && originalItineraryRef.current !== null) {
+      // Restore original itinerary - deep copy to create new references
+      const restoredItinerary = originalItineraryRef.current.map((day) => ({
+        day: day.day,
+        title: day.title || "",
+        description: day.description || "",
+        date: day.date || "",
+      }));
+
+      setFormData({
+        ...formData,
+        about: {
+          ...formData.about,
+          startDate: originalDatesRef.current.startDate,
+          endDate: originalDatesRef.current.endDate,
+        },
+        // Restore original itinerary - this preserves all original data
+        itinerary: restoredItinerary,
+      });
+      
+      console.log("Date change cancelled - restored original itinerary:", {
+        originalLength: originalItineraryRef.current.length,
+        restoredLength: restoredItinerary.length,
+      });
+    }
+    setShowDateChangeWarning(false);
+    setPendingDateUpdate(null);
   };
 
   const nextStep = () => {
@@ -303,6 +511,10 @@ export default function EditTripPage({ tripId }: EditTripPageProps) {
         return;
       }
 
+      // At this point, the formData contains the current state (which may have been modified)
+      // The original itinerary is preserved in originalItineraryRef but we use current formData
+      // This ensures that any edits (including date changes and itinerary updates) are saved
+      
       // Validate with Zod schema
       const validatedData = tripFormSchema.parse(formData);
 
@@ -324,6 +536,8 @@ export default function EditTripPage({ tripId }: EditTripPageProps) {
         throw new Error(errorData.error || "Failed to update trip");
       }
 
+      // Only after successful save, we can consider the changes committed
+      // The original itinerary ref can remain as a backup until next load
       toast.success("Trip updated successfully!");
       router.push("/dashboard");
     } catch (error: unknown) {
@@ -378,6 +592,7 @@ export default function EditTripPage({ tripId }: EditTripPageProps) {
       case 3:
         return (
           <TripItinerary
+            key={`itinerary-${formData.itinerary.length}-${formData.about.startDate}-${formData.about.endDate}`}
             formData={formData}
             updateFormData={updateFormData}
             onNext={nextStep}
@@ -603,6 +818,64 @@ export default function EditTripPage({ tripId }: EditTripPageProps) {
           <CardContent>{renderStep()}</CardContent>
         </Card>
       </div>
+
+      {/* Date Change Warning Modal */}
+      <AlertDialog
+        open={showDateChangeWarning}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleDateChangeCancel();
+          } else {
+            setShowDateChangeWarning(true);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+              </div>
+              <AlertDialogTitle>Date Change Warning</AlertDialogTitle>
+            </div>
+          </AlertDialogHeader>
+          <div className="pt-4">
+            <AlertDialogDescription className="mb-3">
+              Changing the trip dates will affect your itinerary. The system will attempt to preserve your existing itinerary data, but you should review and update it in the Itinerary step.
+            </AlertDialogDescription>
+            {pendingDateUpdate && originalDatesRef.current && (
+              <div className="mt-4 space-y-2 rounded-lg bg-gray-50 p-4 text-sm">
+                <div className="flex justify-between">
+                  <span className="font-medium text-gray-700">Original Dates:</span>
+                  <span className="text-gray-600">
+                    {formatDateDDMMYYYY(originalDatesRef.current.startDate)} - {formatDateDDMMYYYY(originalDatesRef.current.endDate)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium text-gray-700">New Dates:</span>
+                  <span className="text-gray-600">
+                    {formatDateDDMMYYYY(pendingDateUpdate.startDate)} - {formatDateDDMMYYYY(pendingDateUpdate.endDate)}
+                  </span>
+                </div>
+              </div>
+            )}
+            <p className="mt-4 font-medium text-gray-900">
+              Do you want to proceed with updating the dates?
+            </p>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDateChangeCancel}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDateChangeConfirm}
+              className="bg-primary hover:bg-primary/90"
+            >
+              Yes, Update Dates
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { tripService } from "@/lib/firestore";
 import { verifyAuth } from "@/lib/middleware/auth";
 
@@ -68,6 +69,12 @@ export async function PUT(
 
     // Update the trip
     await tripService.updateTrip(tripId, tripData);
+
+    // Revalidate the trip page for SSR
+    revalidatePath(`/trip/${tripId}`);
+    // Also revalidate the trips listing pages
+    revalidatePath("/");
+    revalidatePath("/dashboard");
 
     console.log("Trip updated successfully");
     return NextResponse.json({ success: true });

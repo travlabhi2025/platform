@@ -145,3 +145,89 @@ export function generateItineraryDays(startDate: string, endDate: string) {
 
   return itinerary;
 }
+
+// Helper function to merge existing itinerary with new date range
+// Preserves existing data where possible (by day number or date)
+export function mergeItineraryWithNewDates(
+  oldItinerary: Array<{ day: number; title?: string; description?: string; date?: string }>,
+  newStartDate: string,
+  newEndDate: string
+) {
+  const newItinerary = generateItineraryDays(newStartDate, newEndDate);
+  const oldDaysCount = oldItinerary.length;
+  const newDaysCount = newItinerary.length;
+
+  // Create a map of old itinerary by day number for quick lookup
+  const oldByDay = new Map<number, typeof oldItinerary[0]>();
+  oldItinerary.forEach((item) => {
+    oldByDay.set(item.day, item);
+  });
+
+  // Create a map of old itinerary by date for quick lookup
+  const oldByDate = new Map<string, typeof oldItinerary[0]>();
+  oldItinerary.forEach((item) => {
+    if (item.date) {
+      oldByDate.set(item.date, item);
+    }
+  });
+
+  // Merge: try to preserve existing data, but always use new dates
+  const merged = newItinerary.map((newDay, index) => {
+    const dayNumber = index + 1;
+    
+    // CRITICAL: Always use the new date from the new date range - this ensures dates are updated
+    // newDay.date comes from generateItineraryDays which creates dates based on newStartDate/newEndDate
+    const newDate = newDay.date || "";
+    
+    // Start with the new date and empty content
+    const result: { day: number; date: string; title: string; description: string } = {
+      day: newDay.day,
+      date: newDate, // Always use the new date - this is the key!
+      title: "",
+      description: "",
+    };
+    
+    // First, try to match by date (most accurate) - only if dates happen to match exactly
+    if (newDate) {
+      const oldByDateMatch = oldByDate.get(newDate);
+      if (oldByDateMatch) {
+        // Dates match exactly, preserve title and description
+        result.title = oldByDateMatch.title || "";
+        result.description = oldByDateMatch.description || "";
+        // Date is already set to newDate above
+        return result;
+      }
+    }
+
+    // Then, try to match by day number (if same position)
+    // This handles the case where dates shift but day numbers stay the same
+    // Example: Original dates Jan 1-3, new dates Jan 5-7
+    // Day 1 content should map to new Day 1 (Jan 5), not old Day 1 (Jan 1)
+    if (dayNumber <= oldDaysCount) {
+      const oldByDayMatch = oldByDay.get(dayNumber);
+      if (oldByDayMatch) {
+        // Preserve title and description from old day, but use NEW date
+        result.title = oldByDayMatch.title || "";
+        result.description = oldByDayMatch.description || "";
+        // Date is already set to newDate above - this ensures dates are updated!
+        return result;
+      }
+    }
+
+    // If no match, return the new empty day with new date
+    return result;
+  });
+  
+  // Debug logging to verify dates are being set correctly
+  console.log("mergeItineraryWithNewDates result:", {
+    newStartDate,
+    newEndDate,
+    oldDaysCount,
+    newDaysCount,
+    mergedLength: merged.length,
+    firstDay: merged[0],
+    lastDay: merged[merged.length - 1],
+  });
+  
+  return merged;
+}

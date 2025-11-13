@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Trash2 } from "lucide-react";
-import { TripFormData } from "@/lib/validations/trip";
+import { TripFormData, calculateDaysBetween, mergeItineraryWithNewDates } from "@/lib/validations/trip";
 
 interface TripItineraryProps {
   formData: TripFormData;
@@ -49,6 +49,58 @@ export default function TripItinerary({
 }: TripItineraryProps) {
   const [newInclusion, setNewInclusion] = useState("");
   const [newExclusion, setNewExclusion] = useState("");
+
+  // Ensure itinerary stays in sync with dates
+  useEffect(() => {
+    if (!formData.about.startDate || !formData.about.endDate) return;
+    
+    const expectedDays = calculateDaysBetween(
+      formData.about.startDate,
+      formData.about.endDate
+    );
+    
+    // Check if itinerary needs syncing (length mismatch OR dates don't match)
+    const needsSync = formData.itinerary.length !== expectedDays ||
+      formData.itinerary.some((day, index) => {
+        if (!day.date) return true; // Missing date needs sync
+        // Calculate what the date should be for this day
+        const expectedDate = new Date(formData.about.startDate);
+        expectedDate.setDate(expectedDate.getDate() + index);
+        const expectedDateStr = expectedDate.toISOString().split("T")[0];
+        return day.date !== expectedDateStr;
+      });
+    
+    if (needsSync) {
+      console.log("TripItinerary: Syncing itinerary with dates", {
+        currentLength: formData.itinerary.length,
+        expectedDays,
+        startDate: formData.about.startDate,
+        endDate: formData.about.endDate,
+        sampleDay: formData.itinerary[0],
+      });
+      
+      const syncedItinerary = mergeItineraryWithNewDates(
+        formData.itinerary,
+        formData.about.startDate,
+        formData.about.endDate
+      );
+      
+      // Update if anything changed
+      const hasChanges = syncedItinerary.length !== formData.itinerary.length ||
+        syncedItinerary.some((day, i) => {
+          const oldDay = formData.itinerary[i];
+          return !oldDay || day.date !== oldDay.date || day.title !== oldDay.title || day.description !== oldDay.description;
+        });
+      
+      if (hasChanges) {
+        console.log("TripItinerary: Updating itinerary with synced dates", {
+          syncedDates: syncedItinerary.map(d => ({ day: d.day, date: d.date })),
+        });
+        updateFormData({ itinerary: syncedItinerary });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.about.startDate, formData.about.endDate]);
 
   const updateItineraryDay = (
     index: number,
@@ -106,6 +158,11 @@ export default function TripItinerary({
     }
   };
 
+  // Calculate days from current date range to ensure accuracy
+  const daysCount = formData.about.startDate && formData.about.endDate
+    ? calculateDaysBetween(formData.about.startDate, formData.about.endDate)
+    : formData.itinerary.length;
+
   return (
     <div className="space-y-6">
       {/* Itinerary Days */}
@@ -113,7 +170,7 @@ export default function TripItinerary({
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-semibold">Daily Itinerary</h3>
           <p className="text-sm text-gray-500">
-            {formData.itinerary.length} days based on your date range
+            {daysCount} days based on your date range
           </p>
         </div>
         {errors.itinerary && (
@@ -121,7 +178,7 @@ export default function TripItinerary({
         )}
 
         {formData.itinerary.map((day, index) => (
-          <Card key={index}>
+          <Card key={`day-${day.day}-${day.date || index}`}>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">
                 Day {day.day}
