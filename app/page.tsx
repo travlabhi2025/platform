@@ -1,27 +1,27 @@
-import Header from "@/components/home-page/Header";
-import HeroSection from "@/components/home-page/HeroSection";
-import TopDestinations from "@/components/home-page/TopDestinations";
-import BookingSteps from "@/components/home-page/BookingSteps";
-import CommunitySpotlight from "@/components/home-page/CommunitySpotlight";
-import WhyTravlAbhi from "@/components/home-page/WhyTravlAbhi";
-import OrganizerCTA from "@/components/home-page/OrganizerCTA";
-import PricingSection from "@/components/home-page/PricingSection";
-import Footer from "@/components/home-page/Footer";
-import Experiences from "@/components/home-page/Experiences";
+import NewHeader from "@/components/home-page/NewHeader";
+import NewHeroSection from "@/components/home-page/NewHeroSection";
+import FilterButtons from "@/components/home-page/FilterButtons";
+import TrendingAdventures from "@/components/home-page/TrendingAdventures";
+import FeaturedCurators from "@/components/home-page/FeaturedCurators";
+import TravelReels from "@/components/home-page/TravelReels";
+import Testimonials from "@/components/home-page/Testimonials";
+import NewsletterSignup from "@/components/home-page/NewsletterSignup";
+import NewFooter from "@/components/home-page/NewFooter";
 
 export default function Home() {
   return (
-    <main className="min-h-screen ">
-      <Header />
-      <HeroSection />
-      <TopDestinations />
-      <BookingSteps />
-      <CommunitySpotlight />
-      <WhyTravlAbhi />
-      <OrganizerCTA />
-      <PricingSection />
-      <Experiences />
-      <Footer />
-    </main>
+    <div className="flex min-h-screen w-full flex-col">
+      <NewHeader />
+      <main className="flex-1 bg-background-dark">
+        <NewHeroSection />
+        <FilterButtons />
+        <TrendingAdventures />
+        <FeaturedCurators />
+        <TravelReels />
+        <Testimonials />
+        <NewsletterSignup />
+      </main>
+      <NewFooter />
+    </div>
   );
 }

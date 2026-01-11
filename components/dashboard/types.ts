@@ -34,7 +34,7 @@ export type Earnings = {
 export type Profile = {
   name: string;
   avatar: string;
-  verified: boolean;
+  emailVerified: boolean;
   kycVerified: boolean;
   badge: string;
   // Additional profile fields

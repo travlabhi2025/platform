@@ -17,13 +17,12 @@ export default function UnauthorizedPage() {
         </CardHeader>
         <CardContent className="text-center space-y-4">
           <p className="text-gray-600">
-            You don&apos;t have permission to access this page. Only the trip
-            creator can edit or manage this trip.
+            You don&apos;t have permission to access this page.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <Button asChild className="flex-1">
               <Link
-                href="/trip-organizer/dashboard"
+                href="/dashboard"
                 className="flex items-center gap-2"
               >
                 <BarChart3 className="w-4 h-4" />

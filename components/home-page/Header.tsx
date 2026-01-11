@@ -30,9 +30,9 @@ export default function Header() {
       <div className="max-w-full mx-auto pr-4 relative">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex items-center">
+          <div className="flex ml-2 items-center">
             <Image
-              src={"/images/logo.png"}
+              src={"/images/logo.svg"}
               alt="TravlAbhi"
               width={120}
               height={120}
@@ -78,13 +78,13 @@ export default function Header() {
                   href="/signin"
                   className="bg-primary font-bebas hover:bg-primary/90 text-primary-foreground px-8 py-1 rounded-md font-medium transition-colors duration-200 cursor-pointer"
                 >
-                  LOGIN
+                  Login
                 </Link>
                 <Link
                   href="/signup"
                   className="border border-primary text-primary px-4 py-1 rounded-md font-bebas tracking-wide hover:bg-primary hover:text-white transition-colors duration-200 cursor-pointer"
                 >
-                  SIGN UP
+                  Sign Up
                 </Link>
               </div>
             )}

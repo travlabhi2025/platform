@@ -130,10 +130,10 @@ export interface User {
   name: string;
   email: string;
   avatar?: string;
-  verified: boolean;
-  kycVerified: boolean;
+  emailVerified: boolean;
+  kycVerified?: boolean; // Added missing property
   badge?: string;
-  role: "trip-organizer" | "customer";
+  role: "customer";
   createdAt: Timestamp;
   updatedAt: Timestamp;
   // Extended profile fields
@@ -142,6 +142,7 @@ export interface User {
   contact?: {
     email?: string;
     phone?: string;
+    countryCode?: string;
     address?: string;
   };
   socialLinks?: {
@@ -165,6 +166,15 @@ export interface Notification {
   message: string;
   createdAt: Timestamp;
   meta?: Record<string, unknown>;
+}
+
+// OTP type for verification
+export interface OTP {
+  email: string;
+  otp: string;
+  expiresAt: Timestamp;
+  verified: boolean;
+  createdAt: Timestamp;
 }
 
 // Trip operations
@@ -480,51 +490,6 @@ export const bookingService = {
       (doc) => ({ id: doc.id, ...doc.data() } as Booking)
     );
   },
-
-  // Get all bookings for trip organizer (across all their trips)
-  async getBookingsForOrganizer(organizerId: string): Promise<Booking[]> {
-    // First get all trips by this organizer
-    const tripsQuery = query(
-      collection(db, "trips"),
-      where("createdBy", "==", organizerId)
-    );
-    const tripsSnapshot = await getDocs(tripsQuery);
-    const tripIds = tripsSnapshot.docs.map((doc) => doc.id);
-
-    if (tripIds.length === 0) {
-      return [];
-    }
-
-    // Then get all bookings for these trips
-    const bookingsQuery = query(
-      collection(db, "bookings"),
-      where("tripId", "in", tripIds),
-      orderBy("bookingDate", "desc")
-    );
-    const bookingsSnapshot = await getDocs(bookingsQuery);
-    return bookingsSnapshot.docs.map(
-      (doc) => ({ id: doc.id, ...doc.data() } as Booking)
-    );
-  },
-
-  // Get booking statistics for organizer
-  async getBookingStatsForOrganizer(organizerId: string): Promise<{
-    total: number;
-    pending: number;
-    approved: number;
-    rejected: number;
-  }> {
-    const bookings = await this.getBookingsForOrganizer(organizerId);
-
-    return {
-      total: bookings.length,
-      pending: bookings.filter((b) => b.status === "Pending").length,
-      approved: bookings.filter((b) => b.status === "Approved").length,
-      rejected: bookings.filter((b) => b.status === "Rejected").length,
-    };
-  },
-
-  // (duplicate removed above)
 };
 
 // User operations
@@ -537,16 +502,21 @@ export const userService = {
     const userRef = doc(db, "users", userId);
     const userSnap = await getDoc(userRef);
 
+    // Filter out undefined values - Firestore doesn't accept undefined
+    const cleanUserData = Object.fromEntries(
+      Object.entries(userData).filter(([_, value]) => value !== undefined)
+    ) as Omit<User, "id" | "createdAt" | "updatedAt">;
+
     if (userSnap.exists()) {
       // Update existing user
       await updateDoc(userRef, {
-        ...userData,
+        ...cleanUserData,
         updatedAt: Timestamp.now(),
       });
     } else {
       // Create new user using setDoc
       await setDoc(userRef, {
-        ...userData,
+        ...cleanUserData,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       });
@@ -567,6 +537,90 @@ export const userService = {
     }
     return null;
   },
+
+  // Get user by Email
+  async getUserByEmail(email: string): Promise<User | null> {
+    const q = query(collection(db, "users"), where("email", "==", email));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.docs.length > 0) {
+      const doc = querySnapshot.docs[0];
+      return { id: doc.id, ...doc.data() } as User;
+    }
+    return null;
+  },
+
+  // Verify user email
+  async verifyUserEmail(userId: string): Promise<void> {
+    const userRef = doc(db, "users", userId);
+    await updateDoc(userRef, {
+      emailVerified: true,
+      updatedAt: Timestamp.now(),
+    });
+  },
+};
+
+// OTP operations
+export const otpService = {
+  // Create and store OTP
+  async createOTP(email: string): Promise<string> {
+    // Generate 6 digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Store in firestore with 15 min expiration
+    const now = Timestamp.now();
+    const expiresAt = new Timestamp(now.seconds + 15 * 60, 0);
+
+    // Delete any existing OTPs for this email first
+    const q = query(
+      collection(db, "otp_verifications"),
+      where("email", "==", email)
+    );
+    const snapshot = await getDocs(q);
+    const batchPromises = snapshot.docs.map((doc) => deleteDoc(doc.ref));
+    await Promise.all(batchPromises);
+
+    await addDoc(collection(db, "otp_verifications"), {
+      email,
+      otp,
+      expiresAt,
+      verified: false,
+      createdAt: now,
+    });
+
+    return otp;
+  },
+
+  // Verify OTP
+  async verifyOTP(email: string, otp: string): Promise<boolean> {
+    const q = query(
+      collection(db, "otp_verifications"),
+      where("email", "==", email),
+      where("otp", "==", otp),
+      where("verified", "==", false)
+    );
+
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      return false;
+    }
+
+    const otpDoc = snapshot.docs[0];
+    const data = otpDoc.data() as OTP;
+
+    // Check expiration
+    if (data.expiresAt.toMillis() < Date.now()) {
+      return false;
+    }
+
+    // Mark as verified
+    await updateDoc(otpDoc.ref, {
+      verified: true,
+    });
+
+    return true;
+  },
 };
 
 // Helper function to create HTML email template
@@ -578,6 +632,8 @@ function createEmailTemplate(
     | "booking-approved"
     | "booking-rejected"
     | "status-change"
+    | "otp-verification"
+    | undefined
 ): string {
   const colors = {
     primary: "#0f172a", // slate-900
@@ -594,6 +650,7 @@ function createEmailTemplate(
       case "booking-rejected":
         return colors.error;
       case "booking-created":
+      case "otp-verification":
         return colors.primary;
       default:
         return colors.primary;
@@ -686,16 +743,17 @@ export const notificationService = {
             | "booking-approved"
             | "booking-rejected"
             | "status-change"
+            | "otp-verification"
             | undefined
         );
 
         await resend.emails.send({
-          from: "TravlAbhi <noreply@hi.travlabhi.com>",
+          from: "TripAbhi <noreply@hi.travlabhi.com>",
           to: options.to,
           subject: options.subject,
           html: html,
         });
- 
+
         console.log(`Email sent successfully to ${options.to}`);
       } catch (error) {
         console.error("Error sending email via Resend:", error);

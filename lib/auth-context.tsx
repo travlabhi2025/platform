@@ -10,15 +10,14 @@ interface AuthContextType {
   userProfile: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signInWithGoogle: (role?: "trip-organizer" | "customer") => Promise<void>;
   signUp: (
     email: string,
     password: string,
     name: string,
-    role: "trip-organizer" | "customer"
+    phone?: string
   ) => Promise<{ authUser: AuthUser; userProfile: User }>;
   signOut: () => Promise<void>;
-  isOrganizer: () => boolean;
+  signInWithGoogle: () => Promise<{ firebaseUser: FirebaseUser; userProfile: User }>;
   isCustomer: () => boolean;
   waitForUserProfile: () => Promise<User | null>;
 }
@@ -30,52 +29,85 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userProfile, setUserProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Handle auth state changes
   useEffect(() => {
-    const unsubscribe = authService.onAuthStateChanged(async (firebaseUser) => {
+    let unsubscribe: (() => void) | null = null;
+
+    console.log("[auth-context] 🔄 Setting up onAuthStateChanged listener");
+
+    unsubscribe = authService.onAuthStateChanged(async (firebaseUser) => {
+      console.log("[auth-context] 🔔 onAuthStateChanged fired:", {
+        hasUser: !!firebaseUser,
+        uid: firebaseUser?.uid,
+        email: firebaseUser?.email,
+        displayName: firebaseUser?.displayName,
+        timestamp: new Date().toISOString(),
+      });
+
       setUser(firebaseUser);
 
       if (firebaseUser) {
+        console.log("[auth-context] ✅ User authenticated, fetching profile...");
         // Fetch user profile from Firestore
         try {
           const profile = await userService.getUserById(firebaseUser.uid);
-          setUserProfile(profile);
+          
+          if (profile) {
+            console.log("[auth-context] ✅ Profile found:", {
+              id: profile.id,
+              name: profile.name,
+              email: profile.email,
+              role: profile.role,
+            });
+            setUserProfile(profile);
+          } else {
+            console.log("[auth-context] ⚠️ No profile found, creating new one...");
+            // Create profile if it doesn't exist (fallback for OAuth users)
+            const newProfile = await userService.createOrUpdateUser({
+              name: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "User",
+              email: firebaseUser.email || "",
+              emailVerified: firebaseUser.emailVerified || false,
+              role: "customer",
+              avatar: firebaseUser.photoURL || undefined
+            }, firebaseUser.uid);
+            console.log("[auth-context] ✅ Created new profile:", {
+              id: newProfile.id,
+              name: newProfile.name,
+            });
+            setUserProfile(newProfile);
+          }
         } catch (error: unknown) {
-          console.error("Error fetching user profile:", error);
-          setUserProfile(null);
+          console.error("[auth-context] ❌ Error fetching user profile:", error);
         }
       } else {
+        console.log("[auth-context] 👤 No user - clearing profile");
         setUserProfile(null);
       }
 
+      console.log("[auth-context] ✅ Auth state update complete, setting loading to false");
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      console.log("[auth-context] 🧹 Cleaning up auth listener");
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
     await authService.signIn(email, password);
   };
 
-  const signInWithGoogle = async (
-    role: "trip-organizer" | "customer" = "customer"
-  ) => {
-    const { userProfile } = await authService.signInWithGoogle(role);
-    // Ensure profile is immediately available to consumers
-    setUserProfile(userProfile);
-  };
-
-  const signUp = async (
-    email: string,
-    password: string,
-    name: string,
-    role: "trip-organizer" | "customer"
-  ) => {
+  const signUp = async (email: string, password: string, name: string, phone?: string) => {
+    // Force role to "customer"
     const { authUser, userProfile } = await authService.signUp(
       email,
       password,
       name,
-      role
+      "customer",
+      phone
     );
 
     // Immediately set the user profile to avoid race conditions
@@ -89,8 +121,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await authService.signOut();
   };
 
-  const isOrganizer = () => {
-    return userProfile?.role === "trip-organizer";
+  const signInWithGoogle = async () => {
+    console.log("[auth-context] 🚀 Starting Google OAuth sign-in...");
+    try {
+      const result = await authService.signInWithGoogle();
+      console.log("[auth-context] ✅ Google OAuth successful:", {
+        uid: result.firebaseUser.uid,
+        email: result.firebaseUser.email,
+        hasProfile: !!result.userProfile,
+        profileId: result.userProfile.id,
+      });
+      
+      // Immediately set user and profile from popup result
+      // The FirebaseUser will also trigger onAuthStateChanged, but setting it here
+      // ensures immediate state update for redirect
+      console.log("[auth-context] 📝 Setting user state immediately...");
+      setUser(result.firebaseUser);
+      setUserProfile(result.userProfile);
+      
+      console.log("[auth-context] ✅ User state set:", {
+        userSet: !!result.firebaseUser,
+        profileSet: !!result.userProfile,
+      });
+      
+      return result;
+    } catch (error: unknown) {
+      console.error("[auth-context] ❌ Google OAuth error:", error);
+      throw error;
+    }
   };
 
   const isCustomer = () => {
@@ -135,10 +193,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     userProfile,
     loading,
     signIn,
-    signInWithGoogle,
     signUp,
     signOut,
-    isOrganizer,
+    signInWithGoogle,
     isCustomer,
     waitForUserProfile,
   };

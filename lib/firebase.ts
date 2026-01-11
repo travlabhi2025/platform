@@ -1,6 +1,6 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { getAuth, setPersistence, browserLocalPersistence, GoogleAuthProvider } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -33,6 +33,18 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 // Initialize Firebase services with error handling
 export const db = getFirestore(app, "travlabhi");
 export const auth = getAuth(app);
+// Set persistence once (best-effort; non-blocking)
+if (typeof window !== "undefined") {
+  setPersistence(auth, browserLocalPersistence).catch((err) => {
+    console.error("[firebase] Failed to set auth persistence", err);
+  });
+}
 export const storage = getStorage(app);
+
+// Google OAuth Provider
+export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: "select_account",
+});
 
 export default app;

@@ -1,12 +1,12 @@
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import UnifiedDashboard from "@/components/dashboard/UnifiedDashboard";
+import CustomerDashboard from "@/components/dashboard/CustomerDashboard";
 
 export const dynamic = "force-dynamic";
 
 export default function DashboardPage() {
   return (
     <ProtectedRoute>
-      <UnifiedDashboard />
+      <CustomerDashboard />
     </ProtectedRoute>
   );
 }

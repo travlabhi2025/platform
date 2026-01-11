@@ -1,22 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { verifyAuth } from "@/lib/middleware/auth";
+import { adminUserService } from "@/lib/firestore-admin";
 
 export async function GET(request: NextRequest) {
   try {
     // Verify JWT token and get authenticated userId
     const { userId } = await verifyAuth(request);
 
-    const userRef = doc(db, "users", userId);
-    const userSnap = await getDoc(userRef);
+    const userProfile = await adminUserService.getUserById(userId);
 
-    if (!userSnap.exists()) {
+    if (!userProfile) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const userData = userSnap.data();
-    return NextResponse.json({ profile: userData });
+    return NextResponse.json({ profile: userProfile });
   } catch (error: unknown) {
     console.error("Error fetching profile:", error);
     return NextResponse.json(
@@ -40,27 +37,17 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const userRef = doc(db, "users", userId);
-
-    // Update the user document with the new profile data
-    await setDoc(
-      userRef,
-      {
-        ...profile,
-        updatedAt: new Date(),
-      },
-      { merge: true }
-    );
+    // Update the user document using Admin SDK (bypasses security rules)
+    const updatedProfile = await adminUserService.updateUser(userId, profile);
 
     return NextResponse.json({
       message: "Profile updated successfully",
-      profile,
+      profile: updatedProfile,
     });
   } catch (error: unknown) {
     console.error("Error updating profile:", error);
-    return NextResponse.json(
-      { error: "Failed to update profile" },
-      { status: 500 }
-    );
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to update profile";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

@@ -18,14 +18,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    let bookings;
-    if (userProfile.role === "trip-organizer") {
-      // For organizers: return bookings for their trips
-      bookings = await bookingService.getBookingsForOrganizer(userId);
-    } else {
-      // For customers: return their own bookings by email
-      bookings = await bookingService.getBookingsByEmail(userProfile.email);
-    }
+    // Return bookings for the authenticated customer
+    const bookings = await bookingService.getBookingsByEmail(userProfile.email);
 
     return NextResponse.json(bookings);
   } catch (error) {
@@ -65,15 +59,9 @@ export async function POST(request: NextRequest) {
 
     // Try to get authenticated user, but don't fail if not authenticated (guest bookings)
     let userId = null;
-    let userProfile = null;
     try {
       const authResult = await verifyAuth(request);
       userId = authResult.userId;
-
-      // Fetch user profile to check role
-      if (userId) {
-        userProfile = await userService.getUserById(userId);
-      }
     } catch {
       // User not authenticated - this is okay for guest bookings
       console.log(
@@ -93,18 +81,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Traveler information is required" },
         { status: 400 }
-      );
-    }
-
-    // Check if authenticated user is a trip organizer
-    if (userProfile && userProfile.role === "trip-organizer") {
-      return NextResponse.json(
-        {
-          error:
-            "Trip organizers cannot book trips. Please use a customer account to make bookings.",
-          code: "ORGANIZER_BOOKING_NOT_ALLOWED",
-        },
-        { status: 403 }
       );
     }
 
@@ -159,7 +135,7 @@ export async function POST(request: NextRequest) {
     }
 
     const validGroupSize = Math.max(1, Number(groupSize || 1));
-    
+
     // Calculate total amount based on selected package or fallback to old format
     let totalAmount = 0;
     if (packageId && trip.packages && trip.packages.length > 0) {
@@ -204,19 +180,24 @@ export async function POST(request: NextRequest) {
     const organizerProfile = await userService.getUserById(trip.createdBy);
     const organizerEmail = organizerProfile?.email || "support@travlabhi.com";
 
-    // Organizer notification
-    const organizerMessage = `You have received a new booking request!\n\n` +
+    // Organizer notification (Business owner still needs to know)
+    const organizerMessage =
+      `You have received a new booking request!\n\n` +
       `Booking Details:\n` +
       `- Traveler: ${travelerName}\n` +
       `- Email: ${travelerEmail}\n` +
       `- Phone: ${travelerPhone}\n` +
       `- Trip: ${tripName}\n` +
       `- Location: ${trip.about?.location || "Various locations"}\n` +
-      `- Dates: ${trip.about?.startDate || "TBD"} to ${trip.about?.endDate || "TBD"}\n` +
-      `- Group Size: ${validGroupSize} ${validGroupSize === 1 ? "person" : "people"}\n` +
+      `- Dates: ${trip.about?.startDate || "TBD"} to ${
+        trip.about?.endDate || "TBD"
+      }\n` +
+      `- Group Size: ${validGroupSize} ${
+        validGroupSize === 1 ? "person" : "people"
+      }\n` +
       `- Total Amount: ₹${totalAmount.toLocaleString("en-IN")}\n` +
       `${preferences ? `- Preferences: ${preferences}\n` : ""}\n` +
-      `Please review this booking request in your dashboard and approve or reject it.\n\n` +
+      `Please review this booking request.\n\n` +
       `Booking ID: ${bookingId}`;
 
     await notificationService.sendEmail({
@@ -227,15 +208,20 @@ export async function POST(request: NextRequest) {
     });
 
     // Customer notification
-    const customerMessage = `Thank you for your booking request!\n\n` +
-      `Your booking request for ${tripName} by ${organizerName} has been successfully submitted.\n\n` +
+    const customerMessage =
+      `Thank you for your booking request!\n\n` +
+      `Your booking request for ${tripName} has been successfully submitted.\n\n` +
       `Booking Details:\n` +
       `- Trip: ${tripName}\n` +
       `- Location: ${trip.about?.location || "Various locations"}\n` +
-      `- Dates: ${trip.about?.startDate || "TBD"} to ${trip.about?.endDate || "TBD"}\n` +
-      `- Group Size: ${validGroupSize} ${validGroupSize === 1 ? "person" : "people"}\n` +
+      `- Dates: ${trip.about?.startDate || "TBD"} to ${
+        trip.about?.endDate || "TBD"
+      }\n` +
+      `- Group Size: ${validGroupSize} ${
+        validGroupSize === 1 ? "person" : "people"
+      }\n` +
       `- Total Amount: ₹${totalAmount.toLocaleString("en-IN")}\n\n` +
-      `The organizer will review your request and get back to you shortly. Once approved, they will contact you at ${travelerPhone} with payment details and next steps.\n\n` +
+      `You will be contacted shortly with payment details and next steps.\n\n` +
       `You can check your booking status anytime in your dashboard.\n\n` +
       `Thank you for choosing TravlAbhi!`;
 

@@ -11,6 +11,7 @@ import { useTrip } from "@/lib/hooks";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import SiteHeader from "@/components/common/SiteHeader";
+import { AlertCircle } from "lucide-react";
 
 export default function BookingPage({ tripId }: { tripId: string }) {
   const { trip, loading: tripLoading } = useTrip(tripId);
@@ -149,6 +150,12 @@ export default function BookingPage({ tripId }: { tripId: string }) {
 
   const onSubmitBooking = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Prevent submission if user is not verified
+    if (userProfile && !userProfile.emailVerified) {
+      toast.error("Please verify your email address to book a trip.");
+      return;
+    }
 
     // Prevent submission if user already has a booking for this trip
     if (hasExistingBooking) {
@@ -315,6 +322,31 @@ export default function BookingPage({ tripId }: { tripId: string }) {
         <div className="text-sm text-gray-600 mb-6">
           Fill out your information to request a booking
         </div>
+
+        {/* Verification Warning */}
+        {userProfile && !userProfile.emailVerified && (
+          <Card className="mb-6 border-amber-200 bg-amber-50">
+            <CardContent className="p-4 flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm text-amber-800 font-medium">
+                  Email Verification Required
+                </p>
+                <p className="text-xs text-amber-700 mt-1">
+                  You must verify your email address to book a trip. Go to your dashboard to verify.
+                </p>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="border-amber-600 text-amber-700 hover:bg-amber-100"
+                onClick={() => window.location.href = "/dashboard"}
+              >
+                Go to Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Show existing booking if user has already booked this trip */}
         {hasExistingBooking && existingBooking && (
@@ -669,7 +701,7 @@ export default function BookingPage({ tripId }: { tripId: string }) {
                 </div>
 
                 <div className="flex justify-end">
-                  <Button type="submit" disabled={tripLoading || loading}>
+                  <Button type="submit" disabled={Boolean(tripLoading || loading || (userProfile && !userProfile.emailVerified))}>
                     {loading ? "Submitting..." : "Submit Booking Request"}
                   </Button>
                 </div>

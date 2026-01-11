@@ -24,7 +24,6 @@ export default function Footer() {
             <h3 className="text-xl font-semibold mb-4">TravlAbhi</h3>
             <div className="space-y-2 text-primary-foreground/80">
               <p>Package Deal</p>
-              <p>Organizer Ship</p>
               <p>Gift Trips</p>
               <p>Refer & Earn</p>
               <p>About Us</p>
@@ -61,11 +60,6 @@ export default function Footer() {
 
         <div className="border-t border-primary-foreground/20 mt-8 pt-8">
           <div className="flex flex-col items-center space-y-4 mb-6">
-            <Link href="/signup-organizer">
-              <button className="bg-white text-primary hover:bg-primary-foreground/90 transition-colors px-8 py-3 rounded-lg font-semibold shadow-lg">
-                Become an Organizer
-              </button>
-            </Link>
             <p className="text-primary-foreground/60 text-sm">
               Start creating amazing travel experiences
             </p>

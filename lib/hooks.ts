@@ -47,10 +47,10 @@ export function useMyTrips() {
         setLoading(true);
       }
 
-      // Get auth headers with JWT token
+      // Get auth headers with Firebase ID token
       const headers = await getAuthHeaders();
 
-      console.log("useMyTrips - Fetching trips with JWT authentication");
+      console.log("useMyTrips - Fetching trips with Firebase authentication");
 
       const response = await fetch("/api/trips/my", {
         headers,
@@ -127,7 +127,7 @@ export function useMyBookings() {
       try {
         setLoading(true);
 
-        // Get auth headers with JWT token
+        // Get auth headers with Firebase ID token
         const headers = await getAuthHeaders();
 
         const response = await fetch("/api/bookings", {

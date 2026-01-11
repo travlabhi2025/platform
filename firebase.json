@@ -1,0 +1,15 @@
+{
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      { "source": "/__/!*", "destination": "/__/index.html" },
+      { "source": "/__/firebase/*", "destination": "/__/firebase/*" },
+      { "source": "**", "destination": "/index.html" }
+    ]
+  }
+}

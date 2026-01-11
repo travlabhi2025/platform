@@ -1,131 +1,57 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import SiteHeader from "@/components/common/SiteHeader";
+import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
+import { Earth } from "lucide-react";
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import MaterialSymbolsLoader from "@/components/MaterialSymbolsLoader";
+import PhoneInput from "@/components/auth/PhoneInput";
 import { useAuth } from "@/lib/auth-context";
-import { Profile } from "@/components/dashboard/types";
+import { useMyBookings } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import {
-  Save,
-  Edit,
-  X,
-  Globe,
-  Instagram,
-  Facebook,
-  Twitter,
-  Linkedin,
-  Mail,
-  Phone,
-  MapPin,
-  User,
-} from "lucide-react";
-import Image from "next/image";
-import ImageUpload from "@/components/ui/image-upload";
 
 export default function ProfilePage() {
   const { user, userProfile } = useAuth();
+  const { bookings: myBookings } = useMyBookings();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [profile, setProfile] = useState<Profile>({
+  const [formKey, setFormKey] = useState(0); // Key to force PhoneInput remount
+  const [formData, setFormData] = useState({
     name: "",
-    avatar: "",
-    verified: false,
-    kycVerified: false,
-    badge: "Organizer",
-    logo: "",
-    profilePicture: "",
-    contact: {
-      email: "",
-      phone: "",
-      address: "",
-    },
-    socialLinks: {
-      website: "",
-      instagram: "",
-      facebook: "",
-      twitter: "",
-      linkedin: "",
-    },
-    bio: "",
-    company: "",
-    title: "",
+    phone: "",
+    countryCode: "",
+    phoneNumber: "", // Store phone number separately
+    email: "",
   });
 
-  // Initialize profile data
+  // Initialize form data
   useEffect(() => {
     if (userProfile || user) {
-      setProfile({
+      const countryCode = userProfile?.contact?.countryCode || "";
+      const phoneNumber = userProfile?.contact?.phone || "";
+      // Combine for PhoneInput component
+      const fullPhone =
+        countryCode && phoneNumber
+          ? `${countryCode} ${phoneNumber}`
+          : phoneNumber || "";
+
+      setFormData({
         name: userProfile?.name || user?.displayName || "",
-        avatar: userProfile?.avatar || user?.photoURL || "",
-        verified: userProfile?.verified || false,
-        kycVerified: userProfile?.kycVerified || false,
-        badge: userProfile?.badge || "Organizer",
-        logo: userProfile?.logo || "",
-        profilePicture: userProfile?.profilePicture || "",
-        contact: {
-          email: userProfile?.contact?.email || user?.email || "",
-          phone: userProfile?.contact?.phone || "",
-          address: userProfile?.contact?.address || "",
-        },
-        socialLinks: {
-          website: userProfile?.socialLinks?.website || "",
-          instagram: userProfile?.socialLinks?.instagram || "",
-          facebook: userProfile?.socialLinks?.facebook || "",
-          twitter: userProfile?.socialLinks?.twitter || "",
-          linkedin: userProfile?.socialLinks?.linkedin || "",
-        },
-        bio: userProfile?.bio || "",
-        company: userProfile?.company || "",
-        title: userProfile?.title || "",
+        phone: fullPhone,
+        countryCode: countryCode,
+        phoneNumber: phoneNumber,
+        email: userProfile?.contact?.email || user?.email || "",
       });
     }
   }, [userProfile, user]);
 
-  const validateProfile = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!profile.name.trim()) {
-      newErrors.name = "Full name is required";
-    }
-
-    if (
-      profile.contact?.email &&
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.contact.email)
-    ) {
-      newErrors.email = "Please enter a valid email address";
-    }
-
-    if (
-      profile.socialLinks?.website &&
-      !/^https?:\/\/.+/.test(profile.socialLinks.website)
-    ) {
-      newErrors.website =
-        "Please enter a valid website URL (starting with http:// or https://)";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleSave = async () => {
     if (!user) return;
 
-    if (!validateProfile()) {
-      toast.error("Please fix the validation errors");
-      return;
-    }
-
     setLoading(true);
     try {
-      // Get auth headers with JWT token
       const { getAuthHeaders } = await import("@/lib/auth-helpers");
       const authHeaders = await getAuthHeaders();
 
@@ -136,7 +62,26 @@ export default function ProfilePage() {
           ...authHeaders,
         },
         body: JSON.stringify({
-          profile,
+          profile: {
+            name: formData.name,
+            contact: {
+              email: formData.email,
+              phone:
+                formData.phoneNumber ||
+                (() => {
+                  // Fallback: properly parse phone number from full value
+                  const match = formData.phone.match(/^(\+\d+)\s*(.+)$/);
+                  if (match) {
+                    return match[2].replace(/\D/g, ""); // Remove non-digits from phone part only
+                  }
+                  return formData.phone.replace(/\D/g, ""); // If no country code found, return all digits
+                })(),
+              countryCode:
+                formData.countryCode ||
+                formData.phone.match(/^(\+\d+)/)?.[1] ||
+                "",
+            },
+          },
         }),
       });
 
@@ -146,6 +91,7 @@ export default function ProfilePage() {
 
       toast.success("Profile updated successfully!");
       setIsEditing(false);
+      window.location.reload();
     } catch (error: unknown) {
       console.error("Profile update error:", error);
       toast.error(
@@ -157,550 +103,384 @@ export default function ProfilePage() {
     }
   };
 
-  const handleCancel = () => {
-    // Reset to original data
+  const handleCancel = (e?: React.MouseEvent<HTMLButtonElement>) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+
     if (userProfile || user) {
-      setProfile({
+      const countryCode = userProfile?.contact?.countryCode || "";
+      const phoneNumber = userProfile?.contact?.phone || "";
+      const fullPhone =
+        countryCode && phoneNumber
+          ? `${countryCode} ${phoneNumber}`
+          : phoneNumber || "";
+
+      setFormData({
         name: userProfile?.name || user?.displayName || "",
-        avatar: userProfile?.avatar || user?.photoURL || "",
-        verified: userProfile?.verified || false,
-        kycVerified: userProfile?.kycVerified || false,
-        badge: userProfile?.badge || "Organizer",
-        logo: userProfile?.logo || "",
-        profilePicture: userProfile?.profilePicture || "",
-        contact: {
-          email: userProfile?.contact?.email || user?.email || "",
-          phone: userProfile?.contact?.phone || "",
-          address: userProfile?.contact?.address || "",
-        },
-        socialLinks: {
-          website: userProfile?.socialLinks?.website || "",
-          instagram: userProfile?.socialLinks?.instagram || "",
-          facebook: userProfile?.socialLinks?.facebook || "",
-          twitter: userProfile?.socialLinks?.twitter || "",
-          linkedin: userProfile?.socialLinks?.linkedin || "",
-        },
-        bio: userProfile?.bio || "",
-        company: userProfile?.company || "",
-        title: userProfile?.title || "",
+        phone: fullPhone,
+        countryCode: countryCode,
+        phoneNumber: phoneNumber,
+        email: userProfile?.contact?.email || user?.email || "",
       });
     }
     setIsEditing(false);
+    setFormKey((prev) => prev + 1); // Force PhoneInput to remount
   };
 
-  const updateProfile = (updates: Partial<Profile>) => {
-    setProfile((prev) => ({ ...prev, ...updates }));
-  };
-
-  const updateContact = (updates: Partial<Profile["contact"]>) => {
-    setProfile((prev) => ({
+  const handlePhoneChange = useCallback((value: string) => {
+    setFormData((prev) => ({
       ...prev,
-      contact: { ...prev.contact, ...updates },
+      phone: value,
     }));
-  };
+  }, []);
 
-  const updateSocialLinks = (updates: Partial<Profile["socialLinks"]>) => {
-    setProfile((prev) => ({
-      ...prev,
-      socialLinks: { ...prev.socialLinks, ...updates },
-    }));
-  };
+  const handlePhoneChangeWithParts = useCallback(
+    (parts: {
+      countryCode: string;
+      phoneNumber: string;
+      fullValue: string;
+    }) => {
+      setFormData((prev) => ({
+        ...prev,
+        phone: parts.fullValue,
+        countryCode: parts.countryCode,
+        phoneNumber: parts.phoneNumber,
+      }));
+    },
+    []
+  );
 
-  // Show skeleton loader while profile data is loading
-  if (!userProfile && !user) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <SiteHeader />
-        <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-20 py-8 pb-28 lg:pb-8 max-w-4xl">
-          <div className="mb-8">
-            <Skeleton className="h-8 w-48 mb-2" />
-            <Skeleton className="h-4 w-96" />
-          </div>
+  const profileImage =
+    userProfile?.profilePicture || userProfile?.avatar || user?.photoURL || "";
+  const displayName = userProfile?.name || user?.displayName || "User";
+  const email = userProfile?.contact?.email || user?.email || "";
+  const countryCode = userProfile?.contact?.countryCode || "";
+  const phoneNumber = userProfile?.contact?.phone || "";
+  const fullPhone =
+    countryCode && phoneNumber
+      ? `${countryCode} ${phoneNumber}`
+      : phoneNumber || "";
+  const emailVerified = userProfile?.emailVerified || false;
+  const kycVerified = userProfile?.kycVerified || false;
 
-          <div className="space-y-6">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="bg-white border border-gray-200 rounded-lg p-6"
-              >
-                <Skeleton className="h-6 w-32 mb-4" />
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                  </div>
-                  <Skeleton className="h-20 w-full" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </main>
-      </div>
-    );
-  }
+  // Calculate stats
+  const tripsTaken = myBookings.filter((b) => b.status === "Approved").length;
+  const reviewsCount = 0; // Reviews are stored on trips, not users
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <SiteHeader />
-
-      <main className="mx-auto px-4 sm:px-6 md:px-8 lg:px-20 py-8 pb-28 lg:pb-8 max-w-4xl">
-        <div className="mb-8">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Profile Setup
-              </h1>
-              <p className="text-gray-600">
-                Manage your profile information, contact details, and social
-                links
-              </p>
-            </div>
-            <div>
-              {isEditing ? (
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={handleCancel}
-                    disabled={loading}
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    Cancel
-                  </Button>
-                  <Button onClick={handleSave} disabled={loading}>
-                    <Save className="w-4 h-4 mr-2" />
-                    {loading ? "Saving..." : "Save Changes"}
-                  </Button>
+    <div className="min-h-screen bg-background-light text-[#112838]">
+      <MaterialSymbolsLoader />
+      <DashboardHeader />
+      <main className="max-w-[1440px] mx-auto px-4 md:px-10 py-8 md:py-12">
+        <div className="max-w-6xl mx-auto flex flex-col gap-10">
+          {/* Profile Header */}
+          <div className="flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8 pb-8 border-b border-gray-100">
+            <div className="relative shrink-0 group">
+              <div className="size-32 md:size-40 rounded-full bg-[#F8FAFC] p-1.5 shadow-sm">
+                <div
+                  className="w-full h-full rounded-full bg-cover bg-center bg-slate-200"
+                  style={
+                    profileImage
+                      ? { backgroundImage: `url(${profileImage})` }
+                      : {}
+                  }
+                >
+                  {!profileImage && (
+                    <div className="w-full h-full rounded-full bg-slate-200 flex items-center justify-center text-[#112838] text-4xl font-bold font-satoshi-black">
+                      {displayName[0]?.toUpperCase() || "U"}
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <Button onClick={() => setIsEditing(true)}>
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit Profile
-                </Button>
-              )}
+              </div>
+              <button className="absolute bottom-2 right-2 bg-[#112838] text-white p-2.5 rounded-full border-4 border-white shadow-sm cursor-pointer hover:bg-[#0EAFA3] transition-colors group-hover:scale-105">
+                <span className="material-symbols-outlined text-[20px] block">
+                  photo_camera
+                </span>
+              </button>
+            </div>
+            <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left gap-3 mb-2">
+              <h1 className="text-4xl md:text-5xl font-extrabold text-[#112838] tracking-tight font-satoshi-black">
+                {displayName}
+              </h1>
+              <div className="flex flex-col md:flex-row items-center gap-3 md:gap-6 text-gray-500 font-medium text-sm md:text-base">
+                {email && (
+                  <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#F8FAFC]">
+                    <span className="material-symbols-outlined text-[18px]">
+                      mail
+                    </span>
+                    <span>{email}</span>
+                  </div>
+                )}
+                {fullPhone && (
+                  <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#F8FAFC]">
+                    <span className="material-symbols-outlined text-[18px]">
+                      call
+                    </span>
+                    <span>{fullPhone}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="space-y-6">
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Basic Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Row 1: Profile picture (left) and Full Name (right) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">
-                    Profile Picture
-                  </Label>
-                  {isEditing ? (
-                    <ImageUpload
-                      value={profile.profilePicture || ""}
-                      onChange={(url) => updateProfile({ profilePicture: url })}
-                      storagePath="profile-pictures"
-                      variant="compact"
-                    />
-                  ) : (
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+            {/* Left Sidebar */}
+            <div className="lg:col-span-4 order-2 lg:order-1 grid grid-cols-1 gap-4">
+              {/* Activity Snapshot */}
+              <div className="bg-white rounded-[20px] p-6 border border-gray-100 shadow-soft">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="size-10 rounded-xl bg-[#0EAFA3]/10 flex items-center justify-center text-[#0EAFA3]">
+                    <span className="material-symbols-outlined">analytics</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-[#112838] font-satoshi-bold">
+                    Activity Snapshot
+                  </h3>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between p-3 rounded-2xl hover:bg-[#F8FAFC] transition-colors group cursor-default border border-transparent hover:border-gray-100">
                     <div className="flex items-center gap-3">
-                      {profile.profilePicture ? (
-                        <Image
-                          src={profile.profilePicture}
-                          alt="Profile Picture"
-                          width={64}
-                          height={64}
-                          className="w-16 h-16 rounded-full object-cover"
-                        />
-                      ) : (
-                        <Image
-                          src="/images/home/placeholders/profileImg.png"
-                          alt="Default Profile"
-                          width={64}
-                          height={64}
-                          className="w-16 h-16 rounded-full object-cover"
-                        />
-                      )}
-                      <span className="text-sm text-gray-500 hidden md:inline">
-                        Profile picture uploaded
+                      <div className="size-9 rounded-full bg-[#F8FAFC] group-hover:bg-white flex items-center justify-center text-gray-400 group-hover:text-[#112838] transition-colors">
+                        <span className="material-symbols-outlined text-lg">
+                          flight_takeoff
+                        </span>
+                      </div>
+                      <span className="font-bold text-gray-500 group-hover:text-[#112838] transition-colors font-satoshi-bold text-sm">
+                        Trips Taken
                       </span>
                     </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="name"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Full Name
-                  </Label>
-                  {isEditing ? (
-                    <Input
-                      id="name"
-                      value={profile.name}
-                      onChange={(e) => {
-                        updateProfile({ name: e.target.value });
-                        if (errors.name) {
-                          setErrors({ ...errors, name: "" });
-                        }
-                      }}
-                      placeholder="Enter your full name"
-                      className={`w-full ${
-                        errors.name ? "border-red-500" : ""
-                      }`}
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900 py-2">
-                      {profile.name || "Not set"}
-                    </div>
-                  )}
-                  {isEditing && errors.name && (
-                    <p className="text-sm text-red-500 mt-1">{errors.name}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Company and Title in one row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="company"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Company/Organization
-                  </Label>
-                  {isEditing ? (
-                    <Input
-                      id="company"
-                      value={profile.company || ""}
-                      onChange={(e) =>
-                        updateProfile({ company: e.target.value })
-                      }
-                      placeholder="Enter company name"
-                      className="w-full"
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900 py-2">
-                      {profile.company || "Not set"}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="title"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Title/Position
-                  </Label>
-                  {isEditing ? (
-                    <Input
-                      id="title"
-                      value={profile.title || ""}
-                      onChange={(e) => updateProfile({ title: e.target.value })}
-                      placeholder="Enter your title or position"
-                      className="w-full"
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900 py-2">
-                      {profile.title || "Not set"}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label
-                  htmlFor="bio"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Bio
-                </Label>
-                {isEditing ? (
-                  <Textarea
-                    id="bio"
-                    value={profile.bio || ""}
-                    onChange={(e) => updateProfile({ bio: e.target.value })}
-                    placeholder="Tell us about yourself..."
-                    rows={3}
-                    className="w-full"
-                  />
-                ) : (
-                  <div className="text-sm text-gray-900 py-2">
-                    {profile.bio || "No bio provided"}
+                    <span className="text-xl font-extrabold text-[#112838] font-satoshi-black">
+                      {tripsTaken}
+                    </span>
                   </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Status:</span>
-                <Badge variant={profile.verified ? "default" : "secondary"}>
-                  {profile.verified ? "Verified" : "Unverified"}
-                </Badge>
-                {profile.kycVerified && (
-                  <Badge variant="outline">KYC Verified</Badge>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Contact Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="w-5 h-5" />
-                Contact Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="email"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Email
-                  </Label>
-                  {isEditing ? (
-                    <Input
-                      id="email"
-                      type="email"
-                      value={profile.contact?.email || ""}
-                      onChange={(e) => {
-                        updateContact({ email: e.target.value });
-                        if (errors.email) {
-                          setErrors({ ...errors, email: "" });
-                        }
-                      }}
-                      placeholder="Enter email address"
-                      className={`w-full ${
-                        errors.email ? "border-red-500" : ""
-                      }`}
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900 py-2 flex items-center gap-2">
-                      <Mail className="w-4 h-4" />
-                      {profile.contact?.email || "Not set"}
+                  <div className="w-full h-px bg-gray-50"></div>
+                  <div className="flex items-center justify-between p-3 rounded-2xl hover:bg-[#F8FAFC] transition-colors group cursor-default border border-transparent hover:border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <div className="size-9 rounded-full bg-[#F8FAFC] group-hover:bg-white flex items-center justify-center text-gray-400 group-hover:text-[#0EAFA3] transition-colors">
+                        <span className="material-symbols-outlined text-lg">
+                          rate_review
+                        </span>
+                      </div>
+                      <span className="font-bold text-gray-500 group-hover:text-[#0EAFA3] transition-colors font-satoshi-bold text-sm">
+                        Reviews
+                      </span>
                     </div>
-                  )}
-                  {isEditing && errors.email && (
-                    <p className="text-sm text-red-500 mt-1">{errors.email}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="phone"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Phone
-                  </Label>
-                  {isEditing ? (
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={profile.contact?.phone || ""}
-                      onChange={(e) => updateContact({ phone: e.target.value })}
-                      placeholder="Enter phone number"
-                      className="w-full"
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900 py-2 flex items-center gap-2">
-                      <Phone className="w-4 h-4" />
-                      {profile.contact?.phone || "Not set"}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label
-                  htmlFor="address"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Address
-                </Label>
-                {isEditing ? (
-                  <Textarea
-                    id="address"
-                    value={profile.contact?.address || ""}
-                    onChange={(e) => updateContact({ address: e.target.value })}
-                    placeholder="Enter your address"
-                    rows={2}
-                    className="w-full"
-                  />
-                ) : (
-                  <div className="text-sm text-gray-900 py-2 flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    {profile.contact?.address || "Not set"}
+                    <span className="text-xl font-extrabold text-[#112838] font-satoshi-black">
+                      {reviewsCount}
+                    </span>
                   </div>
-                )}
+                </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Social Links */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="w-5 h-5" />
-                Social Links
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="website"
-                    className="text-sm font-medium text-gray-700"
+              {/* Verification Status Card */}
+              {emailVerified || kycVerified ? (
+                <div className="bg-gradient-to-br from-[#112838] to-[#1a3b50] rounded-[20px] p-6 text-white shadow-soft relative overflow-hidden">
+                  <Earth className="absolute -right-4 -top-4 w-[120px] h-[120px] text-white opacity-5" />
+                  <h4 className="font-bold text-lg mb-2 relative z-10 font-satoshi-bold">
+                    Trusted Traveller
+                  </h4>
+                  <p className="text-sm text-white/70 relative z-10 mb-4 font-satoshi">
+                    You are a verified member of the TripAbhi community.
+                  </p>
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#0EAFA3] relative z-10 font-satoshi-bold">
+                    <span className="material-symbols-outlined text-sm">
+                      verified_user
+                    </span>
+                    <span>Identity Verified</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white rounded-[20px] p-6 border border-gray-100 shadow-soft">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="size-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500">
+                      <span className="material-symbols-outlined">info</span>
+                    </div>
+                    <h4 className="font-bold text-lg text-[#112838] font-satoshi-bold">
+                      Verification Status
+                    </h4>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4 font-satoshi">
+                    Complete your verification to become a Trusted Traveller and
+                    unlock exclusive benefits.
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-gray-500 font-satoshi-medium">
+                      <span
+                        className={`material-symbols-outlined text-sm ${
+                          emailVerified ? "text-green-600" : "text-orange-500"
+                        }`}
+                      >
+                        {emailVerified ? "check_circle" : "cancel"}
+                      </span>
+                      <span>
+                        Email {emailVerified ? "Verified" : "Unverified"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Right Column - Personal Details */}
+            <div className="lg:col-span-8 order-1 lg:order-2">
+              <div className="bg-white rounded-[24px] p-8 md:p-10 border border-gray-100 shadow-soft">
+                <div className="flex items-center justify-between mb-8 pb-6 border-b border-gray-50">
+                  <h3 className="text-2xl font-bold text-[#112838] font-satoshi-bold">
+                    Personal Details
+                  </h3>
+                  <Link
+                    href="/my-settings"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#112838] bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors font-satoshi-bold"
                   >
-                    Website
-                  </Label>
-                  {isEditing ? (
-                    <Input
-                      id="website"
-                      type="url"
-                      value={profile.socialLinks?.website || ""}
-                      onChange={(e) => {
-                        updateSocialLinks({ website: e.target.value });
-                        if (errors.website) {
-                          setErrors({ ...errors, website: "" });
-                        }
-                      }}
-                      placeholder="https://yourwebsite.com"
-                      className={`w-full ${
-                        errors.website ? "border-red-500" : ""
-                      }`}
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900 py-2 flex items-center gap-2">
-                      <Globe className="w-4 h-4" />
-                      {profile.socialLinks?.website ? (
-                        <a
-                          href={profile.socialLinks.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline"
-                        >
-                          {profile.socialLinks.website}
-                        </a>
+                    <span className="material-symbols-outlined text-lg">settings</span>
+                    Settings
+                  </Link>
+                </div>
+                <form
+                  className="flex flex-col gap-8"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (isEditing) {
+                      handleSave();
+                    } else {
+                      setIsEditing(true);
+                    }
+                  }}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Full Name */}
+                    <div className="flex flex-col gap-2.5">
+                      <label className="text-xs font-extrabold text-[#112838] uppercase tracking-wide ml-1 font-satoshi-black">
+                        Full Name
+                      </label>
+                      <div className="relative group">
+                        {isEditing ? (
+                          <Input
+                            className="w-full bg-[#F8FAFC] border-2 border-transparent focus:border-[#112838]/10 hover:bg-gray-50 rounded-xl px-4 py-3.5 font-bold text-[#112838] focus:ring-0 transition-all placeholder:text-gray-400 font-satoshi-bold"
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) =>
+                              setFormData({ ...formData, name: e.target.value })
+                            }
+                            placeholder="Enter your full name"
+                          />
+                        ) : (
+                          <input
+                            className="w-full bg-[#F8FAFC] border-2 border-transparent focus:border-[#112838]/10 hover:bg-gray-50 rounded-xl px-4 py-3.5 font-bold text-[#112838] focus:ring-0 transition-all placeholder:text-gray-400 font-satoshi-bold"
+                            type="text"
+                            value={formData.name}
+                            readOnly
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Phone Number */}
+                    <div className="flex flex-col gap-2.5">
+                      <label className="text-xs font-extrabold text-[#112838] uppercase tracking-wide ml-1 font-satoshi-black">
+                        Phone Number
+                      </label>
+                      <div className="relative group">
+                        {isEditing ? (
+                          <PhoneInput
+                            key={formKey}
+                            value={formData.phone}
+                            onChange={handlePhoneChange}
+                            onChangeWithParts={handlePhoneChangeWithParts}
+                            disabled={loading}
+                            placeholder="000-0000"
+                          />
+                        ) : (
+                          <input
+                            className="w-full bg-[#F8FAFC] border-2 border-transparent focus:border-[#112838]/10 hover:bg-gray-50 rounded-xl px-4 py-3.5 font-bold text-[#112838] focus:ring-0 transition-all placeholder:text-gray-400 font-satoshi-bold"
+                            type="tel"
+                            value={fullPhone || ""}
+                            readOnly
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Email Address */}
+                  <div className="flex flex-col gap-2.5">
+                    <label className="text-xs font-extrabold text-[#112838] uppercase tracking-wide ml-1 font-satoshi-black">
+                      Email Address
+                    </label>
+                    <div className="relative opacity-90">
+                      <input
+                        className="w-full bg-white border-2 border-gray-100 rounded-xl px-4 py-3.5 font-bold text-gray-500 cursor-not-allowed select-none font-satoshi-bold pr-24"
+                        readOnly
+                        type="email"
+                        value={formData.email}
+                      />
+                      {emailVerified ? (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1.5 rounded-lg border border-green-100/50">
+                          <span className="material-symbols-outlined text-[18px] material-symbols-filled">
+                            verified
+                          </span>
+                          <span className="text-xs font-bold font-satoshi-bold">
+                            Verified
+                          </span>
+                        </div>
                       ) : (
-                        "Not set"
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 bg-orange-50 text-orange-700 px-3 py-1.5 rounded-lg border border-orange-100/50">
+                          <span className="material-symbols-outlined text-[18px]">
+                            cancel
+                          </span>
+                          <span className="text-xs font-bold font-satoshi-bold">
+                            Unverified
+                          </span>
+                        </div>
                       )}
                     </div>
-                  )}
-                  {isEditing && errors.website && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {errors.website}
+                    <p className="text-xs text-gray-400 ml-1 font-satoshi">
+                      Contact support to change your email address.
                     </p>
-                  )}
-                </div>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="instagram"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Instagram
-                  </Label>
-                  {isEditing ? (
-                    <Input
-                      id="instagram"
-                      value={profile.socialLinks?.instagram || ""}
-                      onChange={(e) =>
-                        updateSocialLinks({ instagram: e.target.value })
-                      }
-                      placeholder="@username or URL"
-                      className="w-full"
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900 py-2 flex items-center gap-2">
-                      <Instagram className="w-4 h-4" />
-                      {profile.socialLinks?.instagram || "Not set"}
-                    </div>
-                  )}
-                </div>
+                  <div className="h-px w-full bg-gray-50 my-2"></div>
 
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="facebook"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Facebook
-                  </Label>
-                  {isEditing ? (
-                    <Input
-                      id="facebook"
-                      value={profile.socialLinks?.facebook || ""}
-                      onChange={(e) =>
-                        updateSocialLinks({ facebook: e.target.value })
-                      }
-                      placeholder="Facebook page URL"
-                      className="w-full"
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900 py-2 flex items-center gap-2">
-                      <Facebook className="w-4 h-4" />
-                      {profile.socialLinks?.facebook || "Not set"}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="twitter"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Twitter
-                  </Label>
-                  {isEditing ? (
-                    <Input
-                      id="twitter"
-                      value={profile.socialLinks?.twitter || ""}
-                      onChange={(e) =>
-                        updateSocialLinks({ twitter: e.target.value })
-                      }
-                      placeholder="@username or URL"
-                      className="w-full"
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900 py-2 flex items-center gap-2">
-                      <Twitter className="w-4 h-4" />
-                      {profile.socialLinks?.twitter || "Not set"}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="linkedin"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    LinkedIn
-                  </Label>
-                  {isEditing ? (
-                    <Input
-                      id="linkedin"
-                      value={profile.socialLinks?.linkedin || ""}
-                      onChange={(e) =>
-                        updateSocialLinks({ linkedin: e.target.value })
-                      }
-                      placeholder="LinkedIn profile URL"
-                      className="w-full"
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900 py-2 flex items-center gap-2">
-                      <Linkedin className="w-4 h-4" />
-                      {profile.socialLinks?.linkedin || "Not set"}
-                    </div>
-                  )}
-                </div>
+                  {/* Action Buttons */}
+                  <div className="flex justify-end gap-3">
+                    {isEditing ? (
+                      <>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleCancel}
+                          disabled={loading}
+                          className="px-10 py-4 font-bold text-base rounded-xl font-satoshi-bold"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="submit"
+                          disabled={loading}
+                          className="px-10 py-4 bg-[#112838] hover:bg-[#112838]/90 text-white font-bold text-base rounded-xl shadow-lg shadow-[#112838]/20 transition-all transform active:scale-[0.98] flex items-center justify-center gap-2 font-satoshi-bold"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">
+                            save_as
+                          </span>
+                          {loading ? "Saving..." : "Save Changes"}
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        type="submit"
+                        className="w-full md:w-auto px-10 py-4 bg-[#112838] hover:bg-[#112838]/90 text-white font-bold text-base rounded-xl shadow-lg shadow-[#112838]/20 transition-all transform active:scale-[0.98] flex items-center justify-center gap-2 font-satoshi-bold"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">
+                          save_as
+                        </span>
+                        Edit Profile
+                      </Button>
+                    )}
+                  </div>
+                </form>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </main>
     </div>

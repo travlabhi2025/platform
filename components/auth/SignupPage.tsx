@@ -1,264 +1,357 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import Image from "next/image";
+  User,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  X,
+} from "lucide-react";
+import PhoneInput from "./PhoneInput";
 
-export default function SignupPage() {
+function SignupPageContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const role = "customer"; // Fixed to customer role
+  const [phone, setPhone] = useState("");
+  const [countryCode, setCountryCode] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const { signUp, signInWithGoogle } = useAuth();
+  const { signUp, signInWithGoogle, user, userProfile, loading: authLoading } =
+    useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect");
+
+  // Handle phone input with parts
+  const handlePhoneChangeWithParts = useCallback((parts: { countryCode: string; phoneNumber: string; fullValue: string }) => {
+    setCountryCode(parts.countryCode);
+    setPhoneNumber(parts.phoneNumber);
+    setPhone(parts.fullValue);
+  }, []);
+
+  // Simple password validation flags
+  const [validations, setValidations] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    special: false,
+  });
+
+  useEffect(() => {
+    setValidations({
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /\d/.test(password),
+      special: /[@$!%*?&]/.test(password),
+    });
+  }, [password]);
+
+  // Check if user is logged in (from any auth method including OAuth redirect)
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (user && userProfile) {
+      const finalRedirect = redirectUrl || "/dashboard";
+      router.push(decodeURIComponent(finalRedirect));
+    }
+  }, [user, userProfile, router, redirectUrl, authLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    try {
-      await signUp(email, password, name, role);
+    const isValid = Object.values(validations).every(Boolean);
+    if (!isValid) {
+      setError(
+        "Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
+      );
+      setLoading(false);
+      return;
+    }
 
-      // User profile is now immediately available, redirect to home
-      router.push("/");
+    try {
+      // Use phoneNumber and countryCode if available, otherwise fallback to phone parsing
+      const phoneToSend: string | undefined = phoneNumber && countryCode 
+        ? `${countryCode} ${phoneNumber}` 
+        : phone || undefined;
+      await signUp(email, password, name, phoneToSend);
+      // Redirect will be handled by useEffect
     } catch (err: unknown) {
       setError((err as Error).message || "An error occurred");
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const result = await signInWithGoogle();
+
+      if (result.firebaseUser && result.userProfile) {
+        let attempts = 0;
+        const maxAttempts = 20;
+        while (attempts < maxAttempts) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          attempts++;
+          if (attempts >= 5) {
+            break;
+          }
+        }
+
+        const finalRedirect = redirectUrl || "/dashboard";
+        router.push(decodeURIComponent(finalRedirect));
+      } else {
+        setError("Failed to sign up with Google. Please try again.");
+      }
+    } catch (error: unknown) {
+      console.error("[signup] ❌ OAuth error:", error);
+      setError("Failed to sign up with Google. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogle = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      await signInWithGoogle(role);
-      router.push("/");
-    } catch (err: unknown) {
-      setError((err as Error).message || "An error occurred");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Show skeleton loader while loading
-  if (loading) {
+  if (authLoading) {
     return (
-      <section className="relative h-screen w-screen bg-gradient-to-br from-orange-100 to-orange-200">
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/images/home/TravelAbhiHero.png"
-            alt="Travel Adventure"
-            fill
-            className="object-cover"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-black/10"></div>
+      <div className="bg-background-light min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-slate-600 font-satoshi">Loading...</p>
         </div>
-
-        {/* Skeleton Content */}
-        <div className="absolute z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md">
-          <Card className="shadow-2xl border-0">
-            <CardHeader className="space-y-2 text-center">
-              <Skeleton className="h-8 w-48 mx-auto" />
-              <Skeleton className="h-4 w-64 mx-auto" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-              <Skeleton className="h-10 w-full" />
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-2">
-              <Skeleton className="h-4 w-48 mx-auto" />
-              <Skeleton className="h-4 w-32 mx-auto" />
-            </CardFooter>
-          </Card>
-        </div>
-      </section>
+      </div>
     );
   }
 
   return (
-    <section className="relative h-screen w-screen bg-gradient-to-br from-orange-100 to-orange-200">
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/images/home/TravelAbhiHero.png"
-          alt="Travel Adventure"
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-black/10"></div>
-      </div>
-      <div className="absolute z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md">
-        <Card className="shadow-2xl border-0">
-          <CardHeader className="text-center pb-6">
-            <div className="mx-auto mb-4">
-              <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
-                <span className="text-white text-2xl font-bold">T</span>
-              </div>
+    <div className="bg-background-light font-display text-primary min-h-screen flex flex-col items-center justify-center relative overflow-x-hidden">
+      {/* Background decorations */}
+      <div className="absolute top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-slate-50 to-transparent -z-10"></div>
+      <div className="absolute right-[10%] top-[5%] w-64 h-64 bg-accent/5 rounded-full blur-3xl -z-10"></div>
+      <div className="absolute left-[10%] bottom-[10%] w-96 h-96 bg-primary/5 rounded-full blur-3xl -z-10"></div>
+
+      <div className="container mx-auto px-4 py-8 flex flex-col items-center max-w-lg w-full">
+        {/* Logo */}
+        <div className="text-center mb-6 animate-fade-in-down">
+          <div className="inline-flex items-center justify-center gap-2 mb-2">
+            <Image
+              src="/images/logos/TripAbhiDark.svg"
+              alt="TripAbhi"
+              width={120}
+              height={40}
+              className="h-8 w-auto"
+              priority
+            />
+          </div>
+          <h1 className="text-sm md:text-base font-bold text-slate-600 tracking-tight font-satoshi-bold">
+            Travel with people, not packages
+          </h1>
+        </div>
+
+        {/* Signup card */}
+        <div className="w-full bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)] border border-slate-100 overflow-hidden relative flex flex-col">
+          {/* Form content */}
+          <div className="p-6 md:p-8 flex-1 flex flex-col">
+            <div className="mb-6 text-center md:text-left">
+              <h2 className="text-xl md:text-2xl font-bold text-primary mb-1.5 font-satoshi-bold">
+                Join the Community
+              </h2>
+              <p className="text-slate-500 font-medium text-sm font-satoshi">
+                Create your account to start exploring.
+              </p>
             </div>
-            <CardTitle className="text-2xl font-garetheavy text-primary">
-              Create Account
-            </CardTitle>
-            <CardDescription className="text-slate-600">
-              Join TravlAbhi and start booking amazing trips
-            </CardDescription>
-          </CardHeader>
 
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label
-                  htmlFor="name"
-                  className="text-sm font-medium text-slate-700"
-                >
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              {/* Full Name field */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-primary uppercase tracking-wider ml-1 font-satoshi-bold">
                   Full Name
-                </Label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  className="h-11"
-                  placeholder="Enter your full name"
-                />
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <User className="w-5 h-5 text-slate-400 group-focus-within:text-accent transition-colors" />
+                  </div>
+                  <input
+                    className="block w-full pl-10 pr-4 py-2.5 bg-slate-50 border-transparent rounded-xl text-primary text-sm placeholder:text-slate-400 focus:bg-white focus:border-slate-200 focus:ring-4 focus:ring-slate-100 transition-all font-semibold font-body tracking-[0.05em]"
+                    placeholder="Ex. Alex Traveler"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label
-                  htmlFor="email"
-                  className="text-sm font-medium text-slate-700"
-                >
+              {/* Email field */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-primary uppercase tracking-wider ml-1 font-satoshi-bold">
                   Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <Mail className="w-5 h-5 text-slate-400 group-focus-within:text-accent transition-colors" />
+                  </div>
+                  <input
+                    className="block w-full pl-10 pr-4 py-2.5 bg-slate-50 border-transparent rounded-xl text-primary text-sm placeholder:text-slate-400 focus:bg-white focus:border-slate-200 focus:ring-4 focus:ring-slate-100 transition-all font-semibold font-body tracking-[0.05em]"
+                    placeholder="hello@example.com"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              {/* Phone Number field */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-primary uppercase tracking-wider ml-1 font-satoshi-bold">
+                  Phone Number
+                </label>
+                <PhoneInput
+                  value={phone}
+                  onChange={setPhone}
+                  onChangeWithParts={handlePhoneChangeWithParts}
+                  disabled={loading}
+                  placeholder="000-0000"
                   required
-                  className="h-11"
-                  placeholder="Enter your email"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label
-                  htmlFor="password"
-                  className="text-sm font-medium text-slate-700"
-                >
+              {/* Password field */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-primary uppercase tracking-wider ml-1 font-satoshi-bold">
                   Password
-                </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="h-11"
-                  placeholder="Create a password"
-                />
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <Lock className="w-5 h-5 text-slate-400 group-focus-within:text-accent transition-colors" />
+                  </div>
+                  <input
+                    className="block w-full pl-10 pr-10 py-2.5 bg-slate-50 border-transparent rounded-xl text-primary text-sm placeholder:text-slate-400 focus:bg-white focus:border-slate-200 focus:ring-4 focus:ring-slate-100 transition-all font-semibold font-body tracking-[0.05em]"
+                    placeholder="Create a password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                  <button
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-primary transition-colors"
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
               </div>
 
+              {/* Error message */}
               {error && (
-                <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md border border-red-200">
-                  {error}
+                <div className="text-red-600 text-xs bg-red-50 p-2.5 rounded-xl border border-red-200 flex items-start gap-2 font-satoshi">
+                  <X className="h-3 w-3 mt-0.5 shrink-0" />
+                  <span>{error}</span>
                 </div>
               )}
 
-              <Button
+              {/* Submit button */}
+              <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-11 bg-primary hover:bg-primary/90 text-white font-medium"
+                className="mt-2 w-full bg-primary hover:bg-primary-hover text-white font-bold py-3.5 rounded-xl shadow-xl shadow-primary/10 transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 group text-sm font-satoshi-bold disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {loading ? "Creating Account..." : "Create Account"}
-              </Button>
+                <ArrowRight className="w-[18px] h-[18px] group-hover:translate-x-1 transition-transform" />
+              </button>
             </form>
-          </CardContent>
 
-          <CardFooter className="flex flex-col space-y-4">
-            <Button
-              type="button"
-              onClick={handleGoogle}
+            {/* Divider */}
+            <div className="relative mt-6 mb-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-100"></div>
+              </div>
+              <div className="relative flex justify-center text-[10px] uppercase">
+                <span className="bg-white px-2 text-slate-400 font-bold tracking-widest font-satoshi-bold">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+
+            {/* Google OAuth button */}
+            <button
+              onClick={handleGoogleSignIn}
               disabled={loading}
-              className="w-full h-11 bg-white border text-slate-700 hover:bg-slate-50 flex items-center justify-center gap-2"
-              aria-label="Continue with Google"
+              className="w-full py-1.5 px-4 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed font-satoshi-medium flex items-center justify-center gap-2"
+              title="Sign in with Google"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 48 48"
-                className="h-5 w-5"
-              >
-                <path
-                  fill="#FFC107"
-                  d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12 s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C33.337,6.053,28.884,4,24,4C12.955,4,4,12.955,4,24 s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"
-                />
-                <path
-                  fill="#FF3D00"
-                  d="M6.306,14.691l6.571,4.819C14.297,16.104,18.839,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657 C33.337,6.053,28.884,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"
-                />
-                <path
-                  fill="#4CAF50"
-                  d="M24,44c4.774,0,9.154-1.826,12.477-4.807l-5.769-4.869C28.718,35.99,26.486,36.8,24,36.8 c-5.202,0-9.619-3.317-11.278-7.946l-6.54,5.036C9.5,39.556,16.227,44,24,44z"
-                />
-                <path
-                  fill="#1976D2"
-                  d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-3.977,5.586 c0.001-0.001,0.002-0.001,0.003-0.002l5.769,4.869C36.771,39.279,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"
-                />
-              </svg>
-              Continue with Google
-            </Button>
-            <div className="text-center text-sm text-slate-600">
-              Already have an account?{" "}
-              <Link
-                href="/signin"
-                className="text-primary hover:text-primary/80 font-medium"
-              >
-                Sign in
-              </Link>
-            </div>
+              <span className="font-bold text-lg">G</span>
+              <span>Continue with Google</span>
+            </button>
 
-            <div className="text-center">
-              <Link
-                href="/"
-                className="text-sm text-slate-500 hover:text-slate-700"
-              >
-                ← Back to Home
-              </Link>
+            {/* Sign in link */}
+            <div className="mt-6 pt-4 border-t border-slate-50 text-center">
+              <p className="text-xs text-slate-500 font-medium font-satoshi">
+                Already have an account?{" "}
+                <Link
+                  className="text-accent-dark hover:text-primary font-bold ml-1 hover:underline underline-offset-2 decoration-2 decoration-accent/30 transition-all font-satoshi-bold"
+                  href="/signin"
+                >
+                  Login
+                </Link>
+              </p>
             </div>
-          </CardFooter>
-        </Card>
+          </div>
+
+          {/* Bottom gradient bar */}
+          <div className="h-1.5 w-full bg-gradient-to-r from-primary via-accent-dark to-accent"></div>
+        </div>
+
+        {/* Footer links */}
+        <div className="mt-6 flex gap-6 text-xs text-slate-400 font-medium font-satoshi">
+          <Link className="hover:text-primary transition-colors" href="#">
+            Privacy
+          </Link>
+          <span className="w-0.5 h-0.5 rounded-full bg-slate-300 self-center"></span>
+          <Link
+            className="hover:text-primary transition-colors"
+            href="/terms-and-conditions"
+          >
+            Terms
+          </Link>
+          <span className="w-0.5 h-0.5 rounded-full bg-slate-300 self-center"></span>
+          <Link className="hover:text-primary transition-colors" href="#">
+            Help
+          </Link>
+        </div>
       </div>
-    </section>
+    </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SignupPageContent />
+    </Suspense>
   );
 }
