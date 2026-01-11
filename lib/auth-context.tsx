@@ -59,6 +59,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               email: profile.email,
               role: profile.role,
             });
+            
+            // Security check: Block organisers from accessing the platform
+            if (profile.role === "organiser") {
+              console.log("[auth-context] 🚫 Organiser detected - signing out and blocking access");
+              await authService.signOut();
+              setUser(null);
+              setUserProfile(null);
+              setLoading(false);
+              return;
+            }
+            
             setUserProfile(profile);
           } else {
             console.log("[auth-context] ⚠️ No profile found, creating new one...");

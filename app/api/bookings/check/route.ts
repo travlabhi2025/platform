@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { bookingService } from "@/lib/firestore";
-import { verifyAuth } from "@/lib/middleware/auth";
+import { verifyAuth, verifyAuthAndRole } from "@/lib/middleware/auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,11 +17,13 @@ export async function GET(request: NextRequest) {
     // Try to get authenticated user, but don't fail if not authenticated (guest bookings)
     let userId = null;
     try {
-      const authResult = await verifyAuth(request);
+      // If user is authenticated, check role (block organisers)
+      const authResult = await verifyAuthAndRole(request);
       userId = authResult.userId;
     } catch {
       // User not authenticated - this is okay for guest bookings
-      console.log("No authenticated user for booking check");
+      // Or user is organiser - also treat as unauthenticated for guest flow
+      console.log("No authenticated customer user for booking check");
     }
 
     // If user is authenticated, check for duplicates by userId

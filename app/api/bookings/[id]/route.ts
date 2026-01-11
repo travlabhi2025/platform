@@ -5,7 +5,7 @@ import {
   notificationService,
   userService,
 } from "@/lib/firestore";
-import { verifyAuth } from "@/lib/middleware/auth";
+import { verifyAuthAndRole } from "@/lib/middleware/auth";
 
 export async function GET(
   request: NextRequest,
@@ -36,8 +36,8 @@ export async function PUT(
   try {
     const { id } = await params;
 
-    // Verify authentication
-    const authResult = await verifyAuth(request);
+    // Verify authentication and check role (block organisers)
+    const authResult = await verifyAuthAndRole(request);
 
     // Check if booking exists
     const booking = await bookingService.getBookingById(id);

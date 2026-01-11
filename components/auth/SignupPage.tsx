@@ -27,7 +27,7 @@ function SignupPageContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const { signUp, signInWithGoogle, user, userProfile, loading: authLoading } =
+  const { signUp, signInWithGoogle, signOut, user, userProfile, loading: authLoading } =
     useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -84,6 +84,25 @@ function SignupPageContent() {
     }
 
     try {
+      // Check if email is already registered as an organiser
+      console.log("[signup] Checking if email is organiser:", email);
+      const checkResponse = await fetch("/api/auth/check-organiser", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (checkResponse.ok) {
+        const { isOrganiser } = await checkResponse.json();
+        if (isOrganiser) {
+          setError(
+            "This email is already registered as an organiser. Please use a different email address to register as a customer."
+          );
+          setLoading(false);
+          return;
+        }
+      }
+
       // Use phoneNumber and countryCode if available, otherwise fallback to phone parsing
       const phoneToSend: string | undefined = phoneNumber && countryCode 
         ? `${countryCode} ${phoneNumber}` 
@@ -101,7 +120,20 @@ function SignupPageContent() {
       setLoading(true);
       setError("");
 
+      // For Google OAuth, we'll check after getting the email
+      // The check will happen in the auth service or auth context
       const result = await signInWithGoogle();
+      
+      // After Google sign-in, check if user is organiser
+      if (result.userProfile && result.userProfile.role === "organiser") {
+        // Sign out immediately if organiser
+        await signOut();
+        setError(
+          "This account is registered as an organiser. Please use a different email address to register as a customer."
+        );
+        setLoading(false);
+        return;
+      }
 
       if (result.firebaseUser && result.userProfile) {
         let attempts = 0;

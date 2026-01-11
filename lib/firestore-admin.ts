@@ -68,6 +68,29 @@ export const adminUserService = {
   },
 
   /**
+   * Check if an email exists as an organiser in the users collection
+   * Returns true if email exists with role="organiser"
+   */
+  async isEmailOrganiser(email: string): Promise<boolean> {
+    try {
+      const db = getAdminFirestore();
+      const usersRef = db.collection("users");
+      const snapshot = await usersRef
+        .where("email", "==", email)
+        .where("role", "==", "organiser")
+        .limit(1)
+        .get();
+
+      return !snapshot.empty;
+    } catch (error: any) {
+      console.error("[adminUserService] Error checking if email is organiser:", error);
+      // If there's an error, we'll be conservative and return false
+      // This allows signup to proceed if we can't verify
+      return false;
+    }
+  },
+
+  /**
    * Verify user email using Admin SDK (bypasses security rules)
    */
   async verifyUserEmail(userId: string): Promise<void> {
@@ -81,22 +104,43 @@ export const adminUserService = {
 
   /**
    * Update user profile using Admin SDK (bypasses security rules)
+   * IMPORTANT: Role cannot be changed - it is permanent once set
    */
   async updateUser(userId: string, userData: Partial<User>): Promise<User> {
     const db = getAdminFirestore();
     const userRef = db.collection("users").doc(userId);
 
+    // Get existing user to preserve role
+    const existingDoc = await userRef.get();
+    if (!existingDoc.exists) {
+      throw new Error("User not found");
+    }
+    const existingUser = { id: existingDoc.id, ...existingDoc.data() } as User;
+
+    // SECURITY: Role is permanent and cannot be changed
+    // Remove role from update data if present
+    const { role, ...updateDataWithoutRole } = userData;
+
     // Filter out undefined values - Firestore doesn't accept undefined
     const cleanUserData = Object.fromEntries(
-      Object.entries(userData).filter(([_, value]) => value !== undefined)
+      Object.entries(updateDataWithoutRole).filter(([_, value]) => value !== undefined)
     );
+
+    // If role was attempted to be changed, log warning
+    if (role !== undefined && role !== existingUser.role) {
+      console.warn(
+        `[adminUserService] Attempted role change blocked for user ${userId}. ` +
+        `Existing role: ${existingUser.role}, Attempted role: ${role}. ` +
+        `Roles are permanent and cannot be changed.`
+      );
+    }
 
     await userRef.update({
       ...cleanUserData,
       updatedAt: FieldValue.serverTimestamp(),
     });
 
-    // Return the updated user profile
+    // Return the updated user profile (with original role preserved)
     const updatedDoc = await userRef.get();
     if (!updatedDoc.exists) {
       throw new Error("User not found after update");

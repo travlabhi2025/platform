@@ -20,6 +20,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       userId: user?.uid,
       email: user?.email,
       hasUserProfile: !!userProfile,
+      userRole: userProfile?.role,
       pathname,
       timestamp: new Date().toISOString(),
     });
@@ -29,11 +30,18 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       // Preserve the current URL as a redirect parameter
       const redirectUrl = encodeURIComponent(pathname);
       router.push(`/signin?redirect=${redirectUrl}`);
-    } else if (!loading && user) {
+    } else if (!loading && user && userProfile) {
+      // Security check: Block organisers from accessing protected routes
+      if (userProfile.role === "organiser") {
+        console.log("[ProtectedRoute] 🚫 Organiser detected - redirecting to signin");
+        router.push("/signin?error=organiser_access_denied");
+        return;
+      }
       console.log("[ProtectedRoute] ✅ User authenticated:", {
         uid: user.uid,
         email: user.email,
         hasProfile: !!userProfile,
+        role: userProfile.role,
       });
     }
   }, [user, loading, router, pathname, userProfile]);
@@ -49,6 +57,12 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (!user) {
     console.log("[ProtectedRoute] ❌ No user - returning null");
+    return null;
+  }
+
+  // Security check: Block organisers BEFORE rendering (prevents race condition)
+  if (userProfile && userProfile.role === "organiser") {
+    console.log("[ProtectedRoute] 🚫 Organiser detected - blocking render");
     return null;
   }
 

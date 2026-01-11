@@ -205,7 +205,11 @@ function SigninPageContent() {
         const data = await response.json();
 
         if (!response.ok) {
-          setError(data.error || "Invalid OTP");
+          if (data.code === "ORGANISER_ACCESS_DENIED") {
+            setError("Organiser accounts cannot access the customer platform. Please use the organiser portal.");
+          } else {
+            setError(data.error || "Invalid OTP");
+          }
           setLoading(false);
           return;
         }
@@ -266,7 +270,12 @@ function SigninPageContent() {
       }
     } catch (error: unknown) {
       console.error("[signin] ❌ OAuth error:", error);
-      setError("Failed to sign in with Google. Please try again.");
+      const errorMessage = error instanceof Error ? error.message : "Failed to sign in with Google. Please try again.";
+      if (errorMessage.includes("Organiser accounts cannot access")) {
+        setError("Organiser accounts cannot access the customer platform. Please use the organiser portal.");
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }

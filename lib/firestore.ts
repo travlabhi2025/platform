@@ -133,7 +133,7 @@ export interface User {
   emailVerified: boolean;
   kycVerified?: boolean; // Added missing property
   badge?: string;
-  role: "customer";
+  role: "customer" | "organiser";
   createdAt: Timestamp;
   updatedAt: Timestamp;
   // Extended profile fields
@@ -495,6 +495,7 @@ export const bookingService = {
 // User operations
 export const userService = {
   // Create or update user
+  // IMPORTANT: Role cannot be changed - it is permanent once set
   async createOrUpdateUser(
     userData: Omit<User, "id" | "createdAt" | "updatedAt">,
     userId: string
@@ -508,13 +509,31 @@ export const userService = {
     ) as Omit<User, "id" | "createdAt" | "updatedAt">;
 
     if (userSnap.exists()) {
-      // Update existing user
-      await updateDoc(userRef, {
-        ...cleanUserData,
-        updatedAt: Timestamp.now(),
-      });
+      // Update existing user - SECURITY: Preserve existing role
+      const existingUser = { id: userSnap.id, ...userSnap.data() } as User;
+      
+      // If role is being changed, block it and preserve original
+      if (cleanUserData.role && cleanUserData.role !== existingUser.role) {
+        console.warn(
+          `[userService] Attempted role change blocked for user ${userId}. ` +
+          `Existing role: ${existingUser.role}, Attempted role: ${cleanUserData.role}. ` +
+          `Roles are permanent and cannot be changed.`
+        );
+        // Remove role from update to preserve original
+        const { role, ...dataWithoutRole } = cleanUserData;
+        await updateDoc(userRef, {
+          ...dataWithoutRole,
+          updatedAt: Timestamp.now(),
+        });
+      } else {
+        // Normal update - role not being changed
+        await updateDoc(userRef, {
+          ...cleanUserData,
+          updatedAt: Timestamp.now(),
+        });
+      }
     } else {
-      // Create new user using setDoc
+      // Create new user using setDoc - role can be set on creation
       await setDoc(userRef, {
         ...cleanUserData,
         createdAt: Timestamp.now(),

@@ -5,12 +5,12 @@ import {
   tripService,
   userService,
 } from "@/lib/firestore";
-import { verifyAuth } from "@/lib/middleware/auth";
+import { verifyAuthAndRole, verifyAuth } from "@/lib/middleware/auth";
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify JWT token and get authenticated userId
-    const { userId } = await verifyAuth(request);
+    // Verify JWT token, check role (block organisers), and get authenticated userId
+    const { userId } = await verifyAuthAndRole(request);
 
     // Fetch user profile to determine role
     const userProfile = await userService.getUserById(userId);
@@ -60,12 +60,14 @@ export async function POST(request: NextRequest) {
     // Try to get authenticated user, but don't fail if not authenticated (guest bookings)
     let userId = null;
     try {
-      const authResult = await verifyAuth(request);
+      // If user is authenticated, check role (block organisers)
+      const authResult = await verifyAuthAndRole(request);
       userId = authResult.userId;
     } catch {
       // User not authenticated - this is okay for guest bookings
+      // Or user is organiser - also treat as unauthenticated for guest flow
       console.log(
-        "No authenticated user for booking creation - allowing guest booking"
+        "No authenticated customer user for booking creation - allowing guest booking"
       );
     }
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { tripService } from "@/lib/firestore";
-import { verifyAuth } from "@/lib/middleware/auth";
+import { verifyAuthAndRole } from "@/lib/middleware/auth";
 
 export async function GET(
   request: NextRequest,
@@ -49,8 +49,8 @@ export async function PUT(
       );
     }
 
-    // Verify JWT token and get authenticated userId
-    const { userId } = await verifyAuth(request);
+    // Verify JWT token, check role (block organisers), and get authenticated userId
+    const { userId } = await verifyAuthAndRole(request);
 
     const tripData = await request.json();
 
@@ -114,8 +114,8 @@ export async function DELETE(
       );
     }
 
-    // Verify JWT token and get authenticated userId
-    const { userId } = await verifyAuth(request);
+    // Verify JWT token, check role (block organisers), and get authenticated userId
+    const { userId } = await verifyAuthAndRole(request);
 
     console.log("Deleting trip with ID:", tripId);
 

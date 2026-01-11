@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { createRemoteJWKSet, jwtVerify } from "jose";
+import { adminUserService } from "@/lib/firestore-admin";
 
 // Note: In Edge Runtime, 'https' is not fully supported or needed if we use fetch.
 // We'll refactor to use fetch instead of https.
@@ -53,6 +54,31 @@ export async function verifyAuth(
   }
 
   throw new Error("No valid authentication found");
+}
+
+/**
+ * Verify authentication and ensure user is a customer (not organiser)
+ * This is the main function to use in API routes to block organisers
+ */
+export async function verifyAuthAndRole(
+  request: NextRequest
+): Promise<{ userId: string; email: string | null }> {
+  // First verify authentication
+  const authResult = await verifyAuth(request);
+  
+  // Then check user role
+  const userProfile = await adminUserService.getUserById(authResult.userId);
+  
+  if (!userProfile) {
+    throw new Error("User profile not found");
+  }
+  
+  // Security check: Block organisers from accessing customer API routes
+  if (userProfile.role === "organiser") {
+    throw new Error("Organiser accounts cannot access customer platform APIs");
+  }
+  
+  return authResult;
 }
 
 /**

@@ -12,6 +12,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
+    // Security check: Block signup if email is already registered as organiser
+    console.log("[check-email-and-send-otp] Checking if email is organiser:", email);
+    const isOrganiser = await adminUserService.isEmailOrganiser(email);
+    if (isOrganiser) {
+      console.log("[check-email-and-send-otp] 🚫 Email is registered as organiser - blocking");
+      return NextResponse.json(
+        { 
+          error: "This email is already registered as an organiser. Please use a different email address to register as a customer.",
+          code: "ORGANISER_EMAIL_BLOCKED"
+        },
+        { status: 403 }
+      );
+    }
+
     // Check if email exists by looking in Firestore first (more reliable)
     // Then verify with Admin SDK that the user exists in Firebase Auth
     try {

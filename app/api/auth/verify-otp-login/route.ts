@@ -46,7 +46,20 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         email: user.email,
         emailVerified: user.emailVerified,
+        role: user.role,
       });
+
+      // Security check: Block organisers from logging in
+      if (user.role === "organiser") {
+        console.log("[verify-otp-login] 🚫 Organiser account detected - blocking login");
+        return NextResponse.json(
+          { 
+            error: "Organiser accounts cannot access the customer platform. Please use the organiser portal.",
+            code: "ORGANISER_ACCESS_DENIED"
+          },
+          { status: 403 }
+        );
+      }
 
       // Get Admin Auth to create custom token
       const adminAuth = getAdminAuth();

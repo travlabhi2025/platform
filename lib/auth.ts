@@ -128,6 +128,14 @@ export const authService = {
     );
     const user = userCredential.user;
 
+    // Security check: Verify user is not an organiser before allowing sign-in
+    const userProfile = await userService.getUserById(user.uid);
+    if (userProfile && userProfile.role === "organiser") {
+      // Sign out immediately if organiser
+      await signOut(auth);
+      throw new Error("Organiser accounts cannot access the customer platform. Please use the organiser portal.");
+    }
+
     return {
       uid: user.uid,
       email: user.email,
@@ -171,6 +179,14 @@ export const authService = {
       // Check if user profile exists in Firestore
       console.log("[auth] 🔍 Checking for user profile in Firestore...");
       let userProfile = await userService.getUserById(user.uid);
+      
+      // Security check: If user exists and is organiser, block access
+      if (userProfile && userProfile.role === "organiser") {
+        console.log("[auth] 🚫 Organiser account detected - blocking Google OAuth");
+        // Sign out the user immediately
+        await signOut(auth);
+        throw new Error("Organiser accounts cannot access the customer platform. Please use the organiser portal.");
+      }
       
       if (!userProfile) {
         // NEW USER - Signup scenario: Create user profile
