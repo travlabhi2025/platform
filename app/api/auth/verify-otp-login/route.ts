@@ -79,16 +79,51 @@ export async function POST(request: NextRequest) {
 
       try {
         console.log("[verify-otp-login] Verifying user exists in Firebase Auth with UID:", uid);
-        // Verify the user exists in Firebase Auth
-        // This will throw if user doesn't exist
-        const firebaseUser = await adminAuth.getUser(uid);
         
-        console.log("[verify-otp-login] User verified in Firebase Auth:", {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          emailVerified: firebaseUser.emailVerified,
-          providers: firebaseUser.providerData.map(p => p.providerId),
-        });
+        let firebaseUser;
+        try {
+          // Try to get the user from Firebase Auth
+          firebaseUser = await adminAuth.getUser(uid);
+          console.log("[verify-otp-login] User verified in Firebase Auth:", {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            emailVerified: firebaseUser.emailVerified,
+            providers: firebaseUser.providerData.map(p => p.providerId),
+          });
+        } catch (authError: any) {
+          // If user doesn't exist in Firebase Auth, create them
+          if (authError.code === "auth/user-not-found") {
+            console.log("[verify-otp-login] User not found in Firebase Auth, creating user...");
+            
+            try {
+              // Create the user in Firebase Auth with the same UID from Firestore
+              // This maintains consistency between Firestore and Firebase Auth
+              firebaseUser = await adminAuth.createUser({
+                uid: uid,
+                email: user.email || email,
+                emailVerified: true, // OTP verification confirms email
+                displayName: user.name || undefined,
+              });
+              
+              console.log("[verify-otp-login] User created in Firebase Auth:", {
+                uid: firebaseUser.uid,
+                email: firebaseUser.email,
+              });
+            } catch (createError: any) {
+              // If UID already exists (shouldn't happen but handle it), try to get the user
+              if (createError.code === "auth/uid-already-exists") {
+                console.log("[verify-otp-login] UID already exists, fetching user...");
+                firebaseUser = await adminAuth.getUser(uid);
+              } else {
+                // Re-throw if it's a different error
+                throw createError;
+              }
+            }
+          } else {
+            // Re-throw if it's a different error
+            throw authError;
+          }
+        }
 
         console.log("[verify-otp-login] Creating custom token for UID:", uid);
         // Create custom token for the user
