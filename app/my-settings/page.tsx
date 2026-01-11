@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import MaterialSymbolsLoader from "@/components/MaterialSymbolsLoader";
 import { useAuth } from "@/lib/auth-context";
@@ -24,9 +25,10 @@ export default function MySettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F7F8] text-[#112437]">
-      <MaterialSymbolsLoader />
-      <DashboardHeader />
+    <ProtectedRoute>
+      <div className="min-h-screen bg-[#F6F7F8] text-[#112437]">
+        <MaterialSymbolsLoader />
+        <DashboardHeader />
       <main className="flex-1 w-full max-w-[800px] mx-auto px-4 py-8 md:py-12">
         {/* Page Heading */}
         <div className="mb-10">
@@ -258,6 +260,7 @@ export default function MySettingsPage() {
           </div>
         </div>
       </main>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

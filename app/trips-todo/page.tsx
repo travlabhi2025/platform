@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import MaterialSymbolsLoader from "@/components/MaterialSymbolsLoader";
 import { Calendar, Users, Heart, Trash2, Plus, Filter } from "lucide-react";
@@ -276,9 +277,10 @@ export default function TripsTodoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#112838]">
-      <MaterialSymbolsLoader />
-      <DashboardHeader />
+    <ProtectedRoute>
+      <div className="min-h-screen bg-[#F8FAFC] text-[#112838]">
+        <MaterialSymbolsLoader />
+        <DashboardHeader />
       <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         {/* Page Header */}
         {savedTrips.length > 0 && (
@@ -414,6 +416,7 @@ export default function TripsTodoPage() {
           </div>
         )}
       </main>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

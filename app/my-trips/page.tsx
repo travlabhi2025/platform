@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import MaterialSymbolsLoader from "@/components/MaterialSymbolsLoader";
 
@@ -152,9 +153,10 @@ export default function MyTripsPage() {
   const pendingCount = pendingTrips.length;
 
   return (
-    <div className="min-h-screen bg-background-light text-primary">
-      <MaterialSymbolsLoader />
-      <DashboardHeader />
+    <ProtectedRoute>
+      <div className="min-h-screen bg-background-light text-primary">
+        <MaterialSymbolsLoader />
+        <DashboardHeader />
       <main className="max-w-[1440px] mx-auto px-6 py-10">
         {/* Page Header */}
         <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -493,6 +495,7 @@ export default function MyTripsPage() {
           font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
         }
       `}</style>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

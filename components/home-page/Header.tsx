@@ -1,197 +1,197 @@
-"use client";
+// "use client";
 
-import Image from "next/image";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useAuth } from "@/lib/auth-context";
-import { EllipsisVertical } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+// import Image from "next/image";
+// import Link from "next/link";
+// import { useEffect, useState } from "react";
+// import { useAuth } from "@/lib/auth-context";
+// import { EllipsisVertical } from "lucide-react";
+// import { Button } from "@/components/ui/button";
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuItem,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu";
 
-export default function Header() {
-  const [open, setOpen] = useState(false);
-  const { user, signOut } = useAuth();
+// export default function Header() {
+//   const [open, setOpen] = useState(false);
+//   const { user, signOut } = useAuth();
 
-  useEffect(() => {
-    const onResize = () => {
-      if (window.innerWidth >= 640) setOpen(false); // close on >= sm screens
-    };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
+//   useEffect(() => {
+//     const onResize = () => {
+//       if (window.innerWidth >= 640) setOpen(false); // close on >= sm screens
+//     };
+//     window.addEventListener("resize", onResize);
+//     return () => window.removeEventListener("resize", onResize);
+//   }, []);
 
-  return (
-    <header className="shadow-lg fixed z-100 max-w-[95vw] min-w-[95vw] bg-white mx-auto left-1/2 -translate-x-1/2 top-6 rounded-md">
-      <div className="max-w-full mx-auto pr-4 relative">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <div className="flex ml-2 items-center">
-            <Image
-              src={"/images/logo.svg"}
-              alt="TravlAbhi"
-              width={120}
-              height={120}
-            />
-          </div>
+//   return (
+//     <header className="shadow-lg fixed z-100 max-w-[95vw] min-w-[95vw] bg-white mx-auto left-1/2 -translate-x-1/2 top-6 rounded-md">
+//       <div className="max-w-full mx-auto pr-4 relative">
+//         <div className="flex justify-between items-center h-16">
+//           {/* Logo */}
+//           <div className="flex ml-2 items-center">
+//             <Image
+//               src={"/images/logo.svg"}
+//               alt="TravlAbhi"
+//               width={120}
+//               height={120}
+//             />
+//           </div>
 
-          {/* Desktop actions */}
-          <div className="hidden sm:flex items-center gap-6">
-            {user ? (
-              <div className="flex items-center gap-3">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="rounded-full"
-                    >
-                      <EllipsisVertical className="h-5 w-5 text-primary" />
-                      <span className="sr-only">Open menu</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-44 z-[110]">
-                    <DropdownMenuItem asChild>
-                      <Link href="/booking-status">Check Booking</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/profile">Profile</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href={user ? "/dashboard" : "/profile"}>
-                        Dashboard
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={signOut}>
-                      Sign Out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Link
-                  href="/signin"
-                  className="bg-primary font-bebas hover:bg-primary/90 text-primary-foreground px-8 py-1 rounded-md font-medium transition-colors duration-200 cursor-pointer"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/signup"
-                  className="border border-primary text-primary px-4 py-1 rounded-md font-bebas tracking-wide hover:bg-primary hover:text-white transition-colors duration-200 cursor-pointer"
-                >
-                  Sign Up
-                </Link>
-              </div>
-            )}
-          </div>
+//           {/* Desktop actions */}
+//           <div className="hidden sm:flex items-center gap-6">
+//             {user ? (
+//               <div className="flex items-center gap-3">
+//                 <DropdownMenu>
+//                   <DropdownMenuTrigger asChild>
+//                     <Button
+//                       variant="ghost"
+//                       size="icon"
+//                       className="rounded-full"
+//                     >
+//                       <EllipsisVertical className="h-5 w-5 text-primary" />
+//                       <span className="sr-only">Open menu</span>
+//                     </Button>
+//                   </DropdownMenuTrigger>
+//                   <DropdownMenuContent align="end" className="w-44 z-[110]">
+//                     <DropdownMenuItem asChild>
+//                       <Link href="/booking-status">Check Booking</Link>
+//                     </DropdownMenuItem>
+//                     <DropdownMenuItem asChild>
+//                       <Link href="/profile">Profile</Link>
+//                     </DropdownMenuItem>
+//                     <DropdownMenuItem asChild>
+//                       <Link href={user ? "/dashboard" : "/profile"}>
+//                         Dashboard
+//                       </Link>
+//                     </DropdownMenuItem>
+//                     <DropdownMenuItem onClick={signOut}>
+//                       Sign Out
+//                     </DropdownMenuItem>
+//                   </DropdownMenuContent>
+//                 </DropdownMenu>
+//               </div>
+//             ) : (
+//               <div className="flex items-center gap-2">
+//                 <Link
+//                   href="/signin"
+//                   className="bg-primary font-bebas hover:bg-primary/90 text-primary-foreground px-8 py-1 rounded-md font-medium transition-colors duration-200 cursor-pointer"
+//                 >
+//                   Login
+//                 </Link>
+//                 <Link
+//                   href="/signup"
+//                   className="border border-primary text-primary px-4 py-1 rounded-md font-bebas tracking-wide hover:bg-primary hover:text-white transition-colors duration-200 cursor-pointer"
+//                 >
+//                   Sign Up
+//                 </Link>
+//               </div>
+//             )}
+//           </div>
 
-          {/* Center links on sm+ */}
-          <div className="hidden sm:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
-            <Link
-              href="#"
-              className="font-garetheavy text-primary hover:text-primary/90 cursor-not-allowed opacity-60"
-            >
-              Explore All Trips
-            </Link>
-            <Link
-              href={"/dashboard"}
-              className="font-garetheavy text-primary hover:text-primary/90 cursor-pointer"
-            >
-              Dashboard
-            </Link>
-          </div>
+//           {/* Center links on sm+ */}
+//           <div className="hidden sm:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
+//             <Link
+//               href="#"
+//               className="font-garetheavy text-primary hover:text-primary/90 cursor-not-allowed opacity-60"
+//             >
+//               Explore All Trips
+//             </Link>
+//             <Link
+//               href={"/dashboard"}
+//               className="font-garetheavy text-primary hover:text-primary/90 cursor-pointer"
+//             >
+//               Dashboard
+//             </Link>
+//           </div>
 
-          {/* Burger button */}
-          <button
-            className="sm:hidden p-2 rounded-md border border-slate-200 text-primary cursor-pointer"
-            aria-label="Toggle menu"
-            aria-expanded={open}
-            onClick={() => setOpen((v) => !v)}
-          >
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M3 6H21"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-              <path
-                d="M3 12H21"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-              <path
-                d="M3 18H21"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
-        </div>
-      </div>
+//           {/* Burger button */}
+//           <button
+//             className="sm:hidden p-2 rounded-md border border-slate-200 text-primary cursor-pointer"
+//             aria-label="Toggle menu"
+//             aria-expanded={open}
+//             onClick={() => setOpen((v) => !v)}
+//           >
+//             <svg
+//               width="22"
+//               height="22"
+//               viewBox="0 0 24 24"
+//               fill="none"
+//               xmlns="http://www.w3.org/2000/svg"
+//             >
+//               <path
+//                 d="M3 6H21"
+//                 stroke="currentColor"
+//                 strokeWidth="2"
+//                 strokeLinecap="round"
+//               />
+//               <path
+//                 d="M3 12H21"
+//                 stroke="currentColor"
+//                 strokeWidth="2"
+//                 strokeLinecap="round"
+//               />
+//               <path
+//                 d="M3 18H21"
+//                 stroke="currentColor"
+//                 strokeWidth="2"
+//                 strokeLinecap="round"
+//               />
+//             </svg>
+//           </button>
+//         </div>
+//       </div>
 
-      {open && (
-        <nav className="sm:hidden border-t border-slate-200">
-          <div className="px-4 py-3 flex flex-col gap-3">
-            <Link
-              href={"#"}
-              className="font-garetheavy text-primary cursor-not-allowed opacity-60"
-            >
-              Explore All Trips
-            </Link>
-            <Link
-              href={"/dashboard"}
-              className="font-garetheavy text-primary cursor-pointer"
-            >
-              Dashboard
-            </Link>
-            {user ? (
-              <div className="flex flex-col gap-2">
-                <Link
-                  href={user ? "/dashboard" : "/profile"}
-                  className="text-primary font-medium cursor-pointer"
-                >
-                  Dashboard
-                </Link>
-                <button
-                  onClick={signOut}
-                  className="text-sm text-gray-600 hover:text-gray-800 w-max cursor-pointer"
-                >
-                  Sign Out
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <Link
-                  href="/signin"
-                  className="bg-primary font-bebas hover:bg-primary/90 text-primary-foreground px-8 py-2 rounded-md w-max cursor-pointer"
-                >
-                  LOGIN
-                </Link>
-                <Link
-                  href="/signup"
-                  className="border border-primary text-primary px-4 py-2 rounded-md font-bebas tracking-wide w-max cursor-pointer"
-                >
-                  SIGN UP
-                </Link>
-              </div>
-            )}
-          </div>
-        </nav>
-      )}
-    </header>
-  );
-}
+//       {open && (
+//         <nav className="sm:hidden border-t border-slate-200">
+//           <div className="px-4 py-3 flex flex-col gap-3">
+//             <Link
+//               href={"#"}
+//               className="font-garetheavy text-primary cursor-not-allowed opacity-60"
+//             >
+//               Explore All Trips
+//             </Link>
+//             <Link
+//               href={"/dashboard"}
+//               className="font-garetheavy text-primary cursor-pointer"
+//             >
+//               Dashboard
+//             </Link>
+//             {user ? (
+//               <div className="flex flex-col gap-2">
+//                 <Link
+//                   href={user ? "/dashboard" : "/profile"}
+//                   className="text-primary font-medium cursor-pointer"
+//                 >
+//                   Dashboard
+//                 </Link>
+//                 <button
+//                   onClick={signOut}
+//                   className="text-sm text-gray-600 hover:text-gray-800 w-max cursor-pointer"
+//                 >
+//                   Sign Out
+//                 </button>
+//               </div>
+//             ) : (
+//               <div className="flex flex-col gap-2">
+//                 <Link
+//                   href="/signin"
+//                   className="bg-primary font-bebas hover:bg-primary/90 text-primary-foreground px-8 py-2 rounded-md w-max cursor-pointer"
+//                 >
+//                   LOGIN
+//                 </Link>
+//                 <Link
+//                   href="/signup"
+//                   className="border border-primary text-primary px-4 py-2 rounded-md font-bebas tracking-wide w-max cursor-pointer"
+//                 >
+//                   SIGN UP
+//                 </Link>
+//               </div>
+//             )}
+//           </div>
+//         </nav>
+//       )}
+//     </header>
+//   );
+// }

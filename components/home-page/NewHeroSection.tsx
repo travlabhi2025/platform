@@ -14,7 +14,7 @@ export default function NewHeroSection() {
     e.preventDefault();
     // TODO: Implement search functionality
     if (searchQuery.trim()) {
-      router.push(`/trip-details/${searchQuery}`);
+      router.push(`/trip/${searchQuery}`);
     }
   };
 

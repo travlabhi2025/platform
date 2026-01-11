@@ -6,7 +6,7 @@ import SiteHeader from "@/components/common/SiteHeader";
 import { EVEREST_BASE_CAMP_TRIP } from ".";
 import { useTrip } from "@/lib/hooks";
 import { useAuth } from "@/lib/auth-context";
-import { Check, X, Edit, Loader2 } from "lucide-react";
+import { Check, X, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
@@ -213,15 +213,7 @@ export default function TripDetailsPage({ tripId }: TripDetailsPageProps) {
                 <h1 className="text-4xl md:text-6xl font-garetheavy text-white leading-tight">
                   {data.title}
                 </h1>
-                {user && "createdBy" in data && data.createdBy === user.uid && (
-                  <Link
-                    href={`/edit-trip/${data.id}`}
-                    className="flex items-center gap-1 px-3 py-1 text-sm text-white/80 hover:text-white transition-colors bg-white/20 rounded-md backdrop-blur-sm"
-                  >
-                    <Edit className="w-4 h-4" />
-                    <span>Edit</span>
-                  </Link>
-                )}
+                {/* Edit trip functionality removed - organisers use separate platform */}
               </div>
               <div className="flex flex-wrap items-center gap-4 text-white/90">
                 <div className="flex items-center gap-2">

@@ -130,6 +130,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await authService.signOut();
+    // Redirect to home page after logout
+    if (typeof window !== "undefined") {
+      window.location.href = "/";
+    }
   };
 
   const signInWithGoogle = async () => {

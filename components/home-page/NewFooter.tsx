@@ -122,7 +122,7 @@ export default function NewFooter() {
               Cancellation Options
             </a>
             <Link
-              className="text-sm hover:text-primary font-satoshi"
+              className="text-sm hover:text-[var(--landing-primary)] font-satoshi"
               href="/terms-and-conditions"
             >
               Terms & Conditions
