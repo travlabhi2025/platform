@@ -56,6 +56,14 @@ export async function POST(request: NextRequest) {
       // because when users sign up, we store their Firebase Auth UID as the document ID
       const uid = user.id;
 
+      if (!uid) {
+        console.error("[verify-otp-login] User found but missing ID");
+        return NextResponse.json(
+          { error: "User data is invalid" },
+          { status: 500 }
+        );
+      }
+
       try {
         console.log("[verify-otp-login] Verifying user exists in Firebase Auth with UID:", uid);
         // Verify the user exists in Firebase Auth
@@ -76,7 +84,7 @@ export async function POST(request: NextRequest) {
 
         console.log("[verify-otp-login] Updating emailVerified in Firestore");
         // Update emailVerified status in Firestore
-        await adminUserService.verifyUserEmail(user.id);
+        await adminUserService.verifyUserEmail(uid);
 
         console.log("[verify-otp-login] Updating emailVerified in Firebase Auth");
         // Update emailVerified in Firebase Auth
@@ -94,7 +102,7 @@ export async function POST(request: NextRequest) {
           success: true,
           message: "OTP verified successfully",
           customToken,
-          userId: user.id,
+          userId: uid,
           email: user.email,
         });
       } catch (error: any) {

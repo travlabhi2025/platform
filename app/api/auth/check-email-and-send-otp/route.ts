@@ -32,6 +32,14 @@ export async function POST(request: NextRequest) {
       });
 
       // Verify user exists in Firebase Auth using Admin SDK
+      if (!user.id) {
+        console.error("[check-email-and-send-otp] User found but missing ID");
+        return NextResponse.json(
+          { error: "User data is invalid" },
+          { status: 500 }
+        );
+      }
+
       try {
         const adminAuth = getAdminAuth();
         const firebaseUser = await adminAuth.getUser(user.id);

@@ -85,8 +85,8 @@ function TrendingAdventureCard({ trip }: TrendingAdventureCardProps) {
   const price =
     trip.packages && trip.packages.length > 0
       ? trip.packages[0].priceInInr
-      : trip.priceInInr || 0;
-  const currency = trip.packages?.[0]?.currency || trip.currency || "INR";
+      : 0;
+  const currency = trip.packages?.[0]?.currency || "INR";
   const displayPrice = currency === "INR" ? `₹${price}` : `$${price}`;
 
   const startDate = trip.about?.startDate
